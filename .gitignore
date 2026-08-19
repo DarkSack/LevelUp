@@ -1,0 +1,32 @@
+node_modules/
+# Build artifacts
+.next/
+out/
+*.tsbuildinfo
+AGENTS.md
+.expo/
+dist/
+web-build/
+*.log
+.env
+.env.local
+.agents
+.insforge
+
+.DS_Store
+mobile/ios/
+mobile/android/
+
+# InsForge & AI agent skills
+opencode.json
+.agent
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

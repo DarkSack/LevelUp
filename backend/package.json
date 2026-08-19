@@ -1,0 +1,24 @@
+{
+  "name": "levelup-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 4010",
+    "build": "next build",
+    "start": "next start --port 4000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@insforge/sdk": "^1.5.2",
+    "graphql": "^16.9.0",
+    "graphql-yoga": "^5.10.4",
+    "next": "^15.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "typescript": "^5.6.3"
+  }
+}
