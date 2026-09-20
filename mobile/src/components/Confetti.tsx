@@ -95,5 +95,5 @@ export function Confetti({ count = 60, duration = 2400, onDone }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFillObject, zIndex: 20 },
+  root: { ...StyleSheet.absoluteFill, zIndex: 20 },
 });

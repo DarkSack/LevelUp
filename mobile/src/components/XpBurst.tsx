@@ -35,7 +35,7 @@ export function XpBurst({ xp, color = '#3B82F6', onDone }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', zIndex: 15 },
+  root: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', zIndex: 15 },
   pill: {
     paddingHorizontal: 24, paddingVertical: 12, borderRadius: 999,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },

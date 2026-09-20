@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   appBarSpacer: { width: 40 },
 
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#000',
     zIndex: 40,
   },
