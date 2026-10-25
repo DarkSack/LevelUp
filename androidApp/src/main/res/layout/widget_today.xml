@@ -6,7 +6,8 @@
     android:background="@drawable/widget_background"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="16dp">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="8dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -14,7 +15,9 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
+        <!-- Una fila de Inicio mide unos 60 dp: caben dos líneas, así que el avance va junto a la etiqueta. -->
         <TextView
+            android:id="@+id/widget_progress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/widget_label"
@@ -26,18 +29,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:maxLines="2"
+            android:maxLines="1"
             android:text="@string/widget_loading"
             android:textColor="@color/widget_text"
             android:textSize="17sp"
             android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/widget_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/widget_secondary"
-            android:textSize="13sp" />
     </LinearLayout>
 
     <Button

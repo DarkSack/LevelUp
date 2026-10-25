@@ -65,7 +65,8 @@ class TodayWidget : AppWidgetProvider() {
                     else -> "Abre LevelUp para ver tus retos"
                 },
             )
-            views.setTextViewText(R.id.widget_progress, if (summary.total > 0) "${summary.done} de ${summary.total} hechos" else "")
+            val label = context.getString(R.string.widget_label)
+            views.setTextViewText(R.id.widget_progress, if (summary.total > 0) "$label · ${summary.done} de ${summary.total}" else label)
             views.setOnClickPendingIntent(R.id.widget_root, open(context, if (main != null) "levelup://reto/$main" else "levelup://hoy", 1))
             if (main != null) {
                 views.setViewVisibility(R.id.widget_complete, View.VISIBLE)
