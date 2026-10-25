@@ -1,6 +1,6 @@
 # Política de privacidad de LevelUp
 
-Última actualización: 24 de octubre de 2026. Responsable: Johan Jafet Del Valle Santiago,
+Última actualización: 25 de octubre de 2026. Responsable: Johan Jafet Del Valle Santiago,
 contacto: donsackito@protonmail.com.
 
 ## Lo corto
@@ -14,7 +14,7 @@ anuncios, no usa herramientas de análisis ni de rastreo y no vende ni comparte 
 - Tus ajustes: objetivos, ritmo, accesibilidad, recordatorios, días de descanso, color y marco elegidos y, si
   lo escribes, el nombre con el que quieres que te salude (opcional).
 - Tu actividad: los retos que te tocan, los que creas, los que completas, la experiencia, los logros, las
-  misiones y las pausas.
+  misiones y las pausas, y lo que escribas tú: notas de cada reto, metas personales y favoritos.
 
 Todo se guarda en el almacenamiento privado de la app, al que otras apps no pueden entrar.
 
@@ -27,11 +27,12 @@ Supabase, que actúa como proveedor por cuenta nuestra.
   El correo se usa para enviarte los códigos de confirmación y de cambio de contraseña. No te enviamos publicidad.
 - **Sincronización**: una copia de lo que guarda la app (ajustes y actividad, lista de arriba) para tenerla
   en todos tus teléfonos.
-- **Perfil social** (solo si lo creas): nombre de usuario, nombre visible, marco, racha actual y la última
-  vez que usaste la app. Tú decides si te pueden encontrar por tu nombre de usuario, si tus amigos ven tu
+- **Perfil social** (solo si lo creas): nombre de usuario, nombre visible, avatar (un dibujo predefinido) y
+  marco, racha actual, la última vez que usaste la app y, si los eliges, un título y hasta tres trofeos.
+  Tus amigos ven el título y los trofeos solo si compartes tu progreso. Tú decides si te pueden encontrar por tu nombre de usuario, si tus amigos ven tu
   progreso o tu última actividad y si apareces en la clasificación (esta última, desactivada de inicio).
-- **Lo social**: tus solicitudes de amistad, amistades, bloqueos, reacciones (predefinidas: no hay mensajes de
-  texto libre), retos en grupo y avisos. Los avisos se borran a los 90 días.
+- **Lo social**: tus solicitudes de amistad, amistades, bloqueos, reacciones y mensajes de ánimo (predefinidos:
+  no hay mensajes de texto libre), retos en grupo y avisos. Los avisos se borran a los 90 días.
 - **Denuncias**: si denuncias a alguien, guardamos quién denunció a quién, el motivo y la fecha, para revisarlo.
 - Como cualquier servicio en internet, el servidor registra datos técnicos de las conexiones (como la
   dirección IP) para su funcionamiento y seguridad.
@@ -49,14 +50,23 @@ compra y no ve tus datos de pago. Plus no es necesario para progresar.
 - **Copia de seguridad de Android**: si la tienes activada, Android guarda una copia cifrada de los datos de
   tus apps en tu cuenta de Google, LevelUp incluida, para restaurarla en un teléfono nuevo. La sesión de tu
   cuenta de LevelUp no se copia. Puedes desactivarla en los ajustes del teléfono.
-- **Exportar**: si eliges exportar tus datos, se crea un archivo donde tú decidas.
+- **Exportar**: si eliges exportar tus datos (respaldo JSON o historial CSV), se crea un archivo donde tú decidas.
+- **Compartir un logro**: si pulsas «Compartir», la app crea una imagen con el nombre del logro y la fecha (sin
+  tu nombre) y la pasa a la app que elijas.
+- **Reloj con Wear OS**: si instalas LevelUp en tu reloj, el teléfono le envía los retos de hoy y tus metas por
+  la conexión entre los dos (servicios de Google Play). Solo llega a tu reloj emparejado.
+- **Widget**: si lo pones en la pantalla de inicio, muestra tu reto principal a quien vea tu pantalla.
 
 ## Permisos
 
 - **Internet**: solo para la cuenta, la sincronización, lo social y la compra de Plus. Sin cuenta, la app no
   envía tus datos a ningún sitio.
-- **Notificaciones**: recordatorios (un aviso al día como máximo, nunca en tus horas de silencio ni en días
-  de descanso o pausa) y, si tienes cuenta y lo permites, avisos de tus amigos.
+- **Notificaciones**: recordatorios (un aviso al día como máximo, solo los días que elijas, nunca en tus horas
+  de silencio ni en días de descanso o pausa) y, si tienes cuenta y lo permites, avisos de tus amigos.
+- **Health Connect: pasos y ejercicio** (solo si activas «Actividad de Health Connect» en Perfil → Laboratorio):
+  la app lee tus pasos y minutos de ejercicio **de hoy** para mostrarlos en los retos físicos. Se leen en el
+  teléfono cada vez que abres un reto: no se guardan, no se sincronizan y no salen del teléfono. Puedes quitar el
+  permiso cuando quieras en Health Connect.
 
 ## Tus derechos y cómo borrar tus datos
 
@@ -69,7 +79,12 @@ compra y no ve tus datos de pago. Plus no es necesario para progresar.
 ## Salud
 
 LevelUp propone retos de hábitos generales. No es un servicio médico, no hace diagnósticos y no guarda
-datos de salud.
+datos de salud (lo que lee de Health Connect solo se muestra; ver Permisos).
+
+## Capturas de pantalla
+
+Si activas «Proteger mis pantallas» (Perfil → Privacidad), el sistema no deja hacer capturas ni grabaciones
+dentro de LevelUp y oculta su vista previa en las apps recientes.
 
 ## Menores de edad
 

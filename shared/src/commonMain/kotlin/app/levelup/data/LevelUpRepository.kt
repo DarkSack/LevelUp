@@ -287,7 +287,7 @@ class LevelUpRepository(
         val before = dao.totalXpNow()
         // El primer reto de un día tras una temporada sin actividad se reconoce: se premia volver, no se castiga la ausencia.
         val firstThatDay = dao.completedOn(inst.date) == 0
-        val comeback = firstThatDay && dao.lastActiveBefore(inst.date)?.let { it.daysUntil(inst.date) >= Stats.COMEBACK_GAP_DAYS } == true
+        val comeback = firstThatDay && dao.lastActiveBefore(inst.date)?.let { it.daysUntil(inst.date) >= XpRules.COMEBACK_XP_GAP_DAYS } == true
         val xp = if (minimal) XpRules.xpFor(1) else inst.xp
         dao.updateInstance(inst.copy(status = InstanceStatus.COMPLETED, completedAt = now(), minimal = minimal, xp = xp))
         dao.insertXp(xpEntry(XpSource.CHALLENGE, inst.id, xp, inst.category))

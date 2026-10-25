@@ -213,6 +213,8 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
 
     suspend fun surprise(): Challenge? = repo.surprise()
 
+    fun notify(text: String) = act { _events.emit(UiEvent.Message(text)) }
+
     suspend fun search(query: String): List<SearchHit> = repo.search(query)
 
     fun toggleFavorite(challengeId: String) = act {

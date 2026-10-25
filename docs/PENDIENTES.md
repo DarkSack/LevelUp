@@ -43,6 +43,12 @@ ni cambiar la contraseña desde la app**. Para arreglarlo:
    debe pasar por el chat) y subir el límite de correos por hora (Authentication → Rate Limits).
 3. Subir las plantillas de `supabase/templates/` (con la CLI: `supabase config push`; o pedírmelo por Composio).
 
+**Migración nueva sin aplicar en producción:** `supabase/migrations/20261025200000_extras.sql` (favoritos y metas en la
+sincronización, XP de regreso, mensajes de ánimo, avatar/título/trofeos del perfil e historial de grupos). Probada
+en el Supabase local (54 pruebas pgTAP y la prueba de punta a punta). **Aplicarla antes de instalar o publicar esta
+versión con una cuenta real**: sin ella el servidor rechaza los lotes con favoritos o metas y la sincronización de
+esa cuenta se queda parada; guardar el perfil social también falla.
+
 Otros:
 
 - Plan gratis: esa organización ya tiene 2 proyectos activos (RPGRoll-Shop y LevelUp), el máximo gratis, y un
@@ -59,6 +65,11 @@ Otros:
   (`licenseKey=...`, ver `play.properties.example`). Sin ella las compras no se comprueban.
 - Cuenta de pagos de comerciante (necesaria para vender Plus).
 - Probar la compra con una cuenta de prueba de licencias antes de publicar.
+- **Declaración de Health Connect** (Contenido de la app): la app declara `READ_STEPS` y `READ_EXERCISE`. Si no
+  quieres pasar esa revisión en la primera versión, se pueden quitar del manifiesto y la opción desaparece sola
+  del Laboratorio (dímelo y lo hago).
+- **Reloj**: subir el AAB de `wearApp` al canal de Wear OS de la misma ficha, con capturas del reloj
+  ([PLAY_STORE.md](play/PLAY_STORE.md) §5).
 
 ## Datos legales y enlaces
 
@@ -83,6 +94,9 @@ Conviene revisarlas al menos una vez por semana.
 - TalkBack, texto al 200 % y «Quitar animaciones» del sistema en un teléfono real.
 - Que los recordatorios y la sincronización en segundo plano lleguen (WorkManager puede retrasarlos con ahorro de batería).
 - Restaurar la copia automática de Android en un teléfono nuevo.
+- Lo nuevo del 2026-10-25 que solo se ve en un dispositivo: el widget y su botón, los atajos del icono, los enlaces
+  `levelup://`, compartir un logro como imagen, «Proteger mis pantallas», Health Connect, y la app del reloj con su
+  complicación (no hay reloj ni emulador de Wear OS en este equipo).
 
 ## Fuera de esta versión
 

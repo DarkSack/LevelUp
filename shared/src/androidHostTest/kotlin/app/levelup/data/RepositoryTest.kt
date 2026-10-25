@@ -260,15 +260,18 @@ class RepositoryTest {
         assertNotNull(repo.reminderNow())
     }
 
-    @Test fun comingBackAfterAWeekIsGentleAndRecognizedOnce() = runTest {
+    @Test fun comingBackIsGentleAfterAWeekAndRecognizedAfterTwo() = runTest {
         onboarded()
         repo.complete(repo.ensureToday().first().id)
         clock.advanceDays(8)
         assertTrue(repo.isReturning())
-        val today = repo.ensureToday()
-        assertTrue(today.size in 1..2, "regreso suave: ${today.size} retos")
-        assertTrue(today.sumOf { it.minutes } <= 10)
+        val week = repo.ensureToday()
+        assertTrue(week.size in 1..2, "regreso suave: ${week.size} retos")
+        assertTrue(week.sumOf { it.minutes } <= 10)
+        assertFalse(repo.complete(week.first().id)!!.comeback, "tras una semana: retos suaves, sin XP extra")
 
+        clock.advanceDays(XpRules.COMEBACK_XP_GAP_DAYS)
+        val today = repo.ensureToday()
         suspend fun comebackXp() = repo.xpEntries.first().filter { it.sourceType == XpSource.COMEBACK }.sumOf { it.amount }
         val first = repo.complete(today.first().id)!!
         assertTrue(first.comeback)

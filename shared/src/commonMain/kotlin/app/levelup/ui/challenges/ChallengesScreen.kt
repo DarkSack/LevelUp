@@ -19,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -113,8 +115,13 @@ private fun ExploreTab(vm: LevelUpViewModel, nav: Nav) {
             (NO_MATERIALS !in flags || Tags.SIN_MATERIALES in c.tags) &&
             (FAVORITES !in flags || c.id in favorites)
     }
+    val scope = rememberCoroutineScope()
     LazyColumn(contentPadding = listPadding) {
         item {
+            // Exploración: un reto que nunca hiciste, mejor de una categoría que no sueles elegir.
+            SecondaryButton("Probar algo nuevo", {
+                scope.launch { vm.surprise()?.let { nav.catalog(it.id) } ?: vm.notify("Ya probaste todo lo que encaja contigo.") }
+            })
             ChoiceRow("Categoría", listOf("" to "Todas") + Categories.builtIn.map { it.key to it.name }, category, { category = it })
             ChoiceRow("Dificultad", listOf(0 to "Todas") + (1..5).map { it to Fmt.difficulty(it) }, difficulty, { difficulty = it })
             ChoiceRow("Duración", listOf(0 to "Todas", 5 to "Hasta 5 min", 15 to "Hasta 15 min", 30 to "Hasta 30 min", 999 to "Más de 30 min"),

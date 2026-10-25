@@ -71,7 +71,7 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 | Clasificación de contenido | Cuestionario IARC: sin violencia ni ubicación. **Sí** a compras digitales. **Sí** a interacción entre usuarios, limitada: solo reacciones predefinidas, sin chat ni texto libre, con bloqueo y denuncia |
 | Público objetivo | 13 años o más. No dirigida a menores de 13 |
 | Borrado de cuenta | En la app (Cuenta y sincronización → Borrar mi cuenta) y una URL pública con cómo pedirlo (**Tú**, ver PENDIENTES.md) |
-| Apps de salud | Declarar si Play lo pregunta: retos de bienestar general, sin funciones médicas ni datos de salud |
+| Apps de salud | Retos de bienestar general, sin funciones médicas. **Declaración de Health Connect obligatoria**: la app pide `READ_STEPS` y `READ_EXERCISE` (opcional, en Laboratorio) para mostrar los pasos y minutos de ejercicio de hoy en los retos físicos; solo lectura, procesado en el teléfono, sin guardar ni subir nada. Play revisa este formulario aparte |
 
 ## 4. Seguridad de los datos
 
@@ -92,14 +92,22 @@ desarrollador, lo que Play no cuenta como «compartir»).
 | Información personal → Nombre (nombre visible del perfil social) | Funciones de la app (social) |
 | Información personal → ID de usuario | Gestión de la cuenta, funciones de la app |
 | Actividad en la app → Otras acciones (retos, XP, logros, rachas) | Funciones de la app (sincronización, social) |
-| Actividad en la app → Otro contenido generado por el usuario (retos propios, nombre de usuario) | Funciones de la app |
+| Actividad en la app → Otro contenido generado por el usuario (retos propios, notas, metas, favoritos, nombre de usuario) | Funciones de la app |
 
-No se recopilan ubicación, contactos, datos financieros (el pago lo gestiona Google Play), salud,
-identificadores del dispositivo ni datos de diagnóstico.
+No se recopilan ubicación, contactos, datos financieros (el pago lo gestiona Google Play), identificadores del
+dispositivo ni datos de diagnóstico. Los pasos y el ejercicio de Health Connect se leen y se muestran solo en el
+teléfono (no se guardan ni se envían): según la ayuda de Play, lo que se procesa solo en el dispositivo no cuenta
+como recopilado, pero **Tú** confírmalo al rellenarlo.
 
 **Tú**: repasa la lista con la ayuda vigente de Play Console al rellenarla; las categorías cambian a veces.
 
-## 5. Gráficos
+## 5. Reloj (Wear OS)
+
+El módulo `wearApp` se publica en la **misma ficha**, en el canal de Wear OS (Configuración avanzada → Factores de
+forma → Wear OS), con su propio AAB (`./gradlew :wearApp:bundleRelease`, `versionCode` 100001 y siguientes, que no
+pueden coincidir con los del teléfono). Necesita capturas del reloj y pasa una revisión propia de Wear OS.
+
+## 6. Gráficos
 
 Pendientes: icono 512 × 512, gráfico destacado 1024 × 500 y capturas. Se pueden sacar de la interfaz real
 con Robolectric, como en Moneytor (`StoreScreenshots`).

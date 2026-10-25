@@ -12,7 +12,10 @@ momento.
 ## Estado
 
 Versión `0.1.0` (`versionCode 1`), **sin publicar**. El código está completo para una primera versión y probado
-con pruebas automáticas. Nunca se ha instalado en un teléfono real.
+con pruebas automáticas. Nunca se ha instalado en un teléfono ni en un reloj reales.
+
+- **Migración del servidor pendiente:** `supabase/migrations/20261025200000_extras.sql` hay que aplicarla en
+  producción antes de usar esta versión con una cuenta real (ver [docs/PENDIENTES.md](docs/PENDIENTES.md)).
 
 - **Backend en producción:** desplegado en Supabase. Crear una cuenta todavía no funciona porque falta
   configurar un servidor de correo propio (SMTP). Detalles en [docs/PENDIENTES.md](docs/PENDIENTES.md).
@@ -24,19 +27,36 @@ con pruebas automáticas. Nunca se ha instalado en un teléfono real.
 - **Retos del día:** más de 120 retos en 9 categorías (físico, social, mente y aprendizaje, productividad,
   bienestar, creatividad, finanzas, digital y hogar). Los elige según tus objetivos, la dificultad y el tiempo
   que tienes. Puedes cambiar un reto por otro, dejarlo para otro día o pedir una versión más fácil.
-- **Retos propios:** creas los tuyos, con pasos y días de repetición; se pueden pausar y archivar.
+- **Retos propios:** creas los tuyos, con pasos, días de repetición, lugar, momento del día y una versión mínima
+  para días difíciles; se pueden pausar y archivar.
+- **Organizar el día:** Inicio agrupa los retos por mañana, tarde y noche; notas en cada reto; modo concentración
+  con cronómetro que no caduca; «¿dónde estás?» (casa, exterior, trabajo, tiempo libre) al pedir un reto extra.
+- **Encontrar:** búsqueda en retos, hábitos, logros, metas y notas (sin importar acentos), favoritos y filtros por
+  categoría, dificultad, duración, lugar y «sin materiales». «Probar algo nuevo» propone un reto que nunca hiciste.
+- **Metas personales y revisión semanal:** metas con o sin fecha; cada semana, un resumen con propuestas (menos o
+  más retos, mover el aviso, días de aviso) que solo se aplican si las aceptas, y repaso de metas y prioridades.
+- **Pausas sin deuda:** pausa con fecha de fin; al volver eliges qué hábitos retomar y no hay nada atrasado. Tras
+  una semana sin actividad, retos más cortos; tras dos, el primer reto suma XP de regreso.
 - **Dificultad que se adapta:** al terminar un reto dices si fue fácil, justo o difícil, y la app ajusta la
   dificultad poco a poco.
 - **Progreso RPG:** XP y nivel global, nivel por categoría, rachas con días de descanso, objetivo semanal,
   logros, misiones, títulos y marcos. Lo ganado nunca se pierde.
-- **Accesibilidad:** tamaño de texto, alto contraste, menos movimiento, modo sencillo, vibración, pasos visibles,
-  cronómetro opcional y nivel de gamificación ajustable.
-- **Recordatorios:** opcionales, a la hora que elijas, con horas de silencio y sin mensajes de culpa.
-- **Tus datos:** exportar e importar un respaldo JSON, borrar todo, y la copia automática de Android.
+- **Accesibilidad:** tamaño de texto, alto contraste, menos movimiento, modo sencillo, baja estimulación (colores
+  apagados, sin animaciones ni celebraciones), vibración, pasos visibles y estilo de juego completo, tranquilo o
+  sin juego (sin XP, niveles ni rachas).
+- **Fuera de la app:** widget con el reto principal y un botón para completarlo, atajos del icono (reto del día,
+  concentración, buscar), enlaces `levelup://` que solo abren pantallas, y app para Wear OS con complicación.
+- **Laboratorio:** funciones en prueba que se apagan sin tocar el progreso: retos sorpresa y los pasos y el
+  ejercicio de hoy desde Health Connect (solo lectura, no se guardan).
+- **Recordatorios:** opcionales, a la hora y los días que elijas, con horas de silencio y sin mensajes de culpa.
+- **Tus datos:** exportar e importar un respaldo JSON (validado al importar), historial en CSV, guía para cambiar
+  de teléfono, borrar todo, la copia automática de Android y protección opcional de capturas de pantalla.
 - **Cuenta (opcional):** registro por correo con código de 6 cifras. Sincroniza entre teléfonos y permite cerrar
   la sesión en los demás dispositivos o borrar la cuenta desde la app.
-- **Social (con cuenta):** amigos, solicitudes, bloqueos, reacciones predefinidas (sin chat), retos en grupo,
-  clasificación semanal voluntaria, avisos y denuncias. Cada opción de privacidad se puede apagar.
+- **Social (con cuenta):** amigos, solicitudes, bloqueos, reacciones y mensajes de ánimo predefinidos (sin chat),
+  retos en grupo (juntos o compitiendo) con calendario e historial, perfil con avatar, título y trofeos, compartir
+  un logro como imagen, clasificación semanal voluntaria, avisos y denuncias. Cada opción de privacidad se puede
+  apagar.
 - **LevelUp Plus:** compra única en Google Play con marcos, colores y estadísticas ampliadas. Es solo cosmético:
   nada de Plus hace falta para progresar.
 
@@ -55,6 +75,8 @@ tiene anuncios ni analítica. La política completa está en [docs/play/privacid
 | Backend | Supabase (Postgres con RLS, Auth, `pg_cron`) con supabase-kt 3.8.0 |
 | Tareas en segundo plano | WorkManager (recordatorios y sincronización) |
 | Compras | Google Play Billing 9.1.0, con la firma comprobada en el teléfono |
+| Reloj | Wear Compose Material 3 1.7.1, Data Layer (play-services-wearable 20.0.1), complicaciones 1.3.0 |
+| Salud (opcional) | Health Connect 1.1.0, solo lectura |
 | Pruebas | kotlin.test, JUnit 4, Robolectric 4.17, pgTAP |
 | Compilación | Gradle 9.7.1, AGP 9.4.1, JDK 21; `minSdk 26`, `targetSdk 36`, `compileSdk 37` |
 
@@ -83,8 +105,10 @@ Para probar contra el Supabase local desde un emulador, usa `url=http://10.0.2.2
 ## Compilar
 
 ```bash
-./gradlew :androidApp:assembleDebug       # APK de depuración
+./gradlew :androidApp:assembleDebug       # APK de depuración del teléfono
+./gradlew :wearApp:assembleDebug          # APK de depuración del reloj
 ./gradlew :androidApp:bundleRelease       # AAB para Play (firmado si existe keystore.properties)
+./gradlew :wearApp:bundleRelease          # AAB del reloj (misma llave)
 ```
 
 ## Pruebas
@@ -114,8 +138,8 @@ entre dos teléfonos, amigos, grupos y borrado de cuenta). Sin la clave, esta pr
 
 ## Integración continua
 
-[GitHub Actions](.github/workflows) corre las pruebas y compila el APK de depuración en cada push a `main` y en
-cada pull request. No publica nada en Play.
+[GitHub Actions](.github/workflows) corre las pruebas y compila los APK de depuración del teléfono y del reloj en
+cada push a `main` y en cada pull request. No publica nada en Play.
 
 ## Backend
 
@@ -141,7 +165,9 @@ la seguridad de los datos y los gráficos necesarios. Lo que hay que hacer en Pl
 
 ```
 shared/       código común: dominio, catálogo, Room, sincronización, cliente de Supabase, interfaz y pruebas
-androidApp/   actividad, recordatorios y sincronización con WorkManager, compra de Plus, manifiesto e iconos
+androidApp/   actividad, recordatorios y sincronización con WorkManager, compra de Plus, widget, atajos,
+              Health Connect, envío al reloj, manifiesto e iconos
+wearApp/      app del reloj (Wear OS) y complicación de esfera
 supabase/     migraciones, pruebas pgTAP, plantillas de correo y config.toml
 docs/         especificación, arquitectura, reglas, pendientes y material para Play
 ```

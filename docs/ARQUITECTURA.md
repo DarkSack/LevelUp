@@ -30,7 +30,10 @@ shared/      Kotlin Multiplatform (hoy solo el objetivo Android)
     ui/        Compose: tema, componentes, pantallas, navegación; LevelUpViewModel y CloudViewModel (cuenta y social)
     App.kt     punto de entrada de la interfaz; recibe `Platform` con lo que es propio de cada sistema
   androidMain/ base de datos para Android, sesión de la cuenta en preferencias, firma de Play
-androidApp/  Activity, Application, recordatorios y sincronización con WorkManager, compra de Plus, manifiesto
+androidApp/  Activity, Application, recordatorios y sincronización con WorkManager, compra de Plus, manifiesto,
+             widget (TodayWidget), atajos y enlaces levelup://, Health Connect, imagen para compartir y envío al reloj
+wearApp/     app de Wear OS independiente del módulo shared: recibe el resumen del día del teléfono y le pide
+             completar retos; complicación de esfera
 supabase/    migraciones SQL, pruebas pgTAP, plantillas de correo y config.toml (CLI de Supabase)
 ```
 
@@ -52,7 +55,9 @@ la red; lo único que se pide al servidor al abrir una pantalla son los datos so
 | `xp_ledger` | movimientos de XP. `UNIQUE(source_type, source_id)`: la misma acción nunca suma dos veces |
 | `unlocked_achievements` | logros desbloqueados y su fecha |
 | `mission_runs` | misiones empezadas, completadas o vencidas |
-| `pauses` | periodos de pausa (no rompen la racha) |
+| `pauses` | periodos de pausa (no rompen la racha), con fecha de fin opcional |
+| `favorites` | retos guardados (del catálogo o propios) |
+| `personal_goals` | metas personales: título, motivo, fecha opcional y estado (en marcha, lograda, archivada) |
 | `sync_outbox` | cambios locales pendientes de subir (una fila por registro, la llenan triggers de SQLite) |
 | `sync_state` | una fila: cuenta enlazada, cursor de descarga, último error |
 
@@ -69,6 +74,23 @@ la red; lo único que se pide al servidor al abrir una pantalla son los datos so
   `version`, añade una `Migration` y una prueba que la ejecuta. Nunca `fallbackToDestructiveMigration`.
 - **Borrado:** "Borrar todos mis datos" vacía todas las tablas. Borrar un reto propio no borra el
   historial de lo ya completado.
+
+Desde la v3, las instancias guardan también una nota, el momento del día y si se completó en su versión mínima;
+los retos propios, sus etiquetas de lugar, la versión mínima y el momento; y las preferencias, laboratorio, baja
+estimulación, capturas protegidas, días de aviso, última revisión semanal y avatar.
+
+## Fuera de la app: widget, atajos, enlaces y reloj
+
+- **Resumen del día** (`TodaySummary`, en el dominio): reto principal, cuántos van y metas en marcha. Room lo emite
+  como `Flow`; `LevelUpApplication` lo escucha y repinta el widget y lo publica al reloj en cada cambio.
+- **Enlaces** `levelup://hoy|enfoque|buscar|metas|privacidad|reto/<id>`: los usan los atajos, el widget y cualquier
+  automatización. Solo abren pantallas (lista blanca en `AndroidPlatform.openIntent`); ninguno devuelve datos ni
+  completa nada.
+- **Reloj:** Data Layer de Wear OS. El teléfono pone un `DataItem` en `/levelup/hoy`; el reloj manda mensajes a
+  `/levelup/completar` (id de la instancia) y `/levelup/pedir`. Solo se hablan apps con el mismo `applicationId`
+  y la misma firma. La complicación se repinta cuando llega un `DataItem` nuevo.
+- **Health Connect:** `HealthConnectSource` lee pasos y minutos de ejercicio de hoy cuando se abre un reto físico
+  con el experimento activo. No se guarda nada.
 
 ## Respaldo y recuperación
 
