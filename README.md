@@ -14,9 +14,6 @@ momento.
 Versión `0.1.0` (`versionCode 1`), **sin publicar**. El código está completo para una primera versión y probado
 con pruebas automáticas. Nunca se ha instalado en un teléfono ni en un reloj reales.
 
-- **Migración del servidor pendiente:** `supabase/migrations/20261025200000_extras.sql` hay que aplicarla en
-  producción antes de usar esta versión con una cuenta real (ver [docs/PENDIENTES.md](docs/PENDIENTES.md)).
-
 - **Backend en producción:** desplegado en Supabase. Crear una cuenta todavía no funciona porque falta
   configurar un servidor de correo propio (SMTP). Detalles en [docs/PENDIENTES.md](docs/PENDIENTES.md).
 - **Qué falta respecto a la especificación:** [docs/COBERTURA.md](docs/COBERTURA.md).

@@ -100,11 +100,10 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 
 ## Lo que falta, en orden
 
-1. **Aplicar la migración `20261025200000_extras.sql` en producción** antes de usar esta versión con cuentas reales.
-2. **SMTP propio** (del propietario) y subir las plantillas: sin esto nadie puede registrarse.
-3. **Play Console** (del propietario): crear la app, el producto `levelup_plus`, la clave de licencia y la URL de la política.
-4. **Probar en un teléfono**: instalar, TalkBack, texto grande, recordatorios, compra de prueba, registro real.
-5. Recursos de la tienda: icono 512, gráfico 1024 × 500 y capturas reales (se pueden sacar con Robolectric como
+1. **SMTP propio** (del propietario) y subir las plantillas: sin esto nadie puede registrarse.
+2. **Play Console** (del propietario): crear la app, el producto `levelup_plus`, la clave de licencia y la URL de la política.
+3. **Probar en un teléfono**: instalar, TalkBack, texto grande, recordatorios, compra de prueba, registro real.
+4. Recursos de la tienda: icono 512, gráfico 1024 × 500 y capturas reales (se pueden sacar con Robolectric como
    en Moneytor), notas de versión, notas para revisores y lista de verificación.
 6. Condiciones de servicio (lo social las justifica) con los datos del propietario.
 7. Estado de sincronización en Inicio.

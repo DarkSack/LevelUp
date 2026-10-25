@@ -43,11 +43,12 @@ ni cambiar la contraseña desde la app**. Para arreglarlo:
    debe pasar por el chat) y subir el límite de correos por hora (Authentication → Rate Limits).
 3. Subir las plantillas de `supabase/templates/` (con la CLI: `supabase config push`; o pedírmelo por Composio).
 
-**Migración nueva sin aplicar en producción:** `supabase/migrations/20261025200000_extras.sql` (favoritos y metas en la
-sincronización, XP de regreso, mensajes de ánimo, avatar/título/trofeos del perfil e historial de grupos). Probada
-en el Supabase local (54 pruebas pgTAP y la prueba de punta a punta). **Aplicarla antes de instalar o publicar esta
-versión con una cuenta real**: sin ella el servidor rechaza los lotes con favoritos o metas y la sincronización de
-esa cuenta se queda parada; guardar el perfil social también falla.
+**Migración `extras` aplicada en producción el 2026-10-25 por Composio** (`supabase/migrations/20261025161831_extras.sql`,
+renombrada a la versión que registró Supabase): favoritos y metas en la sincronización, XP de regreso, mensajes de
+ánimo, avatar/título/trofeos del perfil e historial de grupos. Comprobado en producción: las tres restricciones
+nuevas, las columnas del perfil, `touch_profile` de 3 argumentos y `my_group_history` solo para `authenticated`, y
+`profile_card` sin acceso directo. Avisos de seguridad: los mismos de siempre (funciones `security definer` que
+validan a quien llama).
 
 Otros:
 
