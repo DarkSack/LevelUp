@@ -46,6 +46,8 @@ private class FakePlatform(override val systemReducedMotion: Boolean = true) : P
     override val plus = MutableStateFlow(PlusState())
     override fun buyPlus() {}
     override fun refreshPlus() {}
+    override val deepLinks = MutableStateFlow<String?>(null)
+    override fun consumeDeepLink() { deepLinks.value = null }
 }
 
 /** La app entera en la JVM: Room en memoria, interfaz real, sin teléfono. */
@@ -149,6 +151,17 @@ class AppUiTest {
         assertEquals(0, compose.onAllNodesWithText("Nivel ", substring = true).fetchSemanticsNodes().size)
         compose.onNodeWithText("Completar").performClick()
         waitForText("¡Hecho!")
+    }
+
+    @Test fun linkToAChallengeThatIsGoneSaysSo() {
+        onboarded()
+        val platform = FakePlatform()
+        launch(platform)
+        waitForText("Reto principal")
+        platform.deepLinks.value = "reto/de-otro-dia"
+        waitForText("Este reto ya no está")
+        compose.onNodeWithText("Ir a Inicio").performClick()
+        waitForText("Reto principal")
     }
 
     @Test fun searchFromHomeFindsCatalogChallenges() {

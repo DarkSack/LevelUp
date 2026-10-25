@@ -129,7 +129,11 @@ class Nav(private val controller: NavHostController) {
     /** Enlaces de atajos, widget y automatizaciones. Solo abren pantallas: nunca completan ni devuelven datos. */
     fun open(link: String) {
         when {
-            link == "hoy" -> tab(HomeRoute)
+            // Inicio limpio: con tab() volvería a abrirse lo que quedó guardado en esa pestaña.
+            link == "hoy" -> controller.navigate(HomeRoute) {
+                popUpTo(controller.graph.findStartDestination().id)
+                launchSingleTop = true
+            }
             link == "enfoque" -> focus()
             link == "buscar" -> search()
             link == "metas" -> goals()

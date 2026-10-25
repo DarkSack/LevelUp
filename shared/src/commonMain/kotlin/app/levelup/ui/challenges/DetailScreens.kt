@@ -53,6 +53,7 @@ import app.levelup.ui.Nav
 import app.levelup.ui.components.CategoryLabel
 import app.levelup.ui.components.ChoiceRow
 import app.levelup.ui.components.DifficultyLabel
+import app.levelup.ui.components.EmptyState
 import app.levelup.ui.components.InfoCard
 import app.levelup.ui.components.PrimaryButton
 import app.levelup.ui.components.ScreenScaffold
@@ -78,7 +79,15 @@ fun InstanceDetailScreen(vm: LevelUpViewModel, nav: Nav, instanceId: String) {
         inst?.title ?: "Reto", onBack = nav::back,
         actions = { if (inst != null) FavoriteButton(inst.challengeId in favorites) { vm.toggleFavorite(inst.challengeId) } },
     ) { padding ->
-        if (inst == null) return@ScreenScaffold
+        if (inst == null) {
+            // Llega aquí desde un enlace viejo (el widget de ayer, un atajo). Las listas tardan un instante en cargar.
+            val missing by produceState(false) { delay(MISSING_DELAY_MS); value = true }
+            if (missing) {
+                EmptyState("Este reto ya no está", "Era de otro día o ya no está en tu lista. Tus retos de hoy están en Inicio.",
+                    Modifier.padding(padding)) { PrimaryButton("Ir a Inicio", { nav.open("hoy") }) }
+            }
+            return@ScreenScaffold
+        }
         Column(
             Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Space.l),
             verticalArrangement = Arrangement.spacedBy(Space.s),
@@ -298,3 +307,6 @@ fun FocusTimer(targetMinutes: Int) {
         }
     }
 }
+
+/** Margen para que carguen los retos antes de decir que uno ya no está. */
+private const val MISSING_DELAY_MS = 600L
