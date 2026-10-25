@@ -1,0 +1,24 @@
+# Gradle y compilación
+.gradle/
+.kotlin/
+build/
+captures/
+
+# Configuración local y secretos (ruta del SDK, llave de firma)
+local.properties
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pem
+.env
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db
+build-log.txt

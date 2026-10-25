@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Solo la ventana mientras arranca; los colores de la interfaz viven en shared/ui/theme. -->
+    <style name="Theme.LevelUp" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window</item>
+    </style>
+
+    <color name="brand">#0F766E</color>
+    <color name="window">#FAFAF9</color>
+</resources>
