@@ -1,24 +1,24 @@
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
-      # gradle.properties usa el almacén de certificados de Windows (proxy del equipo de desarrollo); en Linux no existe.
-      - name: Ajustes de JVM para Linux
-        run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
-      - name: Pruebas
-        run: ./gradlew :shared:testAndroidHostTest
-      - name: APK de depuración
-        run: ./gradlew :androidApp:assembleDebug
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      # gradle.properties usa el almacén de certificados de Windows (proxy del equipo de desarrollo); en Linux no existe.
+      - name: Ajustes de JVM para Linux
+        run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
+      - name: Pruebas
+        run: ./gradlew :shared:testAndroidHostTest
+      - name: APK de depuración (teléfono y reloj)
+        run: ./gradlew :androidApp:assembleDebug :wearApp:assembleDebug

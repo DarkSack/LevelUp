@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "levelup"
-include(":shared", ":androidApp")
+include(":shared", ":androidApp", ":wearApp")

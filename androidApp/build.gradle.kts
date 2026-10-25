@@ -76,4 +76,7 @@ dependencies {
     implementation(libs.androidx.fragment)
     // Solo lectura de pasos y ejercicio de hoy, y solo si se activa en Laboratorio.
     implementation(libs.health.connect)
+    // Reloj: el teléfono le manda los retos de hoy y recibe los que se completan desde la muñeca.
+    implementation(libs.play.services.wearable)
+    implementation(libs.kotlinx.coroutines.play.services)
 }

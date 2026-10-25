@@ -26,3 +26,4 @@ Thumbs.db
 build-log.txt
 supabase-start.log
 test-log.txt
+lint-log.txt

@@ -34,7 +34,12 @@ class LevelUpApplication : Application() {
         super.onCreate()
         ReminderWork.createChannel(this)
         SyncWork.createChannel(this)
-        scope.launch { repo.todaySummary.collect { TodayWidget.render(this@LevelUpApplication, it) } }
+        scope.launch {
+            repo.todaySummary.collect {
+                TodayWidget.render(this@LevelUpApplication, it)
+                WearSync.publish(this@LevelUpApplication, it)
+            }
+        }
         val service = cloud ?: return
         scope.launch {
             service.account.filter { it !is AccountState.Loading }
