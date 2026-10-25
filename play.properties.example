@@ -1,0 +1,4 @@
+# Copia este archivo como play.properties (está en .gitignore).
+# Play Console > LevelUp > Monetizar > Configuración de monetización > Licencias: la clave pública RSA en base64.
+# Sirve para comprobar en el teléfono que las compras de Plus las firmó Google Play.
+licenseKey=MIIBIjANBgkqh...

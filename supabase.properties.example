@@ -1,0 +1,6 @@
+# Copia este archivo como supabase.properties (está en .gitignore) y rellena con los datos del proyecto:
+# Supabase > Project Settings > API. Solo la clave PUBLICABLE (sb_publishable_...): es pública por diseño y
+# la seguridad la ponen las reglas RLS. Nunca la secreta ni la service_role.
+url=https://TU-PROYECTO.supabase.co
+publishableKey=sb_publishable_...
+# Para probar contra el Supabase local (supabase start) desde un emulador: url=http://10.0.2.2:54321

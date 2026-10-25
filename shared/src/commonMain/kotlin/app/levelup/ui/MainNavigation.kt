@@ -61,6 +61,7 @@ import app.levelup.ui.challenges.CustomEditScreen
 import app.levelup.ui.challenges.InstanceDetailScreen
 import app.levelup.ui.components.TrophyBadge
 import app.levelup.ui.home.HomeScreen
+import app.levelup.ui.profile.PlusScreen
 import app.levelup.ui.profile.ProfileScreen
 import app.levelup.ui.profile.SettingsScreen
 import app.levelup.ui.progress.AchievementsScreen
@@ -69,6 +70,13 @@ import androidx.compose.ui.unit.dp
 import app.levelup.ui.theme.LocalReduceMotion
 import app.levelup.ui.theme.Space
 import app.levelup.ui.welcome.WelcomeScreen
+import app.levelup.cloud.AccountState
+import app.levelup.ui.account.AccountScreen
+import app.levelup.ui.account.CloudViewModel
+import app.levelup.ui.social.CreateGroupScreen
+import app.levelup.ui.social.SocialProfileScreen
+import app.levelup.ui.social.SocialScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -82,6 +90,11 @@ import kotlinx.serialization.Serializable
 @Serializable data class CatalogRoute(val challengeId: String)
 @Serializable data class CustomEditRoute(val id: String? = null)
 @Serializable data class SettingsRoute(val section: String)
+@Serializable object AccountRoute
+@Serializable object SocialRoute
+@Serializable object SocialProfileRoute
+@Serializable object CreateGroupRoute
+@Serializable object PlusRoute
 
 /** Un solo lugar para los avisos: cada pantalla pinta este SnackbarHost en su Scaffold. */
 val LocalSnackbar = staticCompositionLocalOf { SnackbarHostState() }
@@ -95,6 +108,11 @@ class Nav(private val controller: NavHostController) {
     fun achievements() = controller.navigate(AchievementsRoute)
     fun settings(section: String) = controller.navigate(SettingsRoute(section))
     fun welcome() = controller.navigate(WelcomeReplayRoute)
+    fun account() = controller.navigate(AccountRoute)
+    fun social() = controller.navigate(SocialRoute)
+    fun socialProfile() = controller.navigate(SocialProfileRoute)
+    fun createGroup() = controller.navigate(CreateGroupRoute)
+    fun plus() = controller.navigate(PlusRoute)
     fun tab(route: Any) = controller.navigate(route) {
         popUpTo(controller.graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
@@ -105,7 +123,7 @@ class Nav(private val controller: NavHostController) {
 private data class Celebration(val achievements: List<Achievement>, val result: CompletionResult?)
 
 @Composable
-fun MainNavigation(vm: LevelUpViewModel, platform: Platform) {
+fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platform) {
     val controller = rememberNavController()
     val nav = remember(controller) { Nav(controller) }
     val snackbar = remember { SnackbarHostState() }
@@ -138,7 +156,13 @@ fun MainNavigation(vm: LevelUpViewModel, platform: Platform) {
         }
     }
 
+    LaunchedEffect(cloud) {
+        cloud?.messages?.collect { launch { snackbar.showSnackbar(it) } }
+    }
+
     val reduce = LocalReduceMotion.current
+    val signedIn = cloud?.account?.collectAsStateWithLifecycle()?.value is AccountState.SignedIn
+    val today by vm.today.collectAsStateWithLifecycle()
     CompositionLocalProvider(LocalSnackbar provides snackbar) {
         NavHost(
             controller,
@@ -156,7 +180,12 @@ fun MainNavigation(vm: LevelUpViewModel, platform: Platform) {
             composable<InstanceRoute> { InstanceDetailScreen(vm, nav, it.toRoute<InstanceRoute>().id) }
             composable<CatalogRoute> { CatalogDetailScreen(vm, nav, it.toRoute<CatalogRoute>().challengeId) }
             composable<CustomEditRoute> { CustomEditScreen(vm, nav, it.toRoute<CustomEditRoute>().id) }
-            composable<SettingsRoute> { SettingsScreen(vm, nav, platform, it.toRoute<SettingsRoute>().section) }
+            composable<SettingsRoute> { SettingsScreen(vm, nav, platform, it.toRoute<SettingsRoute>().section, signedIn) }
+            composable<AccountRoute> { AccountScreen(cloud, nav) }
+            composable<SocialRoute> { SocialScreen(cloud, nav, today) }
+            composable<SocialProfileRoute> { if (cloud != null) SocialProfileScreen(cloud, nav) }
+            composable<CreateGroupRoute> { if (cloud != null) CreateGroupScreen(cloud, nav, today) }
+            composable<PlusRoute> { PlusScreen(vm, nav) }
             composable<WelcomeReplayRoute> { WelcomeScreen(onStart = nav::back, startLabel = "Volver") }
         }
     }

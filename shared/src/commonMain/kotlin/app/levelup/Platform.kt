@@ -1,5 +1,10 @@
 package app.levelup
 
+import kotlinx.coroutines.flow.StateFlow
+
+/** LevelUp Plus: compra única en la tienda. `price` llega de la tienda con su moneda; null si no responde. */
+data class PlusState(val owned: Boolean = false, val price: String? = null)
+
 /** Lo que depende del sistema operativo. Android lo implementa en androidApp; iOS lo hará en su proyecto. */
 interface Platform {
     val appVersion: String
@@ -20,4 +25,12 @@ interface Platform {
 
     /** Las preferencias de recordatorios cambiaron: reprogramar. */
     fun remindersChanged()
+
+    val plus: StateFlow<PlusState>
+
+    /** Abre la compra de la tienda (Google Play). */
+    fun buyPlus()
+
+    /** Vuelve a pedir las compras a la tienda: restaura Plus en un teléfono nuevo o tras un pago pendiente. */
+    fun refreshPlus()
 }

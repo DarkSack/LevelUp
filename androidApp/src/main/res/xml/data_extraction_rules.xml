@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12 o más. Se copia todo menos la sesión de la cuenta (habría que volver a entrar en el teléfono
+     nuevo) y dos cachés que se rehacen solas (Plus lo confirma Google Play; avisos de amigos ya mostrados). -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="levelup_session.xml" />
+        <exclude domain="sharedpref" path="levelup_plus.xml" />
+        <exclude domain="sharedpref" path="levelup_social.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="levelup_session.xml" />
+        <exclude domain="sharedpref" path="levelup_plus.xml" />
+        <exclude domain="sharedpref" path="levelup_social.xml" />
+    </device-transfer>
+</data-extraction-rules>

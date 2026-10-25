@@ -111,6 +111,9 @@ object MissionCatalog {
 object Cosmetics {
     const val DEFAULT = "frame.basic"
 
+    /** `unlockedBy` de los marcos que trae LevelUp Plus. */
+    const val PLUS = "plus"
+
     val frames = listOf(
         Cosmetic(DEFAULT, "Básico", listOf(0xFF0F766E)),
         Cosmetic("frame.bronze", "Bronce", listOf(0xFFB07A3B, 0xFFE0B07A), "first_step"),
@@ -127,13 +130,20 @@ object Cosmetics {
         Cosmetic("frame.prism", "Prisma", listOf(0xFFDB2777, 0xFF6366F1), "mis.exploracion"),
         Cosmetic("frame.ember", "Brasa", listOf(0xFFDC2626, 0xFFF97316), "mis.ritmo"),
         Cosmetic("frame.laurel", "Laurel", listOf(0xFF166534, 0xFFCA8A04), "mis.maraton"),
+        // LevelUp Plus: solo decoración, nunca ventajas.
+        Cosmetic("frame.plus.galaxy", "Galaxia", listOf(0xFF312E81, 0xFF7C3AED, 0xFF0EA5E9), PLUS),
+        Cosmetic("frame.plus.coral", "Coral", listOf(0xFFFB7185, 0xFFFDBA74), PLUS),
+        Cosmetic("frame.plus.forest", "Bosque", listOf(0xFF166534, 0xFF84CC16, 0xFF14B8A6), PLUS),
+        Cosmetic("frame.plus.dawn", "Amanecer", listOf(0xFFF59E0B, 0xFFEC4899, 0xFF8B5CF6), PLUS),
     )
     val byId = frames.associateBy { it.id }
 
     /** Marco que da un logro o una misión, si da alguno. */
     fun rewardOf(sourceId: String): Cosmetic? = frames.firstOrNull { it.unlockedBy == sourceId }
 
-    /** Marcos disponibles según logros desbloqueados y misiones completadas. */
-    fun unlocked(achievements: Set<String>, missions: Set<String>): List<Cosmetic> =
-        frames.filter { it.unlockedBy == null || it.unlockedBy in achievements || it.unlockedBy in missions }
+    /** Marcos disponibles según logros desbloqueados, misiones completadas y LevelUp Plus. */
+    fun unlocked(achievements: Set<String>, missions: Set<String>, plus: Boolean = false): List<Cosmetic> =
+        frames.filter {
+            it.unlockedBy == null || it.unlockedBy in achievements || it.unlockedBy in missions || (plus && it.unlockedBy == PLUS)
+        }
 }

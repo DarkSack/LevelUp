@@ -61,6 +61,9 @@ import app.levelup.ui.theme.Space
 private data class Entry(val section: String, val title: String, val subtitle: String)
 
 private val entries = listOf(
+    Entry("account", "Cuenta y sincronización", "Opcional: guarda tu progreso en la nube"),
+    Entry("social", "Amigos y grupos", "Felicitaciones, retos en grupo y clasificación"),
+    Entry("plus", "LevelUp Plus", "Colores, marcos y estadísticas ampliadas"),
     Entry("goals", "Objetivos", "Categorías y prioridades"),
     Entry("rhythm", "Ritmo y dificultad", "Tiempo, retos al día y objetivo semanal"),
     Entry("rest", "Descanso y pausas", "Días libres y pausar objetivos"),
@@ -96,7 +99,14 @@ fun ProfileScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit
             }
             items(entries, key = { it.section }) { e ->
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable { nav.settings(e.section) }.padding(vertical = Space.s),
+                    Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable {
+                        when (e.section) {
+                            "account" -> nav.account()
+                            "social" -> nav.social()
+                            "plus" -> nav.plus()
+                            else -> nav.settings(e.section)
+                        }
+                    }.padding(vertical = Space.s),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -130,7 +140,7 @@ fun ProfileScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit
 }
 
 @Composable
-fun SettingsScreen(vm: LevelUpViewModel, nav: Nav, platform: Platform, section: String) {
+fun SettingsScreen(vm: LevelUpViewModel, nav: Nav, platform: Platform, section: String, signedIn: Boolean = false) {
     val prefs = LocalPrefs.current
     val title = entries.firstOrNull { it.section == section }?.title ?: "Ajustes"
     val onChange: ((app.levelup.domain.Preferences) -> app.levelup.domain.Preferences) -> Unit = { vm.updatePrefs(it) }
@@ -159,7 +169,7 @@ fun SettingsScreen(vm: LevelUpViewModel, nav: Nav, platform: Platform, section: 
                 "reminders" -> RemindersSection(prefs, platform.notificationsAllowed(), onChange, vm::setReminders)
                 "style" -> GameStyleSection(prefs, onChange)
                 "frames" -> FramesSection(vm)
-                "data" -> DataSection(vm)
+                "data" -> DataSection(vm, nav, signedIn)
                 "privacy" -> PrivacySection()
                 "about" -> AboutSection(vm, nav, platform)
             }
@@ -191,6 +201,7 @@ private fun FramesSection(vm: LevelUpViewModel) {
                 Text(
                     when {
                         f.unlockedBy == null -> "Disponible desde el inicio"
+                        f.unlockedBy == Cosmetics.PLUS -> if (available) "Incluido en LevelUp Plus" else "Se consigue con LevelUp Plus"
                         available -> "Conseguido con «$source»"
                         else -> "Se consigue con «$source»"
                     },
@@ -203,7 +214,7 @@ private fun FramesSection(vm: LevelUpViewModel) {
 }
 
 @Composable
-private fun DataSection(vm: LevelUpViewModel) {
+private fun DataSection(vm: LevelUpViewModel, nav: Nav, signedIn: Boolean) {
     var confirmImport by remember { mutableStateOf(false) }
     var confirmWipe by remember { mutableStateOf(false) }
     SectionTitle("Copia de seguridad")
@@ -218,16 +229,30 @@ private fun DataSection(vm: LevelUpViewModel) {
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     SectionTitle("Borrar")
-    Text("Borra todo lo que LevelUp guarda en este teléfono. No se puede deshacer.", style = MaterialTheme.typography.bodyMedium)
-    TextButton(onClick = { confirmWipe = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-        Text("Borrar todos mis datos", color = MaterialTheme.colorScheme.error)
+    if (signedIn) {
+        Text(
+            "Con la sesión iniciada, tus datos también están en tu cuenta. Para borrarlos de este teléfono, cierra sesión; " +
+                "para borrarlos de la nube, borra la cuenta.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        SecondaryButton("Ir a Cuenta", nav::account)
+    } else {
+        Text("Borra todo lo que LevelUp guarda en este teléfono. No se puede deshacer.", style = MaterialTheme.typography.bodyMedium)
+        TextButton(onClick = { confirmWipe = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text("Borrar todos mis datos", color = MaterialTheme.colorScheme.error)
+        }
     }
 
     if (confirmImport) {
         AlertDialog(
             onDismissRequest = { confirmImport = false },
             title = { Text("¿Importar un respaldo?") },
-            text = { Text("Tus datos actuales se reemplazarán por los del archivo. Si el archivo no es válido, no se cambia nada.") },
+            text = {
+                Text(
+                    "Tus datos actuales se reemplazarán por los del archivo" +
+                        (if (signedIn) ", también los de tu cuenta" else "") + ". Si el archivo no es válido, no se cambia nada.",
+                )
+            },
             confirmButton = { TextButton(onClick = { confirmImport = false; vm.importData() }) { Text("Elegir archivo") } },
             dismissButton = { TextButton(onClick = { confirmImport = false }) { Text("Cancelar") } },
         )
@@ -246,13 +271,18 @@ private fun DataSection(vm: LevelUpViewModel) {
 @Composable
 private fun PrivacySection() {
     listOf(
-        "Qué se guarda" to "Tus ajustes, tus retos (los del catálogo que te tocan y los que creas), la experiencia, los logros y las misiones.",
-        "Dónde" to "Solo en este teléfono. LevelUp no tiene cuentas ni servidores: no envía tus datos a ningún sitio.",
-        "Copia de Android" to "Si tienes activada la copia de seguridad de Android, Google guarda una copia cifrada de los datos de tus apps en tu cuenta, LevelUp incluida. Puedes desactivarla en los ajustes del teléfono.",
+        "Sin cuenta" to "Todo se queda en este teléfono: ajustes, retos, experiencia, logros y misiones. Nada sale de él.",
+        "Con cuenta (opcional)" to "Se guardan tu correo y una copia de tu progreso en Supabase, el proveedor de base de datos de " +
+            "LevelUp, para recuperarlo o usarlo en otro teléfono. La conexión va cifrada y solo tu cuenta puede leer tus datos.",
+        "Amigos (opcional)" to "Si creas un perfil social, otras personas ven tu nombre de usuario y tu nombre visible. Tus amigos " +
+            "ven tu nivel, tu racha y tu XP de la semana solo si lo permites. Tus retos, categorías e historial no se comparten nunca.",
+        "Copia de Android" to "Si tienes activada la copia de seguridad de Android, Google guarda una copia cifrada de los datos de tus " +
+            "apps en tu cuenta, LevelUp incluida (sin tu sesión). Puedes desactivarla en los ajustes del teléfono.",
         "Anuncios y analítica" to "No hay anuncios, ni analítica, ni seguimiento.",
-        "Permisos" to "Solo notificaciones, y solo si activas los recordatorios.",
-        "Tus derechos" to "Puedes exportar tus datos o borrarlos por completo en Perfil → Tus datos.",
+        "Permisos" to "Internet, para la cuenta y lo social, y notificaciones, solo si activas los recordatorios o los avisos de amigos.",
+        "Tus derechos" to "Exporta tus datos o bórralos en Perfil → Tus datos. Borra tu cuenta y todo lo de la nube en Perfil → Cuenta.",
         "Salud" to "LevelUp no es un servicio médico ni hace diagnósticos. Adapta los retos a tu situación.",
+        "Contacto" to "Johan Jafet Del Valle Santiago · donsackito@protonmail.com",
     ).forEach { (title, body) ->
         SectionTitle(title)
         Text(body, style = MaterialTheme.typography.bodyLarge)

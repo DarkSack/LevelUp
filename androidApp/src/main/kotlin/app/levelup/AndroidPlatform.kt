@@ -1,6 +1,7 @@
 package app.levelup
 
 import android.Manifest
+import android.app.Activity
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -21,6 +22,7 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     class Launchers(
+        val activity: Activity,
         val export: ActivityResultLauncher<String>,
         val import: ActivityResultLauncher<Array<String>>,
         val permission: ActivityResultLauncher<String>,
@@ -38,6 +40,11 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     fun onExportPicked(uri: Uri?) { pendingExport?.complete(uri) }
     fun onImportPicked(uri: Uri?) { pendingImport?.complete(uri) }
     fun onPermissionResult(granted: Boolean) { pendingPermission?.complete(granted) }
+
+    private val billing = PlusBilling(app, scope, BuildConfig.PLAY_LICENSE_KEY)
+    override val plus = billing.state
+    override fun buyPlus() { launchers?.activity?.let(billing::buy) }
+    override fun refreshPlus() = billing.refresh()
 
     override val appVersion: String =
         app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: ""

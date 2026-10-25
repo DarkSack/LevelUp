@@ -37,6 +37,13 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             api(libs.kotlinx.datetime)
+            implementation(project.dependencies.platform(libs.supabase.bom))
+            implementation(libs.supabase.auth)
+            implementation(libs.supabase.postgrest)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.sqlite.framework)
+            implementation(libs.ktor.client.okhttp)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -63,3 +70,8 @@ room {
 
 
 apply(from = rootProject.file("gradle/robolectric-offline.gradle.kts"))
+
+// Prueba contra el Supabase local (CloudIntegrationTest): -PsupabaseLocalKey=<clave publicable de `supabase status`>.
+tasks.withType<Test>().configureEach {
+    providers.gradleProperty("supabaseLocalKey").orNull?.let { systemProperty("supabaseLocalKey", it) }
+}

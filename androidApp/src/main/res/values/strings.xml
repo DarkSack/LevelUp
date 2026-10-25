@@ -3,4 +3,6 @@
     <string name="app_name">LevelUp</string>
     <string name="channel_reminders">Recordatorios</string>
     <string name="channel_reminders_description">Un aviso al día con tus retos, a la hora que elijas.</string>
+    <string name="channel_social">Amigos</string>
+    <string name="channel_social_description">Solicitudes, felicitaciones e invitaciones a retos en grupo.</string>
 </resources>

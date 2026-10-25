@@ -57,7 +57,9 @@ class RewardsTest {
             assertTrue(a.xpReward in 0..100, a.id)
         }
         Cosmetics.frames.forEach { f ->
-            f.unlockedBy?.let { assertTrue(it in AchievementCatalog.byId || it in MissionCatalog.byId, "${f.id}: $it no existe") }
+            f.unlockedBy?.let {
+                assertTrue(it == Cosmetics.PLUS || it in AchievementCatalog.byId || it in MissionCatalog.byId, "${f.id}: $it no existe")
+            }
         }
         assertEquals(Cosmetics.frames.size, Cosmetics.byId.size)
         MissionCatalog.all.forEach { m ->
@@ -73,6 +75,8 @@ class RewardsTest {
         val more = Cosmetics.unlocked(setOf("first_step"), setOf("mis.ritmo")).map { it.id }
         assertTrue(more.containsAll(listOf("frame.bronze", "frame.ember")))
         assertEquals("frame.bronze", Cosmetics.rewardOf("first_step")?.id)
+        val withPlus = Cosmetics.unlocked(emptySet(), emptySet(), plus = true).map { it.id }
+        assertEquals(5, withPlus.size, "el básico y los 4 marcos de Plus")
     }
 
     @Test fun missionProgressCountsOnlyInsideItsWindow() {

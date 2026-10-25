@@ -78,6 +78,11 @@ class LevelUpRepository(
     @OptIn(ExperimentalUuidApi::class)
     private fun newId(): String = Uuid.random().toString()
 
+    // Ids deterministas: el mismo hecho en dos teléfonos es el mismo registro, así la sincronización
+    // nunca suma dos veces la XP de un reto, una misión o un logro.
+    private fun xpEntry(source: XpSource, sourceId: String, amount: Int, category: String?) =
+        XpEntry("${source.name}:$sourceId", source, sourceId, amount, category, now())
+
     private suspend fun <R> tx(block: suspend () -> R): R = db.useWriterConnection { it.immediateTransaction { block() } }
 
     // ── Lecturas ──────────────────────────────────────────────────────────────
@@ -219,7 +224,7 @@ class LevelUpRepository(
         if (inst.isDone || inst.status == InstanceStatus.REPLACED) return@tx null
         val before = dao.totalXpNow()
         dao.updateInstance(inst.copy(status = InstanceStatus.COMPLETED, completedAt = now()))
-        dao.insertXp(XpEntry(newId(), XpSource.CHALLENGE, inst.id, inst.xp, inst.category, now()))
+        dao.insertXp(xpEntry(XpSource.CHALLENGE, inst.id, inst.xp, inst.category))
         val missions = completeMissions(today())
         val achievements = awardAchievements()
         val after = dao.totalXpNow()
@@ -277,7 +282,7 @@ class LevelUpRepository(
             return@tx Result.failure(IllegalStateException("Ya tienes una misión en marcha."))
         }
         val today = today()
-        val run = MissionRun(newId(), mission.id, today, MissionRules.endsOn(mission, today), MissionStatus.ACTIVE)
+        val run = MissionRun("${mission.id}|$today", mission.id, today, MissionRules.endsOn(mission, today), MissionStatus.ACTIVE)
         dao.upsertMissionRun(run)
         completeMissions(today)
         awardAchievements()
@@ -297,7 +302,7 @@ class LevelUpRepository(
             val mission = MissionCatalog.byId[run.missionId] ?: return@mapNotNull null
             if (!MissionRules.isComplete(mission, run, done)) return@mapNotNull null
             dao.upsertMissionRun(run.copy(status = MissionStatus.COMPLETED, completedAt = now()))
-            dao.insertXp(XpEntry(newId(), XpSource.MISSION, run.id, mission.xpReward, null, now()))
+            dao.insertXp(xpEntry(XpSource.MISSION, run.id, mission.xpReward, null))
             mission
         }
     }
@@ -310,7 +315,7 @@ class LevelUpRepository(
     // ── Pausas ────────────────────────────────────────────────────────────────
 
     suspend fun startPause(): List<Achievement> = tx {
-        if (dao.pausesNow().none { it.endOn == null }) dao.upsertPause(Pause(newId(), today()))
+        if (dao.pausesNow().none { it.endOn == null }) dao.upsertPause(Pause(today().toString(), today()))
         awardAchievements()
     }
 
@@ -420,7 +425,7 @@ class LevelUpRepository(
         val new = AchievementRules.newlyUnlocked(AchievementCatalog.all, stats(), dao.totalXpNow(), unlocked)
         new.forEach { a ->
             dao.insertUnlocked(UnlockedAchievement(a.id, now()))
-            if (a.xpReward > 0) dao.insertXp(XpEntry(newId(), XpSource.ACHIEVEMENT, a.id, a.xpReward, null, now()))
+            if (a.xpReward > 0) dao.insertXp(xpEntry(XpSource.ACHIEVEMENT, a.id, a.xpReward, null))
         }
         return new
     }
@@ -485,7 +490,7 @@ class LevelUpRepository(
     )
 
     private fun newInstance(c: Challenge, date: LocalDate, slot: Int) = ChallengeInstance(
-        id = newId(), challengeId = c.id, source = c.source, title = c.title, category = c.category,
+        id = "$date|${c.id}", challengeId = c.id, source = c.source, title = c.title, category = c.category,
         difficulty = c.difficulty, minutes = c.minutes, xp = c.xp, date = date, slot = slot, isHabit = c.isHabit,
         createdAt = now(),
     )

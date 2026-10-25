@@ -1,5 +1,6 @@
 package app.levelup.domain
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -62,6 +63,8 @@ object Days {
     fun list(mask: Int): List<DayOfWeek> = DayOfWeek.entries.filter { has(mask, it) }
 }
 
+const val DEFAULT_ACCENT = "teal"
+
 @Serializable
 @Entity(tableName = "preferences")
 data class Preferences(
@@ -98,6 +101,10 @@ data class Preferences(
     val equippedFrame: String = "frame.basic",
     val onboardingStep: Int = 0,
     val onboardingDone: Boolean = false,
+    /** Avisos en el teléfono cuando un amigo te escribe algo (solicitud, reacción, reto en grupo). */
+    @ColumnInfo(defaultValue = "1") val socialNotifications: Boolean = true,
+    /** Color de acento. Los distintos de [DEFAULT_ACCENT] son de LevelUp Plus. */
+    @ColumnInfo(defaultValue = "teal") val accent: String = DEFAULT_ACCENT,
 ) {
     fun difficultyFor(category: String): Int = categoryDifficulty[category] ?: difficulty
 }

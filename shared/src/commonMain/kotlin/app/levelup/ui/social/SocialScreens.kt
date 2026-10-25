@@ -1,0 +1,534 @@
+package app.levelup.ui.social
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.levelup.cloud.AccountState
+import app.levelup.cloud.GroupChallenge
+import app.levelup.cloud.MyProfile
+import app.levelup.cloud.ProfileCard
+import app.levelup.cloud.Reactions
+import app.levelup.cloud.ReportReasons
+import app.levelup.cloud.SocialNotice
+import app.levelup.content.Catalog
+import app.levelup.content.Cosmetics
+import app.levelup.domain.XpRules
+import app.levelup.ui.Fmt
+import app.levelup.ui.Nav
+import app.levelup.ui.account.CloudViewModel
+import app.levelup.ui.account.SignInRequired
+import app.levelup.ui.components.Avatar
+import app.levelup.ui.components.ChoiceRow
+import app.levelup.ui.components.EmptyState
+import app.levelup.ui.components.InfoCard
+import app.levelup.ui.components.LabeledProgress
+import app.levelup.ui.components.PrimaryButton
+import app.levelup.ui.components.ScreenScaffold
+import app.levelup.ui.components.SectionTitle
+import app.levelup.ui.components.StepperRow
+import app.levelup.ui.components.ToggleRow
+import app.levelup.ui.theme.LocalPrefs
+import app.levelup.ui.theme.Space
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
+
+private fun frameOf(id: String) = Cosmetics.byId[id] ?: Cosmetics.byId.getValue(Cosmetics.DEFAULT)
+
+private fun challengeTitle(id: String) = Catalog.byId[id]?.title ?: "Reto"
+
+/** Puerta de entrada: pide cuenta y perfil antes de mostrar lo social. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SocialScreen(vm: CloudViewModel?, nav: Nav, today: LocalDate) {
+    val account = vm?.account?.collectAsStateWithLifecycle()?.value
+    val profile = vm?.profile?.collectAsStateWithLifecycle()?.value
+    ScreenScaffold(
+        "Amigos y grupos",
+        onBack = nav::back,
+        actions = {
+            if (profile != null) {
+                IconButton(onClick = nav::socialProfile) { Icon(Icons.Filled.Settings, contentDescription = "Ajustes del perfil social") }
+            }
+        },
+    ) { padding ->
+        Box(Modifier.padding(padding).fillMaxSize()) {
+            when {
+                vm == null -> Text("Esta versión de la app no tiene la nube configurada.", Modifier.padding(Space.l))
+                account !is AccountState.SignedIn -> SignInRequired(nav, "Conectar con amigos")
+                else -> SocialContent(vm, nav, today, account)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SocialContent(vm: CloudViewModel, nav: Nav, today: LocalDate, account: AccountState.SignedIn) {
+    val loaded by vm.profileLoaded.collectAsStateWithLifecycle()
+    val profile by vm.profile.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.refreshSocial() }
+    when {
+        !loaded -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        profile == null -> Column(Modifier.verticalScroll(rememberScrollState()).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+            Text("Crea tu perfil social", style = MaterialTheme.typography.titleLarge)
+            Text("Es opcional. Solo tus amigos ven tu progreso, y solo si tú lo permites. Tus retos y categorías nunca se comparten.")
+            ProfileForm(null, account.userId, vm) {}
+        }
+        else -> {
+            var tab by rememberSaveable { mutableIntStateOf(0) }
+            val notices by vm.notices.collectAsStateWithLifecycle()
+            val unread = notices.count { !it.read }
+            Column(Modifier.fillMaxSize()) {
+                PrimaryTabRow(selectedTabIndex = tab) {
+                    listOf("Amigos", "Grupos", "Clasificación", if (unread > 0) "Avisos ($unread)" else "Avisos").forEachIndexed { i, label ->
+                        Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label, maxLines = 1) })
+                    }
+                }
+                when (tab) {
+                    0 -> FriendsTab(vm, today)
+                    1 -> GroupsTab(vm, nav, account.userId)
+                    2 -> LeaderboardTab(vm)
+                    else -> NoticesTab(vm, today)
+                }
+            }
+        }
+    }
+}
+
+// ── Amigos ────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun FriendsTab(vm: CloudViewModel, today: LocalDate) {
+    val friends by vm.friends.collectAsStateWithLifecycle()
+    val requests by vm.requests.collectAsStateWithLifecycle()
+    val results by vm.searchResults.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+
+    LazyColumn(contentPadding = PaddingValues(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+        item {
+            SectionTitle("Buscar por nombre de usuario")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    query, { v -> query = v.lowercase().filter { it.isLetterOrDigit() || it == '_' }.take(20) },
+                    label = { Text("Usuario") }, singleLine = true, modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.size(Space.s))
+                OutlinedButton(onClick = { vm.search(query) }, enabled = query.length >= 3, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Buscar")
+                }
+            }
+        }
+        items(results, key = { "s-" + it.userId }) { p ->
+            PersonRow(p) {
+                if (p.isFriend) Text("Amigo", style = MaterialTheme.typography.labelMedium)
+                else TextButton(onClick = { vm.sendRequest(p.username) }, enabled = !busy) { Text("Añadir") }
+            }
+        }
+        val incoming = requests.filter { it.incoming == true }
+        val outgoing = requests.filter { it.incoming == false }
+        if (incoming.isNotEmpty()) item { SectionTitle("Te quieren añadir") }
+        items(incoming, key = { "i-" + it.requestId }) { p ->
+            PersonRow(p) {
+                TextButton(onClick = { vm.respond(p.requestId!!, false) }, enabled = !busy) { Text("Rechazar") }
+                TextButton(onClick = { vm.respond(p.requestId!!, true) }, enabled = !busy) { Text("Aceptar") }
+            }
+        }
+        if (outgoing.isNotEmpty()) item { SectionTitle("Solicitudes enviadas") }
+        items(outgoing, key = { "o-" + it.requestId }) { p ->
+            PersonRow(p) { TextButton(onClick = { vm.cancelRequest(p.requestId!!) }, enabled = !busy) { Text("Retirar") } }
+        }
+        item { SectionTitle("Tus amigos") }
+        if (friends.isEmpty()) {
+            item { EmptyState("Aún no tienes amigos aquí", "Busca a alguien por su nombre de usuario. LevelUp funciona igual sin amigos.") }
+        }
+        items(friends, key = { "f-" + it.userId }) { FriendRow(it, vm, today) }
+    }
+}
+
+@Composable
+private fun PersonRow(p: ProfileCard, actions: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
+        Avatar(p.displayName, frameOf(p.frame), p.level, 40.dp)
+        Spacer(Modifier.size(Space.m))
+        Column(Modifier.weight(1f)) {
+            Text(p.displayName, style = MaterialTheme.typography.bodyLarge)
+            Text("@${p.username}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        actions()
+    }
+}
+
+@Composable
+private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
+    var menu by remember { mutableStateOf(false) }
+    var confirm by remember { mutableStateOf<String?>(null) }
+    var reporting by remember { mutableStateOf(false) }
+    InfoCard {
+        PersonRow(p) {
+            Box {
+                IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "Más opciones para ${p.displayName}") }
+                DropdownMenu(menu, { menu = false }) {
+                    DropdownMenuItem({ Text("Quitar de amigos") }, { menu = false; confirm = "remove" })
+                    DropdownMenuItem({ Text("Bloquear") }, { menu = false; confirm = "block" })
+                    DropdownMenuItem({ Text("Denunciar") }, { menu = false; reporting = true })
+                }
+            }
+        }
+        val details = buildList {
+            p.level?.let { add("Nivel $it · ${XpRules.titleFor(it)}") }
+            p.streak?.takeIf { it > 0 }?.let { add("Racha de ${Fmt.plural(it, "día", "días")}") }
+            p.weeklyXp?.let { add("$it XP esta semana") }
+            p.lastActiveAt?.let { Fmt.lastSeen(it, today) }?.let { add("Activo $it") }
+        }
+        if (details.isNotEmpty()) Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+        Text("Felicitar", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = Space.s))
+        Row {
+            Reactions.forEach { (kind, emoji) ->
+                IconButton(onClick = { vm.react(p.userId, kind) }) {
+                    Text(emoji, modifier = Modifier.semantics { this.contentDescription = "Enviar $kind a ${p.displayName}" })
+                }
+            }
+        }
+    }
+    confirm?.let { action ->
+        AlertDialog(
+            onDismissRequest = { confirm = null },
+            title = { Text(if (action == "block") "¿Bloquear a ${p.displayName}?" else "¿Quitar a ${p.displayName}?") },
+            text = {
+                Text(
+                    if (action == "block") "Dejaréis de ser amigos, no podrá encontrarte ni enviarte nada. No se le avisa."
+                    else "Dejaréis de ver vuestro progreso. Podéis volver a ser amigos más adelante.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirm = null; if (action == "block") vm.block(p.userId) else vm.removeFriend(p.userId) }) {
+                    Text(if (action == "block") "Bloquear" else "Quitar")
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirm = null }) { Text("Cancelar") } },
+        )
+    }
+    if (reporting) ReportDialog(p, vm) { reporting = false }
+}
+
+@Composable
+private fun ReportDialog(p: ProfileCard, vm: CloudViewModel, onDone: () -> Unit) {
+    var reason by remember { mutableStateOf(ReportReasons.first().first) }
+    var alsoBlock by remember { mutableStateOf(true) }
+    AlertDialog(
+        onDismissRequest = onDone,
+        title = { Text("Denunciar a ${p.displayName}") },
+        text = {
+            Column {
+                ReportReasons.forEach { (key, label) ->
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(reason == key, role = Role.RadioButton) { reason = key },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = reason == key, onClick = null)
+                        Spacer(Modifier.size(Space.s))
+                        Text(label)
+                    }
+                }
+                ToggleRow("Bloquear también", alsoBlock, { alsoBlock = it })
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                vm.report(p.userId, reason)
+                if (alsoBlock) vm.block(p.userId)
+                onDone()
+            }) { Text("Enviar") }
+        },
+        dismissButton = { TextButton(onClick = onDone) { Text("Cancelar") } },
+    )
+}
+
+// ── Grupos ────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun GroupsTab(vm: CloudViewModel, nav: Nav, me: String) {
+    val groups by vm.groups.collectAsStateWithLifecycle()
+    val friends by vm.friends.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    LazyColumn(contentPadding = PaddingValues(Space.l), verticalArrangement = Arrangement.spacedBy(Space.m)) {
+        item {
+            Text(
+                "Elige un reto del catálogo y hacedlo juntos (sumáis entre todos) o compitiendo (quién lo completa más veces). " +
+                    "Cuenta lo que cada uno completa y sincroniza.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            PrimaryButton("Crear reto en grupo", nav::createGroup, Modifier.padding(top = Space.s), enabled = friends.isNotEmpty())
+            if (friends.isEmpty()) Text("Necesitas al menos un amigo.", style = MaterialTheme.typography.bodySmall)
+        }
+        if (groups.isEmpty()) item { EmptyState("Sin retos en grupo", "Cuando crees uno o te inviten, aparecerá aquí.") }
+        items(groups, key = { it.id }) { GroupCard(it, me, vm, busy) }
+    }
+}
+
+@Composable
+private fun GroupCard(g: GroupChallenge, me: String, vm: CloudViewModel, busy: Boolean) {
+    InfoCard {
+        Text(challengeTitle(g.challengeId), style = MaterialTheme.typography.titleMedium)
+        Text(
+            "${if (g.mode == "coop") "Juntos" else "Competición"} · del ${Fmt.day(g.startsOn)} al ${Fmt.day(g.endsOn)}",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        val joined = g.members.filter { it.status == "joined" }
+        if (g.mode == "coop") {
+            val total = joined.sumOf { it.completed }
+            LabeledProgress((total.toFloat() / g.target).coerceIn(0f, 1f), "$total de ${g.target} entre todos", Modifier.padding(vertical = Space.s))
+        } else {
+            Text("Meta: ${g.target} veces", style = MaterialTheme.typography.bodySmall)
+        }
+        joined.sortedByDescending { it.completed }.forEach { m ->
+            Text(
+                "${m.displayName}${if (m.userId == me) " (tú)" else ""}: ${m.completed}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (m.userId == me) FontWeight.Bold else null,
+            )
+        }
+        val invited = g.members.count { it.status == "invited" }
+        if (invited > 0) Text("${Fmt.plural(invited, "invitación pendiente", "invitaciones pendientes")}", style = MaterialTheme.typography.bodySmall)
+        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            if (g.myStatus == "invited") {
+                TextButton(onClick = { vm.respondGroup(g.id, false) }, enabled = !busy) { Text("Rechazar") }
+                TextButton(onClick = { vm.respondGroup(g.id, true) }, enabled = !busy) { Text("Unirme") }
+            } else {
+                TextButton(onClick = { vm.leaveGroup(g.id) }, enabled = !busy) { Text("Salir") }
+            }
+        }
+    }
+}
+
+/** Crear un reto en grupo: reto del catálogo, modo, meta, duración y amigos. */
+@Composable
+fun CreateGroupScreen(vm: CloudViewModel, nav: Nav, today: LocalDate) {
+    val friends by vm.friends.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+    var challengeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var mode by rememberSaveable { mutableStateOf("coop") }
+    var target by rememberSaveable { mutableIntStateOf(10) }
+    var days by rememberSaveable { mutableIntStateOf(7) }
+    var selected by remember { mutableStateOf(setOf<String>()) }
+
+    ScreenScaffold("Nuevo reto en grupo", onBack = nav::back) { padding ->
+        LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+            item {
+                SectionTitle("1. El reto")
+                val chosen = challengeId
+                if (chosen != null) {
+                    Text(challengeTitle(chosen), style = MaterialTheme.typography.titleMedium)
+                    TextButton(onClick = { challengeId = null }) { Text("Elegir otro") }
+                } else {
+                    OutlinedTextField(query, { query = it.take(40) }, label = { Text("Buscar en el catálogo") }, singleLine = true,
+                        modifier = Modifier.fillMaxWidth())
+                }
+            }
+            if (challengeId == null) {
+                val matches = Catalog.challenges.filter { query.isBlank() || it.title.contains(query, ignoreCase = true) }.take(30)
+                items(matches, key = { it.id }) { c ->
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(false, role = Role.Button) { challengeId = c.id },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(c.title)
+                            Text(Fmt.minutes(c.minutes), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    HorizontalDivider()
+                }
+            } else {
+                item {
+                    SectionTitle("2. Cómo")
+                    ChoiceRow(null, listOf("coop" to "Juntos", "versus" to "Competir"), mode, { mode = it },
+                        description = if (mode == "coop") "Sumáis entre todos hasta llegar a la meta." else "Gana quien lo completa más veces.")
+                    StepperRow("Meta", Fmt.plural(target, "vez", "veces"),
+                        onMinus = if (target > 1) ({ target-- }) else null, onPlus = if (target < 100) ({ target++ }) else null)
+                    ChoiceRow("Duración", listOf(7 to "1 semana", 14 to "2 semanas", 30 to "1 mes"), days, { days = it })
+                    SectionTitle("3. Con quién (hasta 9)")
+                }
+                items(friends, key = { it.userId }) { f ->
+                    val checked = f.userId in selected
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(checked, role = Role.Checkbox,
+                            enabled = checked || selected.size < 9) { selected = if (checked) selected - f.userId else selected + f.userId },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = checked, onCheckedChange = null)
+                        Spacer(Modifier.size(Space.s))
+                        Text(f.displayName)
+                    }
+                }
+                item {
+                    PrimaryButton("Crear e invitar", {
+                        vm.createGroup(challengeId!!, mode, target, today, today.plus(days - 1, DateTimeUnit.DAY), selected.toList(), nav::back)
+                    }, Modifier.padding(top = Space.m), enabled = !busy && selected.isNotEmpty())
+                }
+            }
+        }
+    }
+}
+
+// ── Clasificación ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun LeaderboardTab(vm: CloudViewModel) {
+    val profile by vm.profile.collectAsStateWithLifecycle()
+    val rows by vm.leaderboard.collectAsStateWithLifecycle()
+    val p = profile ?: return
+    LazyColumn(contentPadding = PaddingValues(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+        item {
+            Text(
+                "XP de esta semana entre tus amigos que eligen participar. Empieza de cero cada lunes y cuenta como mucho " +
+                    "600 XP por día. Es voluntaria: puedes salir cuando quieras.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            ToggleRow("Participar en la clasificación", p.leaderboardOptIn, { vm.saveProfile(p.copy(leaderboardOptIn = it)) })
+        }
+        if (p.leaderboardOptIn) {
+            if (rows.size <= 1) item { EmptyState("Aún no hay con quién comparar", "Aparecerán los amigos que también participen.") }
+            items(rows, key = { it.userId }) { r ->
+                Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("${rows.indexOf(r) + 1}.", modifier = Modifier.size(32.dp, 24.dp))
+                    Avatar(r.displayName, frameOf(r.frame), null, 32.dp)
+                    Spacer(Modifier.size(Space.s))
+                    Text(r.displayName + if (r.isMe) " (tú)" else "", Modifier.weight(1f), fontWeight = if (r.isMe) FontWeight.Bold else null)
+                    Text("${r.weeklyXp} XP")
+                }
+            }
+        }
+    }
+}
+
+// ── Avisos ────────────────────────────────────────────────────────────────────
+
+fun noticeText(n: SocialNotice): String {
+    val who = n.actor?.displayName ?: "Alguien"
+    return when (n.kind) {
+        "friend_request" -> "$who quiere ser tu amigo."
+        "friend_accepted" -> "$who aceptó tu solicitud."
+        "reaction" -> "$who te felicitó ${Reactions.firstOrNull { it.first == n.refId }?.second.orEmpty()}".trim()
+        "group_invite" -> "$who te invitó a un reto en grupo."
+        "group_joined" -> "$who se unió a tu reto en grupo."
+        else -> "Novedad de $who."
+    }
+}
+
+@Composable
+private fun NoticesTab(vm: CloudViewModel, today: LocalDate) {
+    val notices by vm.notices.collectAsStateWithLifecycle()
+    LaunchedEffect(notices.any { !it.read }) { if (notices.any { !it.read }) vm.markNoticesRead() }
+    LazyColumn(contentPadding = PaddingValues(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+        if (notices.isEmpty()) item { EmptyState("Sin avisos", "Aquí verás solicitudes, felicitaciones e invitaciones de tus amigos.") }
+        items(notices, key = { it.id }) { n ->
+            Column(Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(noticeText(n), style = MaterialTheme.typography.bodyLarge, fontWeight = if (!n.read) FontWeight.Bold else null)
+                Fmt.lastSeen(n.createdAt, today)?.let { Text(it.replaceFirstChar { c -> c.uppercase() }, style = MaterialTheme.typography.bodySmall) }
+            }
+        }
+    }
+}
+
+// ── Perfil social ─────────────────────────────────────────────────────────────
+
+@Composable
+fun SocialProfileScreen(vm: CloudViewModel, nav: Nav) {
+    val profile by vm.profile.collectAsStateWithLifecycle()
+    val account by vm.account.collectAsStateWithLifecycle()
+    ScreenScaffold("Perfil social", onBack = nav::back) { padding ->
+        Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+            val a = account as? AccountState.SignedIn ?: return@Column
+            ProfileForm(profile, a.userId, vm, nav::back)
+        }
+    }
+}
+
+@Composable
+private fun ProfileForm(current: MyProfile?, userId: String, vm: CloudViewModel, onSaved: () -> Unit) {
+    val prefs = LocalPrefs.current
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    var username by rememberSaveable { mutableStateOf(current?.username ?: "") }
+    var displayName by rememberSaveable { mutableStateOf(current?.displayName ?: prefs.displayName) }
+    var discoverable by rememberSaveable { mutableStateOf(current?.discoverable ?: true) }
+    var shareProgress by rememberSaveable { mutableStateOf(current?.shareProgress ?: true) }
+    var showActivity by rememberSaveable { mutableStateOf(current?.showActivity ?: false) }
+    var leaderboard by rememberSaveable { mutableStateOf(current?.leaderboardOptIn ?: false) }
+    val usernameOk = Regex("^[a-z0-9_]{3,20}$").matches(username)
+
+    OutlinedTextField(
+        username, { v -> username = v.lowercase().filter { it in 'a'..'z' || it.isDigit() || it == '_' }.take(20) },
+        label = { Text("Nombre de usuario") }, singleLine = true, isError = username.isNotEmpty() && !usernameOk,
+        supportingText = { Text("De 3 a 20 letras sin acentos, números o _. Así te encuentran tus amigos.") },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OutlinedTextField(
+        displayName, { displayName = it.take(30) }, label = { Text("Nombre visible") }, singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    SectionTitle("Privacidad")
+    ToggleRow("Aparecer en las búsquedas", discoverable, { discoverable = it }, "Si lo quitas, solo te encuentra quien ya es tu amigo.")
+    ToggleRow("Compartir mi progreso con amigos", shareProgress, { shareProgress = it }, "Nivel, racha y XP de la semana. Nunca tus retos ni categorías.")
+    ToggleRow("Mostrar cuándo usé la app", showActivity, { showActivity = it }, "Tus amigos ven «activo hoy», «ayer»…")
+    ToggleRow("Participar en la clasificación semanal", leaderboard, { leaderboard = it })
+    PrimaryButton("Guardar", {
+        vm.saveProfile(
+            MyProfile(userId, username, displayName.trim(), prefs.equippedFrame, discoverable, shareProgress, showActivity, leaderboard),
+            onSaved,
+        )
+    }, Modifier.padding(top = Space.m), enabled = !busy && usernameOk && displayName.isNotBlank())
+}

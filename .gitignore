@@ -7,6 +7,8 @@ captures/
 # Configuración local y secretos (ruta del SDK, llave de firma)
 local.properties
 keystore.properties
+supabase.properties
+play.properties
 *.jks
 *.keystore
 *.p12
@@ -22,3 +24,4 @@ keystore.properties
 .DS_Store
 Thumbs.db
 build-log.txt
+supabase-start.log

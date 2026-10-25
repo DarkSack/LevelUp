@@ -5,6 +5,14 @@ import java.util.Properties
 val uploadKey: Properties? = rootProject.file("keystore.properties").takeIf { it.exists() }
     ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
 
+fun localProperties(name: String): Properties =
+    Properties().apply { rootProject.file(name).takeIf { it.exists() }?.inputStream()?.use(::load) }
+
+// Supabase (supabase.properties) y clave de licencia de Play (play.properties), fuera de git; ver los .example.
+// Sin ellos la app compila igual: sin cuenta y sin comprobar la firma de las compras.
+val supabase = localProperties("supabase.properties")
+val play = localProperties("play.properties")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -16,12 +24,15 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        // Identificador provisional: cámbialo antes de la primera subida a Play (después ya no se puede).
-        applicationId = "app.levelup"
+        // Identificador en Play, elegido por el propietario. No se puede cambiar tras la primera subida.
+        applicationId = "sack.levelup"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        buildConfigField("String", "SUPABASE_URL", "\"${supabase.getProperty("url", "")}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${supabase.getProperty("publishableKey", "")}\"")
+        buildConfigField("String", "PLAY_LICENSE_KEY", "\"${play.getProperty("licenseKey", "")}\"")
     }
 
     signingConfigs {
@@ -51,6 +62,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -59,4 +71,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.play.billing)
+    // Billing trae fragment 1.1, que rompe los selectores de archivos (ActivityResult necesita 1.3 o más).
+    implementation(libs.androidx.fragment)
 }

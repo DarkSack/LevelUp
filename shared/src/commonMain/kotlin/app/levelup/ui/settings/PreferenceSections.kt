@@ -134,6 +134,9 @@ fun RemindersSection(prefs: Preferences, notificationsAllowed: Boolean, onChange
     )
     ToggleRow("Recordatorios", prefs.remindersEnabled && notificationsAllowed, onToggle,
         if (prefs.remindersEnabled && !notificationsAllowed) "El permiso de notificaciones está desactivado en el teléfono." else null)
+    ToggleRow("Avisos de amigos", prefs.socialNotifications, { v -> onChange { it.copy(socialNotifications = v) } },
+        if (!notificationsAllowed) "Necesita el permiso de notificaciones del teléfono."
+        else "Solicitudes, felicitaciones e invitaciones, si tienes cuenta. Respetan tus horas de silencio.")
     if (!prefs.remindersEnabled) return
     fun shift(minute: Int, delta: Int) = (minute + delta + 24 * 60) % (24 * 60)
     StepperRow("Hora del aviso", Fmt.time(prefs.reminderMinute),

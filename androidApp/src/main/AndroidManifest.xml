@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Sin permiso de INTERNET: v1 es solo local (ver docs/ARQUITECTURA.md). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Cuenta opcional, sincronización y amigos (Supabase); compra de Plus. Sin cuenta la app no usa la red. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Recordatorios. Se pide solo cuando la persona los activa (Android 13 o más). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- WorkManager lo declara para trabajos en primer plano; LevelUp no los usa. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
 
-    <!-- Copia automática de Android activada: así el progreso pasa a un teléfono nuevo sin cuentas. -->
+    <!-- Copia automática de Android activada: así el progreso pasa a un teléfono nuevo sin cuentas.
+         La sesión de la cuenta no se copia (ver res/xml). -->
     <application
         android:name=".LevelUpApplication"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

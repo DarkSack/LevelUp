@@ -1,5 +1,6 @@
 package app.levelup.data
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Dao
 import androidx.room.Database
@@ -24,19 +25,25 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 
-/** Cambiar el esquema: subir `version`, añadir una Migration y su prueba (docs/ARQUITECTURA.md). */
+/**
+ * Cambiar el esquema: subir `version`, añadir la migración (automática si Room puede deducirla) y su prueba.
+ * v2: cola y estado de sincronización; avisos sociales y color de acento en las preferencias.
+ */
 @Database(
     entities = [
         Preferences::class, CustomCategory::class, CustomChallenge::class, ChallengeInstance::class,
         XpEntry::class, UnlockedAchievement::class, MissionRun::class, Pause::class,
+        OutboxEntry::class, SyncState::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): LevelUpDao
+    abstract fun syncDao(): SyncDao
 }
 
 @Suppress("KotlinNoActualForExpect")

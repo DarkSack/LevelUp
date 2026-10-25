@@ -13,7 +13,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.levelup.cloud.CloudService
 import app.levelup.data.LevelUpRepository
+import app.levelup.ui.account.CloudViewModel
 import app.levelup.domain.Preferences
 import app.levelup.ui.LevelUpViewModel
 import app.levelup.ui.MainNavigation
@@ -24,27 +26,31 @@ import app.levelup.ui.welcome.WelcomeScreen
 
 /** Punto de entrada de la interfaz, igual en todas las plataformas. */
 @Composable
-fun App(repo: LevelUpRepository, platform: Platform) {
+fun App(repo: LevelUpRepository, platform: Platform, cloud: CloudService? = null) {
     val vm = viewModel { LevelUpViewModel(repo, platform) }
-    App(vm, platform)
+    val cloudVm = cloud?.let { viewModel { CloudViewModel(it) } }
+    App(vm, platform, cloudVm)
 }
 
 @Composable
-fun App(vm: LevelUpViewModel, platform: Platform) {
+fun App(vm: LevelUpViewModel, platform: Platform, cloud: CloudViewModel? = null) {
     val prefs by vm.prefs.collectAsStateWithLifecycle()
     LifecycleResumeEffect(vm) {
         vm.refreshDay()
+        cloud?.onAppOpened()
+        platform.refreshPlus()
         onPauseOrDispose {}
     }
     val current = prefs
-    LevelUpTheme(current ?: Preferences(), platform.systemReducedMotion) {
+    val plus by platform.plus.collectAsStateWithLifecycle()
+    LevelUpTheme(current ?: Preferences(), platform.systemReducedMotion, plus.owned) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             when {
                 current == null -> LoadingScreen()
                 !current.onboardingDone && current.onboardingStep == 0 ->
                     WelcomeScreen(onStart = { vm.updatePrefs { it.copy(onboardingStep = 1) } })
                 !current.onboardingDone -> OnboardingFlow(vm, current)
-                else -> MainNavigation(vm, platform)
+                else -> MainNavigation(vm, cloud, platform)
             }
         }
     }

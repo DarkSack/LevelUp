@@ -20,6 +20,7 @@ import app.levelup.domain.CustomChallengeDraft
 import app.levelup.domain.CustomStatus
 import app.levelup.domain.DayKind
 import app.levelup.domain.DraftField
+import app.levelup.domain.ExtendedStats
 import app.levelup.domain.Mission
 import app.levelup.domain.MissionRules
 import app.levelup.domain.MissionRun
@@ -64,6 +65,7 @@ data class ProgressState(
     val missionsCompleted: Set<String> = emptySet(),
     val achievements: List<AchievementView> = emptyList(),
     val frames: List<Cosmetic> = listOf(Cosmetics.byId.getValue(Cosmetics.DEFAULT)),
+    val extended: ExtendedStats = ExtendedStats(),
 )
 
 /**
@@ -90,11 +92,13 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
 
     private val xpData = combine(repo.totalXp, repo.xpByCategory, repo.xpEntries) { total, byCat, entries -> Triple(total, byCat, entries) }
     private val rewardData = combine(repo.unlocked, repo.missionRuns, repo.pauses) { u, m, p -> Triple(u, m, p) }
+    private val customAndPlus = combine(repo.customChallenges, platform.plus) { c, plus -> c.size to plus.owned }
 
     val progress: StateFlow<ProgressState> = combine(
-        day, repo.preferences, repo.completed, xpData, combine(rewardData, repo.customChallenges) { r, c -> r to c.size },
-    ) { today, prefs, completed, (total, byCat, entries), (rewards, customCount) ->
+        day, repo.preferences, repo.completed, xpData, combine(rewardData, customAndPlus) { r, cp -> r to cp },
+    ) { today, prefs, completed, (total, byCat, entries), (rewards, customAndPlus) ->
         val (unlocked, runs, pauses) = rewards
+        val (customCount, plusOwned) = customAndPlus
         val stats = Stats.compute(
             today, completed, total, prefs, pauses, customCount, runs.count { it.status == MissionStatus.COMPLETED },
         )
@@ -118,7 +122,8 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
             achievements = AchievementCatalog.all.map { a ->
                 AchievementView(a, AchievementRules.state(a, unlockedIds.keys), a.progress(stats), unlockedIds[a.id])
             },
-            frames = Cosmetics.unlocked(unlockedIds.keys, doneMissions),
+            frames = Cosmetics.unlocked(unlockedIds.keys, doneMissions, plusOwned),
+            extended = ExtendedStats.compute(today, completed, entries.map { repo.dateOf(it.createdAt) to it.amount }),
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ProgressState())
 
@@ -177,6 +182,10 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
     suspend fun previewToday(): List<Challenge> = repo.previewToday()
 
     fun hourNow(): Int = repo.nowLocal().hour
+
+    val plus = platform.plus
+    fun buyPlus() = platform.buyPlus()
+    fun refreshPlus() = platform.refreshPlus()
 
     // ── Retos propios ─────────────────────────────────────────────────────────
 

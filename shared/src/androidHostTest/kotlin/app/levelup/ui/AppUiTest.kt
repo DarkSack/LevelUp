@@ -11,6 +11,8 @@ import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ApplicationProvider
 import app.levelup.App
 import app.levelup.Platform
+import app.levelup.PlusState
+import kotlinx.coroutines.flow.MutableStateFlow
 import app.levelup.data.AppDatabase
 import app.levelup.data.LevelUpRepository
 import app.levelup.data.TestClock
@@ -35,6 +37,9 @@ private class FakePlatform(override val systemReducedMotion: Boolean = true) : P
     override fun notificationsAllowed() = true
     override suspend fun requestNotifications() = true
     override fun remindersChanged() {}
+    override val plus = MutableStateFlow(PlusState())
+    override fun buyPlus() {}
+    override fun refreshPlus() {}
 }
 
 /** La app entera en la JVM: Room en memoria, interfaz real, sin teléfono. */
@@ -125,5 +130,21 @@ class AppUiTest {
         waitForText("Modo sencillo")
         compose.onNodeWithText("Modo sencillo").performScrollTo().performClick()
         compose.waitUntil(5_000) { runBlocking { repo.prefs().simpleMode } }
+    }
+
+    @Test fun plusShowsTheStorePriceAndUnlocksColors() {
+        onboarded()
+        val platform = FakePlatform().apply { plus.value = PlusState(price = "MX\$59.00") }
+        launch(platform)
+        waitForText("Perfil")
+        compose.onNodeWithText("Perfil").performClick()
+        waitForText("LevelUp Plus")
+        compose.onNodeWithText("LevelUp Plus").performClick()
+        waitForText("Comprar por MX\$59.00")
+
+        platform.plus.value = PlusState(owned = true)
+        waitForText("Color de la app")
+        compose.onNodeWithText("Violeta").performScrollTo().performClick()
+        compose.waitUntil(5_000) { runBlocking { repo.prefs().accent } == "violeta" }
     }
 }

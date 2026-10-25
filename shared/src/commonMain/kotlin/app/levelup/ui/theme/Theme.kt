@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import app.levelup.content.Categories
 import app.levelup.domain.MotionPref
 import app.levelup.domain.Preferences
+import app.levelup.domain.DEFAULT_ACCENT
 import app.levelup.domain.ThemePref
 
 /**
@@ -74,6 +75,29 @@ private fun ColorScheme.highContrast(dark: Boolean): ColorScheme = if (dark) {
     )
 }
 
+/** Color principal elegible (LevelUp Plus). Claro y oscuro con contraste AA frente a su texto. */
+data class Accent(
+    val key: String,
+    val name: String,
+    val light: Long, val lightContainer: Long, val onLightContainer: Long,
+    val dark: Long, val onDark: Long, val darkContainer: Long,
+)
+
+val Accents = listOf(
+    Accent("teal", "Verde azulado", 0xFF0F766E, 0xFFCCFBF1, 0xFF042F2E, 0xFF5EEAD4, 0xFF003733, 0xFF115E59),
+    Accent("azul", "Azul", 0xFF1D4ED8, 0xFFDBEAFE, 0xFF172554, 0xFF93C5FD, 0xFF0C1E4A, 0xFF1E3A8A),
+    Accent("violeta", "Violeta", 0xFF6D28D9, 0xFFEDE9FE, 0xFF2E1065, 0xFFC4B5FD, 0xFF2E1065, 0xFF4C1D95),
+    Accent("rosa", "Rosa", 0xFFBE185D, 0xFFFCE7F3, 0xFF500724, 0xFFF9A8D4, 0xFF4A0420, 0xFF831843),
+    Accent("ambar", "Ámbar", 0xFFB45309, 0xFFFEF3C7, 0xFF451A03, 0xFFFCD34D, 0xFF3F2300, 0xFF78350F),
+    Accent("verde", "Verde", 0xFF15803D, 0xFFDCFCE7, 0xFF052E16, 0xFF86EFAC, 0xFF052E16, 0xFF14532D),
+)
+
+private fun ColorScheme.withAccent(a: Accent, dark: Boolean): ColorScheme = if (dark) {
+    copy(primary = Color(a.dark), onPrimary = Color(a.onDark), primaryContainer = Color(a.darkContainer), onPrimaryContainer = Color(a.lightContainer))
+} else {
+    copy(primary = Color(a.light), onPrimary = Color.White, primaryContainer = Color(a.lightContainer), onPrimaryContainer = Color(a.onLightContainer))
+}
+
 /** Color de cada categoría. Siempre va acompañado del nombre: el color nunca es la única pista. */
 fun categoryColor(key: String, dark: Boolean): Color {
     val light = when (key) {
@@ -126,9 +150,11 @@ fun isDarkTheme(prefs: Preferences): Boolean = when (prefs.theme) {
 }
 
 @Composable
-fun LevelUpTheme(prefs: Preferences, systemReducedMotion: Boolean, content: @Composable () -> Unit) {
+fun LevelUpTheme(prefs: Preferences, systemReducedMotion: Boolean, plus: Boolean = false, content: @Composable () -> Unit) {
     val dark = isDarkTheme(prefs)
-    val base = if (dark) Dark else Light
+    // Sin Plus (p. ej. tras un reembolso) se vuelve al color de siempre, sin tocar la preferencia guardada.
+    val accent = Accents.firstOrNull { it.key == prefs.accent && (plus || it.key == DEFAULT_ACCENT) } ?: Accents.first()
+    val base = (if (dark) Dark else Light).withAccent(accent, dark)
     val colors = if (prefs.highContrast) base.highContrast(dark) else base
     val reduce = when (prefs.motion) {
         MotionPref.SYSTEM -> systemReducedMotion

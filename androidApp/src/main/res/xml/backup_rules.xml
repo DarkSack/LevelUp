@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 o menos: las mismas exclusiones que data_extraction_rules.xml. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="levelup_session.xml" />
+    <exclude domain="sharedpref" path="levelup_plus.xml" />
+    <exclude domain="sharedpref" path="levelup_social.xml" />
+</full-backup-content>
