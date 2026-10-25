@@ -5,4 +5,13 @@
     <string name="channel_reminders_description">Un aviso al día con tus retos, a la hora que elijas.</string>
     <string name="channel_social">Amigos</string>
     <string name="channel_social_description">Solicitudes, felicitaciones e invitaciones a retos en grupo.</string>
+    <string name="widget_label">Reto principal</string>
+    <string name="widget_loading">Cargando…</string>
+    <string name="widget_complete">Hecho</string>
+    <string name="widget_description">Tu reto principal y cuántos llevas hoy.</string>
+    <string name="shortcut_today">Reto del día</string>
+    <string name="shortcut_today_long">Ver el reto del día</string>
+    <string name="shortcut_focus">Concentración</string>
+    <string name="shortcut_focus_long">Empezar en modo concentración</string>
+    <string name="shortcut_search">Buscar</string>
 </resources>

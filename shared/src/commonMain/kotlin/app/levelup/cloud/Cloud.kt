@@ -53,6 +53,12 @@ data class MyProfile(
     @SerialName("share_progress") val shareProgress: Boolean = true,
     @SerialName("show_activity") val showActivity: Boolean = false,
     @SerialName("leaderboard_opt_in") val leaderboardOptIn: Boolean = false,
+    /** Clave de Avatars (emoji predefinido); vacía = la inicial. */
+    val avatar: String = "",
+    /** Nivel del título elegido (XpRules.TITLES). El servidor solo lo muestra si se alcanzó. */
+    @SerialName("title_level") val titleLevel: Int? = null,
+    /** Hasta tres ids de logros. El servidor solo muestra los desbloqueados. */
+    val trophies: List<String> = emptyList(),
 )
 
 /** Lo que una persona deja ver de sí misma (los campos opcionales llegan vacíos si no lo permite). */
@@ -69,6 +75,24 @@ data class ProfileCard(
     val lastActiveAt: String? = null,
     val requestId: String? = null,
     val incoming: Boolean? = null,
+    val avatar: String = "",
+    val title: Int? = null,
+    val trophies: List<String> = emptyList(),
+)
+
+/** Un reto en grupo terminado o que se dejó, para el historial de participación. */
+@Serializable
+data class GroupHistoryItem(
+    val id: String,
+    val challengeId: String,
+    val mode: String,
+    val target: Int,
+    val startsOn: LocalDate,
+    val endsOn: LocalDate,
+    val myStatus: String,
+    val members: Int,
+    val myCompleted: Int,
+    val groupCompleted: Int,
 )
 
 @Serializable
@@ -98,6 +122,15 @@ data class SocialNotice(val id: String, val kind: String, val refId: String? = n
 
 /** Reacciones predefinidas (sin texto libre). La clave es la que guarda el servidor. */
 val Reactions = listOf("aplauso" to "👏", "fuerza" to "💪", "estrella" to "⭐", "fuego" to "🔥", "corazon" to "❤️")
+
+/** Mensajes de ánimo predefinidos: se envían como reacciones, sin texto libre. */
+val Encouragements = listOf(
+    "animo_puedes" to "¡Tú puedes!",
+    "animo_sigue" to "Sigue así",
+    "animo_paso" to "Paso a paso",
+    "animo_contigo" to "Estoy contigo",
+    "animo_descansa" to "Descansa, mañana sigues",
+)
 
 val ReportReasons = listOf(
     "nombre_ofensivo" to "Nombre ofensivo",
@@ -239,8 +272,8 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
         db.from("profiles").upsert(profile)
     }
 
-    suspend fun touchProfile(streak: Int, frame: String) {
-        db.rpc("touch_profile", buildJsonObject { put("streak", streak); put("avatar_frame", frame) })
+    suspend fun touchProfile(streak: Int, frame: String, avatar: String) {
+        db.rpc("touch_profile", buildJsonObject { put("streak", streak); put("avatar_frame", frame); put("avatar_key", avatar) })
     }
 
     suspend fun search(query: String): List<ProfileCard> =
@@ -286,6 +319,8 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
     }
 
     suspend fun groups(): List<GroupChallenge> = db.rpc("my_groups").decodeList()
+
+    suspend fun groupHistory(): List<GroupHistoryItem> = db.rpc("my_group_history").decodeList()
 
     suspend fun createGroup(challengeId: String, mode: String, target: Int, startsOn: LocalDate, endsOn: LocalDate, friends: List<String>) {
         db.rpc("create_group_challenge", buildJsonObject {

@@ -41,6 +41,7 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
     val requests = MutableStateFlow<List<ProfileCard>>(emptyList())
     val searchResults = MutableStateFlow<List<ProfileCard>>(emptyList())
     val groups = MutableStateFlow<List<GroupChallenge>>(emptyList())
+    val groupHistory = MutableStateFlow<List<app.levelup.cloud.GroupHistoryItem>>(emptyList())
     val leaderboard = MutableStateFlow<List<LeaderboardRow>>(emptyList())
     val notices = MutableStateFlow<List<SocialNotice>>(emptyList())
 
@@ -84,6 +85,7 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
         profile.value = null; profileLoaded.value = false
         friends.value = emptyList(); requests.value = emptyList(); searchResults.value = emptyList()
         groups.value = emptyList(); leaderboard.value = emptyList(); notices.value = emptyList()
+        groupHistory.value = emptyList()
     }
 
     // ── Social ────────────────────────────────────────────────────────────────
@@ -101,8 +103,10 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
                 val g = async { cloud.groups() }
                 val l = async { cloud.leaderboard() }
                 val n = async { cloud.notices() }
+                // Aparte: si el servidor aún no tiene el historial, lo demás sigue funcionando.
+                val h = async { runCatching { cloud.groupHistory() }.getOrDefault(emptyList()) }
                 friends.value = f.await(); requests.value = r.await(); groups.value = g.await()
-                leaderboard.value = l.await(); notices.value = n.await()
+                leaderboard.value = l.await(); notices.value = n.await(); groupHistory.value = h.await()
             }
         }.onFailure { _messages.emit(CloudErrors.message(it)) }
     }

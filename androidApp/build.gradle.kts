@@ -74,4 +74,6 @@ dependencies {
     implementation(libs.play.billing)
     // Billing trae fragment 1.1, que rompe los selectores de archivos (ActivityResult necesita 1.3 o más).
     implementation(libs.androidx.fragment)
+    // Solo lectura de pasos y ejercicio de hoy, y solo si se activa en Laboratorio.
+    implementation(libs.health.connect)
 }

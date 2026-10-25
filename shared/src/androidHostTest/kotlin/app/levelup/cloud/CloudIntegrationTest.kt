@@ -65,12 +65,17 @@ class CloudIntegrationTest {
         // Lo hecho en un teléfono llega al otro de la misma cuenta.
         val inst = a1.repo.ensureToday().first()
         a1.repo.complete(inst.id)
+        a1.repo.toggleFavorite(inst.challengeId)
+        a1.repo.saveGoal(null, "Correr 5 km", "", null).getOrThrow()
+        a1.repo.updatePreferences { it.copy(avatar = "zorro") }
         assertTrue(a1.service.syncNow().isSuccess)
         val a2 = Phone()
         assertTrue(a2.service.signIn(anaMail, "nivel2026").isSuccess)
         assertTrue(a2.service.syncNow().isSuccess)
         assertEquals(a1.repo.totalXp.first(), a2.repo.totalXp.first())
         assertTrue(a2.repo.prefs().onboardingDone)
+        assertEquals(listOf(inst.challengeId), a2.repo.favorites.first().map { it.challengeId }, "favoritos al otro teléfono")
+        assertEquals(listOf("Correr 5 km"), a2.repo.goals.first().map { it.title }, "metas al otro teléfono")
 
         // Otra persona no ve nada de Ana (RLS).
         val beto = cloud()
@@ -82,7 +87,8 @@ class CloudIntegrationTest {
         // Perfiles, búsqueda y amistad.
         val anaUser = "ana_$run".take(20)
         val betoUser = "beto_$run".take(20)
-        a1.cloud.saveProfile(MyProfile(ana, anaUser, "Ana", leaderboardOptIn = true))
+        val trophy = a1.repo.unlocked.first().first().achievementId
+        a1.cloud.saveProfile(MyProfile(ana, anaUser, "Ana", leaderboardOptIn = true, avatar = "zorro", titleLevel = 1, trophies = listOf(trophy)))
         beto.saveProfile(MyProfile(betoId, betoUser, "Beto", leaderboardOptIn = true))
         assertEquals("Ana", a1.cloud.myProfile()?.displayName)
         assertEquals(listOf(betoUser), a1.cloud.search(betoUser).map { it.username })
@@ -93,11 +99,17 @@ class CloudIntegrationTest {
         val friend = a1.cloud.friends().single()
         assertEquals(betoUser, friend.username)
         assertTrue(friend.isFriend)
+        val anaCard = beto.friends().single()
+        assertEquals("zorro", anaCard.avatar)
+        assertEquals(1, anaCard.title)
+        assertEquals(listOf(trophy), anaCard.trophies, "solo trofeos desbloqueados y sincronizados")
 
         // Reacción y avisos (SyncWork lee la fecha del aviso con OffsetDateTime).
         a1.cloud.react(betoId, "aplauso")
+        a1.cloud.react(betoId, "animo_puedes")
         val notices = beto.notices()
         assertTrue(notices.any { it.kind == "reaction" && it.refId == "aplauso" && it.actor?.username == anaUser })
+        assertTrue(notices.any { it.refId == "animo_puedes" }, "mensaje de ánimo")
         notices.forEach { OffsetDateTime.parse(it.createdAt) }
         beto.markNoticesRead()
         assertTrue(beto.notices().all { it.read })
@@ -111,6 +123,7 @@ class CloudIntegrationTest {
         val group = a1.cloud.groups().single()
         assertEquals(1, group.members.single { it.userId == ana }.completed)
         assertEquals("joined", group.members.single { it.userId == betoId }.status)
+        assertTrue(a1.cloud.groupHistory().isEmpty(), "un reto en marcha aún no es historial")
 
         // Clasificación semanal: los dos se apuntaron.
         a1.service.syncNow() // también actualiza racha y marco del perfil (touch_profile)

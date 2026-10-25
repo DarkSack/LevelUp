@@ -53,16 +53,27 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextAlign
 import app.levelup.cloud.AccountState
+import app.levelup.cloud.Encouragements
 import app.levelup.cloud.GroupChallenge
+import app.levelup.cloud.GroupHistoryItem
 import app.levelup.cloud.MyProfile
 import app.levelup.cloud.ProfileCard
 import app.levelup.cloud.Reactions
 import app.levelup.cloud.ReportReasons
 import app.levelup.cloud.SocialNotice
+import app.levelup.content.AchievementCatalog
+import app.levelup.content.Avatars
 import app.levelup.content.Catalog
 import app.levelup.content.Cosmetics
+import app.levelup.domain.AchievementState
 import app.levelup.domain.XpRules
+import app.levelup.ui.LevelUpViewModel
+import app.levelup.ui.components.MultiChoiceRow
 import app.levelup.ui.Fmt
 import app.levelup.ui.Nav
 import app.levelup.ui.account.CloudViewModel
@@ -81,6 +92,7 @@ import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
 private fun frameOf(id: String) = Cosmetics.byId[id] ?: Cosmetics.byId.getValue(Cosmetics.DEFAULT)
@@ -90,7 +102,7 @@ private fun challengeTitle(id: String) = Catalog.byId[id]?.title ?: "Reto"
 /** Puerta de entrada: pide cuenta y perfil antes de mostrar lo social. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SocialScreen(vm: CloudViewModel?, nav: Nav, today: LocalDate) {
+fun SocialScreen(vm: CloudViewModel?, local: LevelUpViewModel, nav: Nav, today: LocalDate) {
     val account = vm?.account?.collectAsStateWithLifecycle()?.value
     val profile = vm?.profile?.collectAsStateWithLifecycle()?.value
     ScreenScaffold(
@@ -106,7 +118,7 @@ fun SocialScreen(vm: CloudViewModel?, nav: Nav, today: LocalDate) {
             when {
                 vm == null -> Text("Esta versión de la app no tiene la nube configurada.", Modifier.padding(Space.l))
                 account !is AccountState.SignedIn -> SignInRequired(nav, "Conectar con amigos")
-                else -> SocialContent(vm, nav, today, account)
+                else -> SocialContent(vm, local, nav, today, account)
             }
         }
     }
@@ -114,7 +126,7 @@ fun SocialScreen(vm: CloudViewModel?, nav: Nav, today: LocalDate) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SocialContent(vm: CloudViewModel, nav: Nav, today: LocalDate, account: AccountState.SignedIn) {
+private fun SocialContent(vm: CloudViewModel, local: LevelUpViewModel, nav: Nav, today: LocalDate, account: AccountState.SignedIn) {
     val loaded by vm.profileLoaded.collectAsStateWithLifecycle()
     val profile by vm.profile.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.refreshSocial() }
@@ -123,7 +135,7 @@ private fun SocialContent(vm: CloudViewModel, nav: Nav, today: LocalDate, accoun
         profile == null -> Column(Modifier.verticalScroll(rememberScrollState()).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
             Text("Crea tu perfil social", style = MaterialTheme.typography.titleLarge)
             Text("Es opcional. Solo tus amigos ven tu progreso, y solo si tú lo permites. Tus retos y categorías nunca se comparten.")
-            ProfileForm(null, account.userId, vm) {}
+            ProfileForm(null, account.userId, vm, local) {}
         }
         else -> {
             var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -137,7 +149,7 @@ private fun SocialContent(vm: CloudViewModel, nav: Nav, today: LocalDate, accoun
                 }
                 when (tab) {
                     0 -> FriendsTab(vm, today)
-                    1 -> GroupsTab(vm, nav, account.userId)
+                    1 -> GroupsTab(vm, nav, account.userId, today)
                     2 -> LeaderboardTab(vm)
                     else -> NoticesTab(vm, today)
                 }
@@ -200,7 +212,7 @@ private fun FriendsTab(vm: CloudViewModel, today: LocalDate) {
 @Composable
 private fun PersonRow(p: ProfileCard, actions: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
-        Avatar(p.displayName, frameOf(p.frame), p.level, 40.dp)
+        Avatar(p.displayName, frameOf(p.frame), p.level, 40.dp, Avatars.emoji(p.avatar))
         Spacer(Modifier.size(Space.m))
         Column(Modifier.weight(1f)) {
             Text(p.displayName, style = MaterialTheme.typography.bodyLarge)
@@ -215,6 +227,7 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
     var menu by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<String?>(null) }
     var reporting by remember { mutableStateOf(false) }
+    var cheering by remember { mutableStateOf(false) }
     InfoCard {
         PersonRow(p) {
             Box {
@@ -233,11 +246,22 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
             p.lastActiveAt?.let { Fmt.lastSeen(it, today) }?.let { add("Activo $it") }
         }
         if (details.isNotEmpty()) Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+        p.title?.let { Text("Título: «${XpRules.titleFor(it)}»", style = MaterialTheme.typography.bodySmall) }
+        val trophies = p.trophies.mapNotNull { AchievementCatalog.byId[it]?.name }
+        if (trophies.isNotEmpty()) Text("Trofeos: ${trophies.joinToString()}", style = MaterialTheme.typography.bodySmall)
         Text("Felicitar", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = Space.s))
-        Row {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Reactions.forEach { (kind, emoji) ->
                 IconButton(onClick = { vm.react(p.userId, kind) }) {
                     Text(emoji, modifier = Modifier.semantics { this.contentDescription = "Enviar $kind a ${p.displayName}" })
+                }
+            }
+            Box {
+                TextButton(onClick = { cheering = true }) { Text("Ánimo") }
+                DropdownMenu(cheering, { cheering = false }) {
+                    Encouragements.forEach { (kind, text) ->
+                        DropdownMenuItem({ Text(text) }, { cheering = false; vm.react(p.userId, kind) })
+                    }
                 }
             }
         }
@@ -299,8 +323,9 @@ private fun ReportDialog(p: ProfileCard, vm: CloudViewModel, onDone: () -> Unit)
 // ── Grupos ────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun GroupsTab(vm: CloudViewModel, nav: Nav, me: String) {
+private fun GroupsTab(vm: CloudViewModel, nav: Nav, me: String, today: LocalDate) {
     val groups by vm.groups.collectAsStateWithLifecycle()
+    val history by vm.groupHistory.collectAsStateWithLifecycle()
     val friends by vm.friends.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     LazyColumn(contentPadding = PaddingValues(Space.l), verticalArrangement = Arrangement.spacedBy(Space.m)) {
@@ -314,7 +339,82 @@ private fun GroupsTab(vm: CloudViewModel, nav: Nav, me: String) {
             if (friends.isEmpty()) Text("Necesitas al menos un amigo.", style = MaterialTheme.typography.bodySmall)
         }
         if (groups.isEmpty()) item { EmptyState("Sin retos en grupo", "Cuando crees uno o te inviten, aparecerá aquí.") }
+        val joined = groups.filter { it.myStatus == "joined" }
+        if (joined.isNotEmpty()) item { GroupCalendar(joined, today) }
         items(groups, key = { it.id }) { GroupCard(it, me, vm, busy) }
+        if (history.isNotEmpty()) {
+            item { SectionTitle("Historial") }
+            items(history, key = { "h-" + it.id }) { HistoryRow(it) }
+        }
+    }
+}
+
+/** Calendario del mes con los días que tienen un reto en grupo en marcha. */
+@Composable
+private fun GroupCalendar(groups: List<GroupChallenge>, today: LocalDate) {
+    var offset by rememberSaveable { mutableIntStateOf(0) }
+    val first = LocalDate(today.year, today.month, 1).plus(offset, DateTimeUnit.MONTH)
+    val days = first.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY).day
+    InfoCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { offset-- }) { Text("‹", style = MaterialTheme.typography.titleLarge) }
+            Text("${Fmt.monthName(first.month).replaceFirstChar { it.uppercase() }} de ${first.year}",
+                Modifier.weight(1f).semantics { heading() }, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleSmall)
+            TextButton(onClick = { offset++ }) { Text("›", style = MaterialTheme.typography.titleLarge) }
+        }
+        Row(Modifier.fillMaxWidth()) {
+            listOf("L", "M", "X", "J", "V", "S", "D").forEach {
+                Text(it, Modifier.weight(1f), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+        val lead = first.dayOfWeek.ordinal // lunes = 0
+        ((0 until lead).map { null } + (1..days).map { first.plus(it - 1, DateTimeUnit.DAY) }).chunked(7).forEach { week ->
+            Row(Modifier.fillMaxWidth()) {
+                week.forEach { date ->
+                    val active = date?.let { d -> groups.filter { d >= it.startsOn && d <= it.endsOn } }.orEmpty()
+                    Box(
+                        Modifier.weight(1f).heightIn(min = 36.dp).clearAndSetSemantics {
+                            if (date != null) contentDescription = Fmt.day(date) +
+                                if (active.isEmpty()) "" else ": " + active.joinToString { challengeTitle(it.challengeId) }
+                        },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (date != null) {
+                            Box(
+                                Modifier.size(32.dp).then(
+                                    if (active.isNotEmpty()) Modifier.background(MaterialTheme.colorScheme.primaryContainer, CircleShape) else Modifier,
+                                ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("${date.day}", fontWeight = if (date == today) FontWeight.Bold else null,
+                                    color = if (active.isNotEmpty()) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                            }
+                        }
+                    }
+                }
+                repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+        Text("Los días marcados tienen un reto en grupo en marcha.", style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = Space.xs))
+    }
+}
+
+@Composable
+private fun HistoryRow(h: GroupHistoryItem) {
+    Column(Modifier.fillMaxWidth().padding(vertical = Space.xs).semantics(mergeDescendants = true) {}) {
+        Text(challengeTitle(h.challengeId), style = MaterialTheme.typography.bodyLarge)
+        val result = when {
+            h.myStatus == "left" -> "Lo dejaste"
+            h.mode == "coop" && h.groupCompleted >= h.target -> "Meta lograda entre todos"
+            h.mode == "coop" -> "${h.groupCompleted} de ${h.target} entre todos"
+            else -> "Competición"
+        }
+        Text(
+            "Del ${Fmt.day(h.startsOn)} al ${Fmt.day(h.endsOn)} · ${Fmt.plural(h.members, "persona", "personas")} · " +
+                "tú: ${Fmt.plural(h.myCompleted, "vez", "veces")} · $result",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -462,7 +562,8 @@ fun noticeText(n: SocialNotice): String {
     return when (n.kind) {
         "friend_request" -> "$who quiere ser tu amigo."
         "friend_accepted" -> "$who aceptó tu solicitud."
-        "reaction" -> "$who te felicitó ${Reactions.firstOrNull { it.first == n.refId }?.second.orEmpty()}".trim()
+        "reaction" -> Encouragements.firstOrNull { it.first == n.refId }?.let { "$who te dice: «${it.second}»" }
+            ?: "$who te felicitó ${Reactions.firstOrNull { it.first == n.refId }?.second.orEmpty()}".trim()
         "group_invite" -> "$who te invitó a un reto en grupo."
         "group_joined" -> "$who se unió a tu reto en grupo."
         else -> "Novedad de $who."
@@ -487,20 +588,23 @@ private fun NoticesTab(vm: CloudViewModel, today: LocalDate) {
 // ── Perfil social ─────────────────────────────────────────────────────────────
 
 @Composable
-fun SocialProfileScreen(vm: CloudViewModel, nav: Nav) {
+fun SocialProfileScreen(vm: CloudViewModel, local: LevelUpViewModel, nav: Nav) {
     val profile by vm.profile.collectAsStateWithLifecycle()
     val account by vm.account.collectAsStateWithLifecycle()
     ScreenScaffold("Perfil social", onBack = nav::back) { padding ->
         Column(Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.s)) {
             val a = account as? AccountState.SignedIn ?: return@Column
-            ProfileForm(profile, a.userId, vm, nav::back)
+            ProfileForm(profile, a.userId, vm, local, nav::back)
         }
     }
 }
 
 @Composable
-private fun ProfileForm(current: MyProfile?, userId: String, vm: CloudViewModel, onSaved: () -> Unit) {
+private fun ProfileForm(current: MyProfile?, userId: String, vm: CloudViewModel, local: LevelUpViewModel, onSaved: () -> Unit) {
     val prefs = LocalPrefs.current
+    val progress by local.progress.collectAsStateWithLifecycle()
+    var titleLevel by rememberSaveable { mutableStateOf(current?.titleLevel) }
+    var trophies by rememberSaveable { mutableStateOf(current?.trophies ?: emptyList()) }
     val busy by vm.busy.collectAsStateWithLifecycle()
     var username by rememberSaveable { mutableStateOf(current?.username ?: "") }
     var displayName by rememberSaveable { mutableStateOf(current?.displayName ?: prefs.displayName) }
@@ -525,9 +629,30 @@ private fun ProfileForm(current: MyProfile?, userId: String, vm: CloudViewModel,
     ToggleRow("Compartir mi progreso con amigos", shareProgress, { shareProgress = it }, "Nivel, racha y XP de la semana. Nunca tus retos ni categorías.")
     ToggleRow("Mostrar cuándo usé la app", showActivity, { showActivity = it }, "Tus amigos ven «activo hoy», «ayer»…")
     ToggleRow("Participar en la clasificación semanal", leaderboard, { leaderboard = it })
+
+    SectionTitle("Lo que muestras")
+    Text("Tu avatar y tu marco se cambian en Perfil → Avatar y marco. El título y los trofeos los ven tus amigos si compartes tu progreso.",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    ChoiceRow(
+        "Título", listOf(null to "Ninguno") + XpRules.TITLES.filter { it.first <= progress.level.level }, titleLevel, { titleLevel = it },
+    )
+    val unlocked = progress.achievements.filter { it.state == AchievementState.UNLOCKED }.map { it.achievement }
+    if (unlocked.isNotEmpty()) {
+        Text("Trofeos (hasta 3)", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Space.s))
+        MultiChoiceRow(unlocked.map { it.id to it.name }, trophies.toSet()) { id ->
+            trophies = when {
+                id in trophies -> trophies - id
+                trophies.size < 3 -> trophies + id
+                else -> trophies
+            }
+        }
+    }
     PrimaryButton("Guardar", {
         vm.saveProfile(
-            MyProfile(userId, username, displayName.trim(), prefs.equippedFrame, discoverable, shareProgress, showActivity, leaderboard),
+            MyProfile(
+                userId, username, displayName.trim(), prefs.equippedFrame, discoverable, shareProgress, showActivity, leaderboard,
+                avatar = prefs.avatar, titleLevel = titleLevel, trophies = trophies,
+            ),
             onSaved,
         )
     }, Modifier.padding(top = Space.m), enabled = !busy && usernameOk && displayName.isNotBlank())

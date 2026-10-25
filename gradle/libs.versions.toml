@@ -25,6 +25,7 @@ supabase = "3.8.0"
 # La que usa supabase-kt 3.8.0.
 ktor = "3.5.1"
 play-billing = "9.1.0"
+health-connect = "1.1.0"
 
 [libraries]
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
@@ -58,6 +59,7 @@ supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
 supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 play-billing = { module = "com.android.billingclient:billing-ktx", version.ref = "play-billing" }
+health-connect = { module = "androidx.health.connect:connect-client", version.ref = "health-connect" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

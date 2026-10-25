@@ -223,8 +223,8 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
             composable<CustomEditRoute> { CustomEditScreen(vm, nav, it.toRoute<CustomEditRoute>().id) }
             composable<SettingsRoute> { SettingsScreen(vm, nav, platform, it.toRoute<SettingsRoute>().section, signedIn) }
             composable<AccountRoute> { AccountScreen(cloud, nav) }
-            composable<SocialRoute> { SocialScreen(cloud, nav, today) }
-            composable<SocialProfileRoute> { if (cloud != null) SocialProfileScreen(cloud, nav) }
+            composable<SocialRoute> { SocialScreen(cloud, vm, nav, today) }
+            composable<SocialProfileRoute> { if (cloud != null) SocialProfileScreen(cloud, vm, nav) }
             composable<CreateGroupRoute> { if (cloud != null) CreateGroupScreen(cloud, nav, today) }
             composable<PlusRoute> { PlusScreen(vm, nav) }
             composable<SearchRoute> { SearchScreen(vm, nav) }

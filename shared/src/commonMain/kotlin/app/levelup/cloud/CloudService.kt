@@ -86,7 +86,7 @@ class CloudService(
         return try {
             engine.sync().onSuccess {
                 // Lo que ven los amigos (si tiene perfil y lo permite). Si falla, no es motivo para fallar la sincronización.
-                runCatching { cloud.touchProfile(repo.stats().currentStreak, repo.prefs().equippedFrame) }
+                runCatching { repo.prefs().let { p -> cloud.touchProfile(repo.stats().currentStreak, p.equippedFrame, p.avatar) } }
             }
         } finally {
             _syncing.value = false
