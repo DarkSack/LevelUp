@@ -2,6 +2,12 @@ package app.levelup.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -32,7 +38,7 @@ import kotlin.test.assertEquals
 
 private class FakePlatform(override val systemReducedMotion: Boolean = true) : Platform {
     override val appVersion = "test"
-    override suspend fun exportFile(fileName: String, content: String) = true
+    override suspend fun exportFile(fileName: String, content: String, mimeType: String) = true
     override suspend fun importFile(): String? = null
     override fun notificationsAllowed() = true
     override suspend fun requestNotifications() = true
@@ -126,10 +132,33 @@ class AppUiTest {
         waitForText("Perfil")
         compose.onNodeWithText("Perfil").performClick()
         waitForText("Accesibilidad")
+        // Al final de la lista, para que la entrada no quede debajo de la barra de pestañas.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Acerca de LevelUp", substring = true))
         compose.onNodeWithText("Accesibilidad").performClick()
         waitForText("Modo sencillo")
         compose.onNodeWithText("Modo sencillo").performScrollTo().performClick()
         compose.waitUntil(5_000) { runBlocking { repo.prefs().simpleMode } }
+    }
+
+    @Test fun withoutGameThereIsNoXpNorLevels() {
+        onboarded()
+        prefs { it.copy(gamification = app.levelup.domain.GamificationStyle.OFF) }
+        launch()
+        waitForText("Reto principal")
+        assertEquals(0, compose.onAllNodesWithText("XP", substring = true).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithText("Nivel ", substring = true).fetchSemanticsNodes().size)
+        compose.onNodeWithText("Completar").performClick()
+        waitForText("¡Hecho!")
+    }
+
+    @Test fun searchFromHomeFindsCatalogChallenges() {
+        onboarded()
+        launch()
+        waitForText("Reto principal")
+        compose.onNodeWithContentDescription("Buscar").performClick()
+        waitForText("Retos, hábitos, logros, metas o notas")
+        compose.onNode(hasSetTextAction()).performTextInput("camina 10")
+        waitForText("Camina 10 minutos")
     }
 
     @Test fun plusShowsTheStorePriceAndUnlocksColors() {

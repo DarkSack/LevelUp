@@ -16,7 +16,9 @@ import androidx.room.Upsert
 import app.levelup.domain.ChallengeInstance
 import app.levelup.domain.CustomCategory
 import app.levelup.domain.CustomChallenge
+import app.levelup.domain.Favorite
 import app.levelup.domain.MissionRun
+import app.levelup.domain.PersonalGoal
 import app.levelup.domain.Pause
 import app.levelup.domain.Preferences
 import app.levelup.domain.UnlockedAchievement
@@ -28,16 +30,18 @@ import kotlinx.serialization.json.Json
 /**
  * Cambiar el esquema: subir `version`, añadir la migración (automática si Room puede deducirla) y su prueba.
  * v2: cola y estado de sincronización; avisos sociales y color de acento en las preferencias.
+ * v3: favoritos y metas personales; notas, momento del día y versión mínima; etiquetas de los retos propios;
+ *     laboratorio, baja estimulación, capturas protegidas, días de aviso, revisión semanal y avatar.
  */
 @Database(
     entities = [
         Preferences::class, CustomCategory::class, CustomChallenge::class, ChallengeInstance::class,
         XpEntry::class, UnlockedAchievement::class, MissionRun::class, Pause::class,
-        OutboxEntry::class, SyncState::class,
+        OutboxEntry::class, SyncState::class, Favorite::class, PersonalGoal::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -99,6 +103,14 @@ interface LevelUpDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertXp(value: XpEntry): Long
     @Query("DELETE FROM xp_ledger WHERE sourceType = 'CHALLENGE' AND sourceId = :instanceId")
     suspend fun deleteChallengeXp(instanceId: String)
+    @Query("DELETE FROM xp_ledger WHERE sourceType = :type AND sourceId = :sourceId")
+    suspend fun deleteXp(type: String, sourceId: String)
+    @Query("SELECT MAX(date) FROM challenge_instances WHERE status = 'COMPLETED' AND date < :before")
+    suspend fun lastActiveBefore(before: LocalDate): LocalDate?
+    @Query("SELECT COUNT(*) FROM challenge_instances WHERE status = 'COMPLETED' AND date = :date")
+    suspend fun completedOn(date: LocalDate): Int
+    @Query("SELECT * FROM challenge_instances WHERE note IS NOT NULL AND note <> ''")
+    suspend fun withNotes(): List<ChallengeInstance>
     @Query("SELECT COALESCE(SUM(amount), 0) FROM xp_ledger") fun totalXp(): Flow<Int>
     @Query("SELECT COALESCE(SUM(amount), 0) FROM xp_ledger") suspend fun totalXpNow(): Int
     @Query("SELECT category, SUM(amount) AS xp FROM xp_ledger WHERE category IS NOT NULL GROUP BY category")
@@ -124,6 +136,17 @@ interface LevelUpDao {
     @Upsert suspend fun upsertCustomChallenge(value: CustomChallenge)
     @Query("DELETE FROM custom_challenges WHERE id = :id") suspend fun deleteCustomChallenge(id: String)
 
+    @Query("SELECT * FROM favorites ORDER BY createdAt DESC") fun favorites(): Flow<List<Favorite>>
+    @Query("SELECT * FROM favorites") suspend fun favoritesNow(): List<Favorite>
+    @Upsert suspend fun upsertFavorite(value: Favorite)
+    @Query("DELETE FROM favorites WHERE challengeId = :id") suspend fun deleteFavorite(id: String)
+
+    @Query("SELECT * FROM personal_goals ORDER BY createdAt") fun goals(): Flow<List<PersonalGoal>>
+    @Query("SELECT * FROM personal_goals") suspend fun goalsNow(): List<PersonalGoal>
+    @Query("SELECT * FROM personal_goals WHERE id = :id") suspend fun goal(id: String): PersonalGoal?
+    @Upsert suspend fun upsertGoal(value: PersonalGoal)
+    @Query("DELETE FROM personal_goals WHERE id = :id") suspend fun deleteGoal(id: String)
+
     @Query("SELECT * FROM custom_categories ORDER BY name") fun customCategories(): Flow<List<CustomCategory>>
     @Query("SELECT * FROM custom_categories") suspend fun customCategoriesNow(): List<CustomCategory>
     @Upsert suspend fun upsertCustomCategory(value: CustomCategory)
@@ -138,6 +161,8 @@ interface LevelUpDao {
     @Insert suspend fun insertAllPauses(values: List<Pause>)
     @Insert suspend fun insertAllCustomChallenges(values: List<CustomChallenge>)
     @Insert suspend fun insertAllCustomCategories(values: List<CustomCategory>)
+    @Insert suspend fun insertAllFavorites(values: List<Favorite>)
+    @Insert suspend fun insertAllGoals(values: List<PersonalGoal>)
 
     @Query("DELETE FROM preferences") suspend fun clearPreferences()
     @Query("DELETE FROM custom_categories") suspend fun clearCustomCategories()
@@ -147,4 +172,6 @@ interface LevelUpDao {
     @Query("DELETE FROM unlocked_achievements") suspend fun clearUnlocked()
     @Query("DELETE FROM mission_runs") suspend fun clearMissionRuns()
     @Query("DELETE FROM pauses") suspend fun clearPauses()
+    @Query("DELETE FROM favorites") suspend fun clearFavorites()
+    @Query("DELETE FROM personal_goals") suspend fun clearGoals()
 }

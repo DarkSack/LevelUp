@@ -24,6 +24,7 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     class Launchers(
         val activity: Activity,
         val export: ActivityResultLauncher<String>,
+        val exportCsv: ActivityResultLauncher<String>,
         val import: ActivityResultLauncher<Array<String>>,
         val permission: ActivityResultLauncher<String>,
     )
@@ -52,10 +53,10 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     override val systemReducedMotion: Boolean
         get() = Settings.Global.getFloat(app.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 
-    override suspend fun exportFile(fileName: String, content: String): Boolean {
+    override suspend fun exportFile(fileName: String, content: String, mimeType: String): Boolean {
         val l = launchers ?: return false
         val picked = CompletableDeferred<Uri?>().also { pendingExport = it }
-        withContext(Dispatchers.Main) { l.export.launch(fileName) }
+        withContext(Dispatchers.Main) { (if (mimeType == "text/csv") l.exportCsv else l.export).launch(fileName) }
         val uri = picked.await() ?: return false
         return withContext(Dispatchers.IO) {
             runCatching {

@@ -17,9 +17,22 @@ import app.levelup.domain.CustomChallenge
 import app.levelup.domain.CustomChallengeDraft
 import app.levelup.domain.CustomChallengeRules
 import app.levelup.domain.CustomStatus
+import app.levelup.content.Tags
+import app.levelup.domain.DayBlock
 import app.levelup.domain.DayKind
 import app.levelup.domain.DifficultyMode
 import app.levelup.domain.DraftField
+import app.levelup.domain.Favorite
+import app.levelup.domain.GoalRules
+import app.levelup.domain.GoalStatus
+import app.levelup.domain.NOTE_MAX
+import app.levelup.domain.PersonalGoal
+import app.levelup.domain.ReviewSuggestion
+import app.levelup.domain.Search
+import app.levelup.domain.SearchHit
+import app.levelup.domain.TodaySummary
+import app.levelup.domain.WeeklyReview
+import app.levelup.domain.WeeklySummary
 import app.levelup.domain.InstanceStatus
 import app.levelup.domain.Mission
 import app.levelup.domain.MissionRules
@@ -36,11 +49,13 @@ import app.levelup.domain.XpEntry
 import app.levelup.domain.XpRules
 import app.levelup.domain.XpSource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.random.Random
@@ -57,6 +72,8 @@ data class CompletionResult(
     val levelAfter: Int,
     val achievements: List<Achievement>,
     val missions: List<Mission>,
+    /** Primer reto tras una temporada sin actividad: suma [XpRules.COMEBACK_XP]. */
+    val comeback: Boolean = false,
 )
 
 /**
@@ -97,6 +114,14 @@ class LevelUpRepository(
     val pauses: Flow<List<Pause>> = dao.pauses()
     val customChallenges: Flow<List<CustomChallenge>> = dao.customChallenges()
     val customCategories: Flow<List<CustomCategory>> = dao.customCategories()
+    val favorites: Flow<List<Favorite>> = dao.favorites()
+    val goals: Flow<List<PersonalGoal>> = dao.goals()
+
+    /** Hoy, para el widget y el reloj. Se recalcula con cada cambio de retos o metas. */
+    val todaySummary: Flow<TodaySummary> =
+        combine(dao.instancesSinceFlow(today().minus(1, DateTimeUnit.DAY)), dao.goals()) { list, goals ->
+            TodaySummary.from(today(), list, goals)
+        }
 
     fun instancesOn(date: LocalDate): Flow<List<ChallengeInstance>> = dao.instancesOn(date)
     fun instance(id: String): Flow<ChallengeInstance?> = dao.instanceFlow(id)
@@ -130,8 +155,17 @@ class LevelUpRepository(
         val adjusted = applyAutoDifficulty(prefs, today)
         val kind = ChallengeEngine.dayKind(today, adjusted, dao.pausesNow())
         val challenges = allChallenges()
+        // Tras una temporada sin actividad, retos de recuperación: pocos, cortos y fáciles para retomar.
+        val pickPrefs = if (isReturning(today)) {
+            adjusted.copy(
+                difficulty = 1, categoryDifficulty = emptyMap(),
+                dailyCount = minOf(adjusted.dailyCount, 2), minutesPerDay = minOf(adjusted.minutesPerDay, 10),
+            )
+        } else {
+            adjusted
+        }
         val picks = if (kind == DayKind.ACTIVE) {
-            ChallengeEngine.dailyPicks(engineInput(today, adjusted, challenges), Random(today.toEpochDays()))
+            ChallengeEngine.dailyPicks(engineInput(today, pickPrefs, challenges), Random(today.toEpochDays()))
         } else {
             emptyList()
         }
@@ -149,11 +183,19 @@ class LevelUpRepository(
         return ChallengeEngine.dailyPicks(engineInput(today, prefs, allChallenges()), Random(today.toEpochDays()))
     }
 
-    /** Un reto más para hoy, también en días de descanso o pausa si el usuario lo pide. */
-    suspend fun addExtraToday(): ChallengeInstance? = tx {
+    /** true si el último reto completado fue hace [Stats.COMEBACK_GAP_DAYS] días o más (y hubo alguno). */
+    suspend fun isReturning(today: LocalDate = today()): Boolean =
+        dao.lastActiveBefore(today)?.let { it.daysUntil(today) >= Stats.COMEBACK_GAP_DAYS } ?: false
+
+    /**
+     * Un reto más para hoy, también en días de descanso o pausa si el usuario lo pide.
+     * Con [place] (clave de Tags) solo elige retos que se pueden hacer ahí.
+     */
+    suspend fun addExtraToday(place: String? = null): ChallengeInstance? = tx {
         val today = today()
         val existing = dao.instancesOnNow(today)
-        val input = engineInput(today, prefs(), allChallenges())
+        val pool = allChallenges().filter { place == null || place in it.tags }
+        val input = engineInput(today, prefs(), pool)
         val pick = ChallengeEngine.dailyPicks(input, Random.Default, count = 1, exclude = existing.map { it.challengeId }.toSet())
             .firstOrNull() ?: return@tx null
         newInstance(pick, today, (existing.maxOfOrNull { it.slot } ?: -1) + 1).also { dao.insertInstance(it) }
@@ -170,6 +212,26 @@ class LevelUpRepository(
             same.isDone || same.isOpen -> same
             else -> same.copy(status = InstanceStatus.PENDING).also { dao.updateInstance(it) }
         }
+    }
+
+    /** Un reto del catálogo que nunca has hecho, sin guardarlo ni tocar el plan del día. */
+    suspend fun surprise(): Challenge? {
+        val today = today()
+        val todayIds = dao.instancesOnNow(today).map { it.challengeId }.toSet()
+        return ChallengeEngine.surprise(engineInput(today, prefs(), Catalog.challenges), todayIds, Random.Default)
+    }
+
+    /** Nota del día sobre un reto (también en los ya hechos). Vacía la borra. */
+    suspend fun setNote(id: String, note: String): Result<Unit> = tx {
+        val clean = note.trim()
+        if (clean.length > NOTE_MAX) return@tx Result.failure(IllegalArgumentException("La nota puede tener hasta $NOTE_MAX caracteres."))
+        val inst = dao.instance(id) ?: return@tx Result.failure(IllegalStateException("Ese reto ya no existe."))
+        dao.updateInstance(inst.copy(note = clean.ifEmpty { null }))
+        Result.success(Unit)
+    }
+
+    suspend fun setBlock(id: String, block: DayBlock?) = tx {
+        dao.instance(id)?.let { dao.updateInstance(it.copy(block = block)) }
     }
 
     suspend fun start(id: String) = updateOpen(id) { it.copy(status = InstanceStatus.STARTED, startedAt = it.startedAt ?: now()) }
@@ -219,24 +281,64 @@ class LevelUpRepository(
      * Completa un reto: marca la instancia, suma su XP una sola vez, cierra misiones y desbloquea logros,
      * todo en una transacción. Completar algo ya completado no hace nada (devuelve null).
      */
-    suspend fun complete(id: String): CompletionResult? = tx {
+    suspend fun complete(id: String, minimal: Boolean = false): CompletionResult? = tx {
         val inst = dao.instance(id) ?: return@tx null
         if (inst.isDone || inst.status == InstanceStatus.REPLACED) return@tx null
         val before = dao.totalXpNow()
-        dao.updateInstance(inst.copy(status = InstanceStatus.COMPLETED, completedAt = now()))
-        dao.insertXp(xpEntry(XpSource.CHALLENGE, inst.id, inst.xp, inst.category))
+        // El primer reto de un día tras una temporada sin actividad se reconoce: se premia volver, no se castiga la ausencia.
+        val firstThatDay = dao.completedOn(inst.date) == 0
+        val comeback = firstThatDay && dao.lastActiveBefore(inst.date)?.let { it.daysUntil(inst.date) >= Stats.COMEBACK_GAP_DAYS } == true
+        val xp = if (minimal) XpRules.xpFor(1) else inst.xp
+        dao.updateInstance(inst.copy(status = InstanceStatus.COMPLETED, completedAt = now(), minimal = minimal, xp = xp))
+        dao.insertXp(xpEntry(XpSource.CHALLENGE, inst.id, xp, inst.category))
+        if (comeback) dao.insertXp(xpEntry(XpSource.COMEBACK, inst.date.toString(), XpRules.COMEBACK_XP, null))
         val missions = completeMissions(today())
         val achievements = awardAchievements()
         val after = dao.totalXpNow()
-        CompletionResult(after - before, XpRules.levelFor(before), XpRules.levelFor(after), achievements, missions)
+        CompletionResult(after - before, XpRules.levelFor(before), XpRules.levelFor(after), achievements, missions, comeback)
     }
 
-    /** Deshace un reto completado por error: vuelve a pendiente y quita su XP. Los logros ya ganados se quedan. */
+    /**
+     * Deshace un reto completado por error: vuelve a pendiente y quita su XP (y la de regreso si era el único
+     * del día). Los logros ya ganados se quedan.
+     */
     suspend fun undoComplete(id: String) = tx {
         val inst = dao.instance(id)?.takeIf { it.isDone } ?: return@tx
-        dao.updateInstance(inst.copy(status = InstanceStatus.PENDING, completedAt = null, rating = null))
+        dao.updateInstance(
+            inst.copy(status = InstanceStatus.PENDING, completedAt = null, rating = null, minimal = false, xp = XpRules.xpFor(inst.difficulty)),
+        )
         dao.deleteChallengeXp(inst.id)
+        if (dao.completedOn(inst.date) == 0) dao.deleteXp(XpSource.COMEBACK.name, inst.date.toString())
     }
+
+    // ── Favoritos y metas ─────────────────────────────────────────────────────
+
+    suspend fun toggleFavorite(challengeId: String): Boolean = tx {
+        val isFavorite = dao.favoritesNow().any { it.challengeId == challengeId }
+        if (isFavorite) dao.deleteFavorite(challengeId) else dao.upsertFavorite(Favorite(challengeId, now()))
+        !isFavorite
+    }
+
+    /** Crea o edita una meta. Error con texto para el usuario si no vale. */
+    suspend fun saveGoal(id: String?, title: String, why: String, targetDate: LocalDate?): Result<PersonalGoal> = tx {
+        GoalRules.validate(title, why)?.let { return@tx Result.failure(IllegalArgumentException(it)) }
+        val existing = id?.let { dao.goal(it) }
+        val goal = PersonalGoal(
+            id = existing?.id ?: newId(), title = title.trim(), why = why.trim(), targetDate = targetDate,
+            status = existing?.status ?: GoalStatus.ACTIVE, createdAt = existing?.createdAt ?: now(), updatedAt = now(),
+            achievedAt = existing?.achievedAt,
+        )
+        dao.upsertGoal(goal)
+        Result.success(goal)
+    }
+
+    suspend fun setGoalStatus(id: String, status: GoalStatus) = tx {
+        dao.goal(id)?.let {
+            dao.upsertGoal(it.copy(status = status, updatedAt = now(), achievedAt = if (status == GoalStatus.ACHIEVED) now() else null))
+        }
+    }
+
+    suspend fun deleteGoal(id: String) = tx { dao.deleteGoal(id) }
 
     // ── Dificultad adaptativa ─────────────────────────────────────────────────
 
@@ -314,16 +416,76 @@ class LevelUpRepository(
 
     // ── Pausas ────────────────────────────────────────────────────────────────
 
-    suspend fun startPause(): List<Achievement> = tx {
-        if (dao.pausesNow().none { it.endOn == null }) dao.upsertPause(Pause(today().toString(), today()))
+    /** Pausa desde hoy. Con [until], termina sola ese día (incluido); sin él, hasta que se quite a mano. */
+    suspend fun startPause(until: LocalDate? = null): List<Achievement> = tx {
+        val today = today()
+        if (dao.pausesNow().none { it.covers(today) }) dao.upsertPause(Pause(today.toString(), today, until?.takeIf { it >= today }))
         awardAchievements()
     }
 
     /** Termina la pausa: hoy vuelve a ser un día normal. */
     suspend fun endPause() = tx {
-        val open = dao.pausesNow().firstOrNull { it.endOn == null } ?: return@tx
-        val yesterday = today().minus(1, DateTimeUnit.DAY)
+        val today = today()
+        val open = dao.pausesNow().firstOrNull { it.covers(today) } ?: return@tx
+        val yesterday = today.minus(1, DateTimeUnit.DAY)
         if (yesterday < open.startOn) dao.deletePause(open.id) else dao.upsertPause(open.copy(endOn = yesterday))
+    }
+
+    /**
+     * Al volver de una pausa: los hábitos que no se marcan quedan en pausa (sin historial perdido) y el resto
+     * sigue como estaba. No hay retos atrasados que recuperar: los días de pausa no generan nada.
+     */
+    suspend fun resumeAfterPause(pauseId: String, keepHabits: Set<String>) = tx {
+        dao.customChallengesNow()
+            .filter { it.status == CustomStatus.ACTIVE && it.habitDays != 0 && it.id !in keepHabits }
+            .forEach { dao.upsertCustomChallenge(it.copy(status = CustomStatus.PAUSED, updatedAt = now())) }
+        dao.upsertPreferences(prefs().copy(lastPauseReviewed = pauseId))
+        dao.instancesOnNow(today()).filter { it.isHabit && it.isOpen && it.challengeId !in keepHabits }
+            .forEach { dao.updateInstance(it.copy(status = InstanceStatus.SKIPPED)) }
+    }
+
+    // ── Revisión semanal ──────────────────────────────────────────────────────
+
+    suspend fun weeklySummary(): WeeklySummary {
+        val today = today()
+        val from = today.minus(35, DateTimeUnit.DAY)
+        val history = dao.instancesSince(from)
+        val recentDone = history.mapNotNull { it.completedAt }.filter { dateOf(it) >= today.minus(28, DateTimeUnit.DAY) }
+        return WeeklyReview.compute(
+            today = today,
+            prefs = prefs(),
+            history = history,
+            xpByDay = dao.allXp().map { dateOf(it.createdAt) to it.amount }.filter { it.first >= from },
+            unlocked = dao.unlockedNow().mapNotNull { u -> AchievementCatalog.byId[u.achievementId]?.let { it.name to dateOf(u.unlockedAt) } },
+            completionMinutes = recentDone.map { Instant.fromEpochMilliseconds(it).toLocalDateTime(zone()).let { t -> t.hour * 60 + t.minute } },
+        )
+    }
+
+    suspend fun markWeeklyReviewed() = updatePreferences { it.copy(lastWeeklyReview = today()) }
+
+    suspend fun applyReviewSuggestion(s: ReviewSuggestion) = updatePreferences {
+        when (s) {
+            is ReviewSuggestion.FewerPerDay -> it.copy(dailyCount = s.to)
+            is ReviewSuggestion.MorePerDay -> it.copy(dailyCount = s.to)
+            is ReviewSuggestion.MoveReminder -> it.copy(reminderMinute = s.minuteOfDay)
+            is ReviewSuggestion.ReminderDays -> it.copy(reminderDays = s.mask)
+        }
+    }
+
+    // ── Búsqueda y exportación ────────────────────────────────────────────────
+
+    suspend fun search(query: String): List<SearchHit> = Search.run(
+        query,
+        Catalog.challenges + dao.customChallengesNow().filter { it.status != CustomStatus.ARCHIVED }.map { it.toChallenge() },
+        AchievementCatalog.all,
+        dao.goalsNow(),
+        dao.withNotes(),
+    )
+
+    /** Historial en CSV para una hoja de cálculo. */
+    suspend fun exportCsv(): String {
+        val custom = dao.customCategoriesNow()
+        return CsvExport.instances(dao.allInstances()) { Categories.name(it, custom) }
     }
 
     // ── Retos propios ─────────────────────────────────────────────────────────
@@ -352,6 +514,9 @@ class LevelUpRepository(
             status = existing?.status ?: CustomStatus.ACTIVE,
             createdAt = existing?.createdAt ?: now(),
             updatedAt = now(),
+            tags = draft.tags.filter { it in Tags.all }.distinct(),
+            minimum = draft.minimum.trim(),
+            block = draft.block,
         )
         dao.upsertCustomChallenge(saved)
         addHabitToTodayIfScheduled(saved)
@@ -444,6 +609,8 @@ class LevelUpRepository(
                 achievements = dao.unlockedNow(),
                 missions = dao.missionRunsNow(),
                 pauses = dao.pausesNow(),
+                favorites = dao.favoritesNow(),
+                goals = dao.goalsNow(),
             ),
         )
     }
@@ -461,6 +628,8 @@ class LevelUpRepository(
             dao.insertAllUnlocked(backup.achievements)
             dao.insertAllMissionRuns(backup.missions)
             dao.insertAllPauses(backup.pauses)
+            dao.insertAllFavorites(backup.favorites)
+            dao.insertAllGoals(backup.goals)
         }
         return Result.success(Unit)
     }
@@ -477,6 +646,8 @@ class LevelUpRepository(
         dao.clearUnlocked()
         dao.clearMissionRuns()
         dao.clearPauses()
+        dao.clearFavorites()
+        dao.clearGoals()
     }
 
     // ── Auxiliares ────────────────────────────────────────────────────────────
@@ -492,6 +663,6 @@ class LevelUpRepository(
     private fun newInstance(c: Challenge, date: LocalDate, slot: Int) = ChallengeInstance(
         id = "$date|${c.id}", challengeId = c.id, source = c.source, title = c.title, category = c.category,
         difficulty = c.difficulty, minutes = c.minutes, xp = c.xp, date = date, slot = slot, isHabit = c.isHabit,
-        createdAt = now(),
+        createdAt = now(), block = c.block,
     )
 }

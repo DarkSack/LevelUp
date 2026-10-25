@@ -10,6 +10,9 @@ object XpRules {
     /** XP total para llegar al nivel L: step × L × (L − 1). Nivel 2 = 100, 3 = 300, 4 = 600… */
     const val LEVEL_STEP = 50
 
+    /** XP por retomar: el primer reto completado tras [Stats.COMEBACK_GAP_DAYS] días o más sin actividad. */
+    const val COMEBACK_XP = 20
+
     /** Lo mismo para el nivel de cada categoría, con la mitad de paso. */
     const val CATEGORY_STEP = 25
 

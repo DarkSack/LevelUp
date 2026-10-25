@@ -11,9 +11,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,8 +39,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.levelup.HealthToday
+import app.levelup.content.Categories
+import app.levelup.content.Lab
 import app.levelup.domain.Challenge
+import app.levelup.domain.DayBlock
 import app.levelup.domain.InstanceStatus
+import app.levelup.domain.NOTE_MAX
 import app.levelup.domain.Rating
 import app.levelup.ui.Fmt
 import app.levelup.ui.LevelUpViewModel
@@ -49,6 +60,7 @@ import app.levelup.ui.components.SecondaryButton
 import app.levelup.ui.components.SectionTitle
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
+import app.levelup.ui.theme.gameOn
 import kotlinx.coroutines.delay
 
 /** Detalle de un reto concreto de hoy: pasos, temporizador opcional y acciones sin penalización. */
@@ -60,8 +72,12 @@ fun InstanceDetailScreen(vm: LevelUpViewModel, nav: Nav, instanceId: String) {
     val recent by vm.recent.collectAsStateWithLifecycle()
     val inst = (today + recent).firstOrNull { it.id == instanceId }
     val definition by produceState<Challenge?>(null, inst?.challengeId) { value = inst?.let { vm.challenge(it.challengeId) } }
+    val favorites by vm.favorites.collectAsStateWithLifecycle()
 
-    ScreenScaffold(inst?.title ?: "Reto", onBack = nav::back) { padding ->
+    ScreenScaffold(
+        inst?.title ?: "Reto", onBack = nav::back,
+        actions = { if (inst != null) FavoriteButton(inst.challengeId in favorites) { vm.toggleFavorite(inst.challengeId) } },
+    ) { padding ->
         if (inst == null) return@ScreenScaffold
         Column(
             Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Space.l),
@@ -70,14 +86,19 @@ fun InstanceDetailScreen(vm: LevelUpViewModel, nav: Nav, instanceId: String) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CategoryLabel(inst.category, custom)
                 Spacer(Modifier.size(Space.m))
-                Text("${Fmt.minutes(inst.minutes)} · +${inst.xp} XP", style = MaterialTheme.typography.labelMedium)
+                Text(Fmt.minutes(inst.minutes) + if (prefs.gameOn) " · +${inst.xp} XP" else "", style = MaterialTheme.typography.labelMedium)
             }
             DifficultyLabel(inst.difficulty)
-            Text("Estado: ${statusText(inst)}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text("Estado: ${statusText(inst)}" + if (inst.minimal) " (versión mínima)" else "",
+                style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             if (inst.isHabit) Text("Es uno de tus hábitos.", style = MaterialTheme.typography.bodySmall)
 
             val d = definition
             if (d != null) ChallengeInfo(d) else Text("Este reto ya no existe en tu lista, pero queda en tu historial.")
+
+            if (Lab.HEALTH in prefs.labFlags && inst.category == Categories.FISICO) {
+                HealthCard(vm, inst.minutes, if (inst.isOpen) ({ vm.complete(inst.id) }) else null)
+            }
 
             if (d != null && prefs.showSteps && d.steps.isNotEmpty()) {
                 SectionTitle("Pasos")
@@ -97,10 +118,20 @@ fun InstanceDetailScreen(vm: LevelUpViewModel, nav: Nav, instanceId: String) {
 
             if (prefs.focusTimer && inst.isOpen) FocusTimer(inst.minutes)
 
+            if (inst.isOpen || inst.date == vm.today.value) {
+                ChoiceRow(
+                    "Momento del día", listOf(null to "Cualquiera") + DayBlock.entries.map { it to Fmt.block(it) }, inst.block,
+                    { vm.setBlock(inst.id, it) },
+                )
+            }
+            NoteField(inst.id, inst.note, vm::setNote)
+
             Spacer(Modifier.size(Space.m))
             when {
                 inst.isOpen -> {
                     PrimaryButton("Completar", { vm.complete(inst.id) })
+                    if (d != null && d.minimum.isNotBlank()) SecondaryButton("Hice la versión mínima", { vm.completeMinimal(inst.id) })
+                    SecondaryButton("Modo concentración", { nav.focus(inst.id) })
                     if (inst.status == InstanceStatus.STARTED) {
                         SecondaryButton("Pausar", { vm.pause(inst.id) })
                     } else {
@@ -143,7 +174,12 @@ fun CatalogDetailScreen(vm: LevelUpViewModel, nav: Nav, challengeId: String) {
     val custom by vm.customCategories.collectAsStateWithLifecycle()
     val today by vm.todayInstances.collectAsStateWithLifecycle()
     val c by produceState<Challenge?>(null, challengeId) { value = vm.challenge(challengeId) }
-    ScreenScaffold(c?.title ?: "Reto", onBack = nav::back) { padding ->
+    val favorites by vm.favorites.collectAsStateWithLifecycle()
+    val gameOn = LocalPrefs.current.gameOn
+    ScreenScaffold(
+        c?.title ?: "Reto", onBack = nav::back,
+        actions = { FavoriteButton(challengeId in favorites) { vm.toggleFavorite(challengeId) } },
+    ) { padding ->
         val challenge = c ?: return@ScreenScaffold
         Column(
             Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Space.l),
@@ -152,7 +188,7 @@ fun CatalogDetailScreen(vm: LevelUpViewModel, nav: Nav, challengeId: String) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CategoryLabel(challenge.category, custom)
                 Spacer(Modifier.size(Space.m))
-                Text("${Fmt.minutes(challenge.minutes)} · +${challenge.xp} XP", style = MaterialTheme.typography.labelMedium)
+                Text(Fmt.minutes(challenge.minutes) + if (gameOn) " · +${challenge.xp} XP" else "", style = MaterialTheme.typography.labelMedium)
             }
             DifficultyLabel(challenge.difficulty)
             ChallengeInfo(challenge)
@@ -173,10 +209,55 @@ fun CatalogDetailScreen(vm: LevelUpViewModel, nav: Nav, challengeId: String) {
 }
 
 @Composable
+private fun FavoriteButton(favorite: Boolean, onToggle: () -> Unit) {
+    IconButton(onClick = onToggle) {
+        Icon(
+            if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+            contentDescription = if (favorite) "Quitar de favoritos" else "Guardar en favoritos",
+        )
+    }
+}
+
+/** Nota libre del día sobre el reto. Se busca desde Inicio → Buscar. */
+@Composable
+private fun NoteField(id: String, saved: String?, onSave: (String, String) -> Unit) {
+    var text by rememberSaveable(id, saved) { mutableStateOf(saved.orEmpty()) }
+    SectionTitle("Nota (opcional)")
+    OutlinedTextField(
+        text, { text = it.take(NOTE_MAX) }, Modifier.fillMaxWidth(),
+        placeholder = { Text("Cómo te fue, qué te ayudó…") }, minLines = 2,
+        supportingText = { Text("${text.length}/$NOTE_MAX") },
+    )
+    if (text.trim() != saved.orEmpty()) {
+        TextButton(onClick = { onSave(id, text) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Guardar nota") }
+    }
+}
+
+/** Actividad de hoy leída de Health Connect. Solo se muestra; nada se guarda ni se sube. */
+@Composable
+private fun HealthCard(vm: LevelUpViewModel, minutes: Int, onComplete: (() -> Unit)?) {
+    val health = vm.health ?: return
+    val data by produceState<HealthToday?>(null) { value = runCatching { health.today() }.getOrNull() }
+    val d = data ?: return
+    InfoCard(container = MaterialTheme.colorScheme.secondaryContainer) {
+        Text("Tu actividad de hoy", style = MaterialTheme.typography.titleSmall)
+        Text("${d.steps} pasos · ${d.exerciseMinutes} min de ejercicio (Health Connect)", style = MaterialTheme.typography.bodyMedium)
+        if (onComplete != null && d.exerciseMinutes >= minutes) {
+            Text("Parece que ya lo hiciste.", style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = onComplete, modifier = Modifier.heightIn(min = 48.dp)) { Text("Marcarlo como hecho") }
+        }
+    }
+}
+
+@Composable
 private fun ChallengeInfo(c: Challenge) {
     Text(c.description, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Space.s))
     SectionTitle("Qué hacer")
     Text(c.goal, style = MaterialTheme.typography.bodyLarge)
+    if (c.minimum.isNotBlank()) {
+        SectionTitle("Versión mínima")
+        Text("Para días difíciles: ${c.minimum}", style = MaterialTheme.typography.bodyLarge)
+    }
     if (c.doneWhen.isNotBlank()) {
         SectionTitle("Está hecho cuando")
         Text(c.doneWhen, style = MaterialTheme.typography.bodyLarge)
@@ -191,7 +272,7 @@ private fun ChallengeInfo(c: Challenge) {
 
 /** Cronómetro opcional: cuenta hacia arriba y no suena. Llegar a la duración estimada no obliga a nada. */
 @Composable
-private fun FocusTimer(targetMinutes: Int) {
+fun FocusTimer(targetMinutes: Int) {
     var running by rememberSaveable { mutableStateOf(false) }
     var seconds by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(running) {

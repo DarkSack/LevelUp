@@ -57,8 +57,10 @@ import app.levelup.ui.components.ScreenScaffold
 import app.levelup.ui.components.SecondaryButton
 import app.levelup.ui.components.SectionTitle
 import app.levelup.ui.components.TrophyBadge
+import app.levelup.ShareCard
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
+import app.levelup.ui.theme.gameOn
 
 @Composable
 fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
@@ -74,7 +76,7 @@ fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Uni
             contentPadding = PaddingValues(start = Space.l, end = Space.l, top = padding.calculateTopPadding(),
                 bottom = padding.calculateBottomPadding() + Space.xl),
         ) {
-            item {
+            if (prefs.gameOn) item {
                 InfoCard(Modifier.padding(top = Space.s)) {
                     Text("Nivel ${p.level.level} · ${XpRules.titleFor(p.level.level)}", style = MaterialTheme.typography.titleLarge)
                     LabeledProgress(p.level.fraction, "${p.level.totalXp} XP en total · ${p.level.xpForNext - p.level.xpInLevel} para el siguiente nivel",
@@ -86,22 +88,24 @@ fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Uni
                 PrimaryButton("Logros y trofeos", nav::achievements, Modifier.padding(top = Space.m))
             }
 
-            item { SectionTitle("Por categoría") }
-            if (p.categoryLevels.isEmpty()) {
-                item { Text("Completa tu primer reto para ver tus categorías.", style = MaterialTheme.typography.bodyMedium) }
-            }
-            items(p.categoryLevels.entries.sortedByDescending { it.value.totalXp }, key = { it.key }) { (key, lp) ->
-                LabeledProgress(lp.fraction, "${Categories.name(key, custom)} · nivel ${lp.level} · ${lp.totalXp} XP",
-                    Modifier.padding(vertical = Space.xs))
-            }
-            item {
-                Text("Los niveles miden lo que has practicado aquí, no lo que vales.", style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Space.xs))
-            }
+            if (prefs.gameOn) {
+                item { SectionTitle("Por categoría") }
+                if (p.categoryLevels.isEmpty()) {
+                    item { Text("Completa tu primer reto para ver tus categorías.", style = MaterialTheme.typography.bodyMedium) }
+                }
+                items(p.categoryLevels.entries.sortedByDescending { it.value.totalXp }, key = { it.key }) { (key, lp) ->
+                    LabeledProgress(lp.fraction, "${Categories.name(key, custom)} · nivel ${lp.level} · ${lp.totalXp} XP",
+                        Modifier.padding(vertical = Space.xs))
+                }
+                item {
+                    Text("Los niveles miden lo que has practicado aquí, no lo que vales.", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Space.xs))
+                }
 
-            item {
-                SectionTitle("XP por semana")
-                WeeklyChart(p.weeklyXp)
+                item {
+                    SectionTitle("XP por semana")
+                    WeeklyChart(p.weeklyXp)
+                }
             }
 
             item {
@@ -264,6 +268,12 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
         AlertDialog(
             onDismissRequest = { selected = null },
             confirmButton = { TextButton(onClick = { selected = null }) { Text("Cerrar") } },
+            dismissButton = {
+                val on = v.unlockedOn
+                if (v.state == AchievementState.UNLOCKED && on != null) {
+                    TextButton(onClick = { vm.share(ShareCard(a.name, a.description, a.tier, Fmt.dayWithYear(on))) }) { Text("Compartir") }
+                }
+            },
             icon = { TrophyBadge(a.tier, v.state, 56.dp) },
             title = { Text(a.name) },
             text = {

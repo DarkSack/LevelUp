@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.levelup.content.Catalog
 import app.levelup.content.Categories
+import app.levelup.content.Tags
 import app.levelup.domain.CustomStatus
 import app.levelup.domain.InstanceStatus
 import app.levelup.ui.Fmt
@@ -34,6 +35,8 @@ import app.levelup.ui.LevelUpViewModel
 import app.levelup.ui.Nav
 import app.levelup.ui.components.ChoiceRow
 import app.levelup.ui.components.EmptyState
+import app.levelup.ui.components.MultiChoiceRow
+import app.levelup.ui.extra.PlaceDialog
 import app.levelup.ui.components.ScreenScaffold
 import app.levelup.ui.components.SecondaryButton
 import app.levelup.ui.theme.Space
@@ -77,12 +80,17 @@ private fun TodayTab(vm: LevelUpViewModel, nav: Nav) {
     val today by vm.todayInstances.collectAsStateWithLifecycle()
     val custom by vm.customCategories.collectAsStateWithLifecycle()
     val visible = today.filter { it.status != InstanceStatus.REPLACED }
+    var askPlace by rememberSaveable { mutableStateOf(false) }
     LazyColumn(contentPadding = listPadding) {
         if (visible.isEmpty()) item { EmptyState("Hoy no hay retos", "Puede ser un día de descanso. Si te apetece, añade uno.") }
         items(visible, key = { it.id }) { i -> InstanceRow(i, custom, { vm.complete(i.id) }, { nav.instance(i.id) }) }
-        item { SecondaryButton("Quiero otro reto", vm::addExtraToday, Modifier.padding(top = Space.m)) }
+        item { SecondaryButton("Quiero otro reto", { askPlace = true }, Modifier.padding(top = Space.m)) }
     }
+    if (askPlace) PlaceDialog(onPick = { askPlace = false; vm.addExtraToday(it) }, onDismiss = { askPlace = false })
 }
+
+private const val NO_MATERIALS = "sin_materiales"
+private const val FAVORITES = "favoritos"
 
 @Composable
 private fun ExploreTab(vm: LevelUpViewModel, nav: Nav) {
@@ -90,10 +98,20 @@ private fun ExploreTab(vm: LevelUpViewModel, nav: Nav) {
     var category by rememberSaveable { mutableStateOf("") }
     var difficulty by rememberSaveable { mutableIntStateOf(0) }
     var maxMinutes by rememberSaveable { mutableIntStateOf(0) }
-    val list = Catalog.challenges.filter { c ->
+    var place by rememberSaveable { mutableStateOf("") }
+    var flags by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val favorites by vm.favorites.collectAsStateWithLifecycle()
+    val customs by vm.customChallenges.collectAsStateWithLifecycle()
+    // Los favoritos pueden ser también retos propios; el resto de la lista es el catálogo.
+    val pool = if (FAVORITES in flags) Catalog.challenges + customs.filter { it.status != CustomStatus.ARCHIVED }.map { it.toChallenge() }
+    else Catalog.challenges
+    val list = pool.filter { c ->
         (category.isEmpty() || c.category == category) &&
             (difficulty == 0 || c.difficulty == difficulty) &&
-            when (maxMinutes) { 0 -> true; 999 -> c.minutes > 30; else -> c.minutes <= maxMinutes }
+            when (maxMinutes) { 0 -> true; 999 -> c.minutes > 30; else -> c.minutes <= maxMinutes } &&
+            (place.isEmpty() || place in c.tags) &&
+            (NO_MATERIALS !in flags || Tags.SIN_MATERIALES in c.tags) &&
+            (FAVORITES !in flags || c.id in favorites)
     }
     LazyColumn(contentPadding = listPadding) {
         item {
@@ -101,11 +119,15 @@ private fun ExploreTab(vm: LevelUpViewModel, nav: Nav) {
             ChoiceRow("Dificultad", listOf(0 to "Todas") + (1..5).map { it to Fmt.difficulty(it) }, difficulty, { difficulty = it })
             ChoiceRow("Duración", listOf(0 to "Todas", 5 to "Hasta 5 min", 15 to "Hasta 15 min", 30 to "Hasta 30 min", 999 to "Más de 30 min"),
                 maxMinutes, { maxMinutes = it })
+            ChoiceRow("Lugar", listOf("" to "Cualquiera") + Tags.places, place, { place = it })
+            MultiChoiceRow(listOf(NO_MATERIALS to "Sin materiales", FAVORITES to "Solo favoritos"), flags.toSet()) { f ->
+                flags = if (f in flags) flags - f else flags + f
+            }
             Text(Fmt.plural(list.size, "reto", "retos"), style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(vertical = Space.s).semantics { heading() })
         }
         if (list.isEmpty()) item { EmptyState("Nada con esos filtros", "Prueba a quitar alguno.") }
-        items(list, key = { it.id }) { c -> ChallengeRow(c, custom) { nav.catalog(c.id) } }
+        items(list, key = { it.id }) { c -> ChallengeRow(c, custom, favorite = c.id in favorites) { nav.catalog(c.id) } }
     }
 }
 

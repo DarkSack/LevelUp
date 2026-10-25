@@ -13,7 +13,9 @@ import androidx.sqlite.execSQL
 import app.levelup.domain.ChallengeInstance
 import app.levelup.domain.CustomCategory
 import app.levelup.domain.CustomChallenge
+import app.levelup.domain.Favorite
 import app.levelup.domain.MissionRun
+import app.levelup.domain.PersonalGoal
 import app.levelup.domain.Pause
 import app.levelup.domain.Preferences
 import app.levelup.domain.UnlockedAchievement
@@ -84,6 +86,8 @@ private val syncedTables = listOf(
     SyncedTable("unlocked_achievements", "achievement", "achievementId"),
     SyncedTable("mission_runs", "mission_run"),
     SyncedTable("pauses", "pause"),
+    SyncedTable("favorites", "favorite", "challengeId"),
+    SyncedTable("personal_goals", "goal"),
 )
 
 /** Milisegundos desde 1970 según SQLite (precisión de ms, a diferencia de strftime('%s')). */
@@ -153,6 +157,10 @@ interface SyncDao {
     suspend fun dirtyMissionRuns()
     @Query("INSERT OR REPLACE INTO sync_outbox (entity, entityId, changedAt) SELECT 'pause', id, 0 FROM pauses")
     suspend fun dirtyPauses()
+    @Query("INSERT OR REPLACE INTO sync_outbox (entity, entityId, changedAt) SELECT 'favorite', challengeId, createdAt FROM favorites")
+    suspend fun dirtyFavorites()
+    @Query("INSERT OR REPLACE INTO sync_outbox (entity, entityId, changedAt) SELECT 'goal', id, updatedAt FROM personal_goals")
+    suspend fun dirtyGoals()
 
     @Query("SELECT * FROM preferences WHERE id = :id") suspend fun preferences(id: Int): Preferences?
     @Query("SELECT * FROM custom_categories WHERE id = :id") suspend fun customCategory(id: String): CustomCategory?
@@ -162,6 +170,8 @@ interface SyncDao {
     @Query("SELECT * FROM unlocked_achievements WHERE achievementId = :id") suspend fun achievement(id: String): UnlockedAchievement?
     @Query("SELECT * FROM mission_runs WHERE id = :id") suspend fun missionRun(id: String): MissionRun?
     @Query("SELECT * FROM pauses WHERE id = :id") suspend fun pause(id: String): Pause?
+    @Query("SELECT * FROM favorites WHERE challengeId = :id") suspend fun favorite(id: String): Favorite?
+    @Query("SELECT * FROM personal_goals WHERE id = :id") suspend fun goal(id: String): PersonalGoal?
 
     @Upsert suspend fun putPreferences(value: Preferences)
     @Upsert suspend fun putCustomCategory(value: CustomCategory)
@@ -171,6 +181,8 @@ interface SyncDao {
     @Upsert suspend fun putAchievement(value: UnlockedAchievement)
     @Upsert suspend fun putMissionRun(value: MissionRun)
     @Upsert suspend fun putPause(value: Pause)
+    @Upsert suspend fun putFavorite(value: Favorite)
+    @Upsert suspend fun putGoal(value: PersonalGoal)
 
     // Filas locales antiguas (de antes de los ids deterministas) que representan lo mismo con otro id.
     @Query("DELETE FROM challenge_instances WHERE challengeId = :challengeId AND date = :date AND id <> :id")
@@ -186,6 +198,8 @@ interface SyncDao {
     @Query("DELETE FROM unlocked_achievements WHERE achievementId = :id") suspend fun deleteAchievement(id: String)
     @Query("DELETE FROM mission_runs WHERE id = :id") suspend fun deleteMissionRun(id: String)
     @Query("DELETE FROM pauses WHERE id = :id") suspend fun deletePause(id: String)
+    @Query("DELETE FROM favorites WHERE challengeId = :id") suspend fun deleteFavorite(id: String)
+    @Query("DELETE FROM personal_goals WHERE id = :id") suspend fun deleteGoal(id: String)
 }
 
 /** Cómo leer, escribir y borrar cada tipo de registro sincronizado. */
@@ -206,6 +220,8 @@ private val kinds: Map<String, Kind<*>> = mapOf(
     "achievement" to Kind(UnlockedAchievement.serializer(), { achievement(it) }, { putAchievement(it) }, { deleteAchievement(it) }),
     "mission_run" to Kind(MissionRun.serializer(), { missionRun(it) }, { putMissionRun(it) }, { deleteMissionRun(it) }),
     "pause" to Kind(Pause.serializer(), { pause(it) }, { putPause(it) }, { deletePause(it) }),
+    "favorite" to Kind(Favorite.serializer(), { favorite(it) }, { putFavorite(it) }, { deleteFavorite(it) }),
+    "goal" to Kind(PersonalGoal.serializer(), { goal(it) }, { putGoal(it) }, { deleteGoal(it) }),
 )
 
 /**
@@ -242,6 +258,8 @@ class SyncEngine(
         dao.dirtyAchievements()
         dao.dirtyMissionRuns()
         dao.dirtyPauses()
+        dao.dirtyFavorites()
+        dao.dirtyGoals()
     }
 
     /** Salir de la cuenta. Con `wipeLocal` se borra todo lo de este teléfono (sigue en la cuenta). */
@@ -250,6 +268,7 @@ class SyncEngine(
         if (wipeLocal) {
             data.clearPreferences(); data.clearCustomCategories(); data.clearCustomChallenges(); data.clearInstances()
             data.clearXp(); data.clearUnlocked(); data.clearMissionRuns(); data.clearPauses()
+            data.clearFavorites(); data.clearGoals()
         }
         dao.clearOutbox()
         dao.putState(SyncState())

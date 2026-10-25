@@ -14,15 +14,21 @@ enum class ChallengeSource { CATALOG, CUSTOM }
 enum class InstanceStatus { PENDING, STARTED, PAUSED, COMPLETED, SKIPPED, REPLACED }
 enum class Rating { EASY, RIGHT, HARD }
 enum class CustomStatus { ACTIVE, PAUSED, ARCHIVED }
-enum class XpSource { CHALLENGE, ACHIEVEMENT, MISSION }
+/** COMEBACK: XP por retomar tras una pausa larga (una vez por regreso). */
+enum class XpSource { CHALLENGE, ACHIEVEMENT, MISSION, COMEBACK }
 enum class MissionStatus { ACTIVE, COMPLETED, EXPIRED }
 enum class DifficultyMode { MANUAL, SUGGEST, AUTO }
 enum class NotificationLevel { OFF, LOW, NORMAL }
 enum class MotionPref { SYSTEM, REDUCED, FULL }
 enum class ThemePref { SYSTEM, LIGHT, DARK }
 
-/** FULL: XP, rachas y celebraciones. CALM: sin rachas ni celebraciones. */
-enum class GamificationStyle { FULL, CALM }
+/** FULL: XP, rachas y celebraciones. CALM: sin rachas ni celebraciones. OFF: ni XP ni niveles a la vista, solo hábitos. */
+enum class GamificationStyle { FULL, CALM, OFF }
+
+/** Momento del día en que se piensa hacer un reto. null = cuando sea. */
+enum class DayBlock { MORNING, AFTERNOON, EVENING }
+
+enum class GoalStatus { ACTIVE, ACHIEVED, ARCHIVED }
 
 /** Definición de un reto (catálogo o propio). Lo que hay que hacer un día concreto es [ChallengeInstance]. */
 data class Challenge(
@@ -49,6 +55,10 @@ data class Challenge(
     val habitDays: Int = 0,
     val availableFrom: LocalDate? = null,
     val contentVersion: Int = 1,
+    /** Versión mínima de un reto propio («al menos ponerme las zapatillas»). Vacía = no tiene. */
+    val minimum: String = "",
+    /** Momento del día por defecto (hábitos propios). */
+    val block: DayBlock? = null,
 ) {
     val xp: Int get() = XpRules.xpFor(difficulty)
     val isHabit: Boolean get() = habitDays != 0
@@ -105,6 +115,20 @@ data class Preferences(
     @ColumnInfo(defaultValue = "1") val socialNotifications: Boolean = true,
     /** Color de acento. Los distintos de [DEFAULT_ACCENT] son de LevelUp Plus. */
     @ColumnInfo(defaultValue = "teal") val accent: String = DEFAULT_ACCENT,
+    /** Colores apagados, sin animaciones ni ventanas de celebración. */
+    @ColumnInfo(defaultValue = "0") val lowStimulation: Boolean = false,
+    /** Impide capturas de pantalla en las pantallas con datos personales (cuenta, datos, metas). */
+    @ColumnInfo(defaultValue = "0") val secureScreens: Boolean = false,
+    /** Funciones experimentales activadas (ver content/Lab.kt). */
+    @ColumnInfo(defaultValue = "[]") val labFlags: List<String> = emptyList(),
+    /** Días en que puede sonar el recordatorio (máscara de [Days]). */
+    @ColumnInfo(defaultValue = "127") val reminderDays: Int = Days.ALL,
+    /** Último día en que se hizo la revisión semanal. */
+    val lastWeeklyReview: LocalDate? = null,
+    /** Última pausa terminada cuya vuelta ya se repasó (qué hábitos retomar). */
+    val lastPauseReviewed: String? = null,
+    /** Avatar elegido (clave de content/Avatars.kt). Vacío = la inicial del nombre. */
+    @ColumnInfo(defaultValue = "") val avatar: String = "",
 ) {
     fun difficultyFor(category: String): Int = categoryDifficulty[category] ?: difficulty
 }
@@ -135,11 +159,15 @@ data class CustomChallenge(
     val status: CustomStatus,
     val createdAt: Long,
     val updatedAt: Long,
+    /** Lugar y «sin materiales» (claves de content/Tags.kt). */
+    @ColumnInfo(defaultValue = "[]") val tags: List<String> = emptyList(),
+    @ColumnInfo(defaultValue = "") val minimum: String = "",
+    val block: DayBlock? = null,
 ) {
     fun toChallenge() = Challenge(
         id = id, title = title, description = description, category = category, goal = goal,
         doneWhen = doneWhen, difficulty = difficulty, minutes = minutes, frequency = frequency,
-        steps = steps, source = ChallengeSource.CUSTOM, habitDays = habitDays,
+        steps = steps, tags = tags, source = ChallengeSource.CUSTOM, habitDays = habitDays, minimum = minimum, block = block,
     )
 }
 
@@ -170,6 +198,11 @@ data class ChallengeInstance(
     val createdAt: Long,
     val startedAt: Long? = null,
     val completedAt: Long? = null,
+    /** Nota libre del usuario sobre ese día (se puede buscar). */
+    val note: String? = null,
+    val block: DayBlock? = null,
+    /** Se completó en su versión mínima (da la XP de dificultad 1). */
+    @ColumnInfo(defaultValue = "0") val minimal: Boolean = false,
 ) {
     val isDone: Boolean get() = status == InstanceStatus.COMPLETED
     val isOpen: Boolean get() = status == InstanceStatus.PENDING || status == InstanceStatus.STARTED || status == InstanceStatus.PAUSED
@@ -216,3 +249,50 @@ data class Pause(
 ) {
     fun covers(day: LocalDate): Boolean = day >= startOn && (endOn == null || day <= endOn)
 }
+
+object PauseRules {
+    /** Días tras el final de una pausa en que todavía se ofrece elegir qué hábitos retomar. */
+    const val RETURN_WINDOW_DAYS = 30
+
+    /** La pausa terminada más reciente cuya vuelta aún no se repasó, si terminó hace poco. */
+    fun pendingReturn(today: LocalDate, pauses: List<Pause>, lastReviewed: String?): Pause? {
+        val latest = pauses.filter { it.endOn != null && it.endOn < today }.maxByOrNull { it.endOn!! } ?: return null
+        if (latest.id == lastReviewed) return null
+        if (latest.endOn!!.toEpochDays() < today.toEpochDays() - RETURN_WINDOW_DAYS) return null
+        return latest
+    }
+}
+
+/** Reto guardado para repetirlo. Sirve para retos del catálogo y propios. */
+@Serializable
+@Entity(tableName = "favorites")
+data class Favorite(@PrimaryKey val challengeId: String, val createdAt: Long)
+
+/** Meta personal: algo que importa aunque no sea un reto del catálogo («terminar el curso de inglés»). */
+@Serializable
+@Entity(tableName = "personal_goals")
+data class PersonalGoal(
+    @PrimaryKey val id: String,
+    val title: String,
+    val why: String = "",
+    val targetDate: LocalDate? = null,
+    val status: GoalStatus = GoalStatus.ACTIVE,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val achievedAt: Long? = null,
+)
+
+object GoalRules {
+    const val TITLE_MAX = 60
+    const val WHY_MAX = 200
+
+    /** Texto del error para el usuario, o null si vale. */
+    fun validate(title: String, why: String): String? = when {
+        title.trim().length < 3 -> "Escribe la meta con al menos 3 letras."
+        title.trim().length > TITLE_MAX -> "La meta puede tener hasta $TITLE_MAX caracteres."
+        why.trim().length > WHY_MAX -> "El motivo puede tener hasta $WHY_MAX caracteres."
+        else -> null
+    }
+}
+
+const val NOTE_MAX = 280

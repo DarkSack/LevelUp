@@ -13,6 +13,7 @@ class MainActivity : ComponentActivity() {
     private val launchers = AndroidPlatform.Launchers(
         activity = this,
         export = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { app.platform.onExportPicked(it) },
+        exportCsv = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { app.platform.onExportPicked(it) },
         import = registerForActivityResult(ActivityResultContracts.OpenDocument()) { app.platform.onImportPicked(it) },
         permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { app.platform.onPermissionResult(it) },
     )

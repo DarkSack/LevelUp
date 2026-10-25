@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.levelup.content.Categories
+import app.levelup.content.Tags
+import app.levelup.domain.DayBlock
 import app.levelup.domain.CustomChallenge
 import app.levelup.domain.CustomChallengeDraft
 import app.levelup.domain.CustomChallengeRules
@@ -66,7 +68,10 @@ fun CustomEditScreen(vm: LevelUpViewModel, nav: Nav, id: String?) {
         if (id != null) {
             vm.customChallenge(id)?.let { c ->
                 existing = c
-                draft = CustomChallengeDraft(c.title, c.description, c.category, c.goal, c.doneWhen, c.difficulty, c.minutes, c.frequency, c.habitDays, c.steps)
+                draft = CustomChallengeDraft(
+                    c.title, c.description, c.category, c.goal, c.doneWhen, c.difficulty, c.minutes, c.frequency, c.habitDays, c.steps,
+                    c.tags, c.minimum, c.block,
+                )
                 repeat = when {
                     c.habitDays != 0 -> Repeat.HABIT
                     c.frequency == Frequency.WEEKLY -> Repeat.WEEKLY
@@ -90,6 +95,8 @@ fun CustomEditScreen(vm: LevelUpViewModel, nav: Nav, id: String?) {
             Field("Está hecho cuando (opcional)", draft.doneWhen, errors[DraftField.DONE_WHEN], CustomChallengeRules.GOAL_MAX) {
                 draft = draft.copy(doneWhen = it)
             }
+            Field("Versión mínima (opcional)", draft.minimum, errors[DraftField.MINIMUM], CustomChallengeRules.GOAL_MAX,
+                hint = "Para días difíciles: «Leer una página»") { draft = draft.copy(minimum = it) }
             Field("Descripción (opcional)", draft.description, errors[DraftField.DESCRIPTION], CustomChallengeRules.TEXT_MAX, singleLine = false) {
                 draft = draft.copy(description = it)
             }
@@ -128,6 +135,15 @@ fun CustomEditScreen(vm: LevelUpViewModel, nav: Nav, id: String?) {
                     if (mask != 0) draft = draft.copy(habitDays = mask)
                 }
             }
+
+            SectionTitle("Dónde y cuándo (opcional)")
+            MultiChoiceRow(Tags.places + (Tags.SIN_MATERIALES to "Sin materiales"), draft.tags.toSet()) { tag ->
+                draft = draft.copy(tags = if (tag in draft.tags) draft.tags - tag else draft.tags + tag)
+            }
+            ChoiceRow(
+                "Momento del día", listOf(null to "Cualquiera") + DayBlock.entries.map { it to Fmt.block(it) }, draft.block,
+                { draft = draft.copy(block = it) }, description = "En Inicio, tus retos se agrupan por mañana, tarde y noche.",
+            )
 
             SectionTitle("Pasos (opcional)")
             draft.steps.forEachIndexed { index, step ->

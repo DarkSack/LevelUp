@@ -18,6 +18,7 @@ import app.levelup.content.Categories
 import app.levelup.domain.MotionPref
 import app.levelup.domain.Preferences
 import app.levelup.domain.DEFAULT_ACCENT
+import app.levelup.domain.GamificationStyle
 import app.levelup.domain.ThemePref
 
 /**
@@ -74,6 +75,17 @@ private fun ColorScheme.highContrast(dark: Boolean): ColorScheme = if (dark) {
         background = Color.White, onBackground = Color.Black, onSurface = Color.Black,
     )
 }
+
+/** Baja estimulación: un solo color de acento y fondos neutros, para que nada compita por la atención. */
+private fun ColorScheme.muted(): ColorScheme = copy(
+    secondary = primary, onSecondary = onPrimary, tertiary = primary, onTertiary = onPrimary,
+    primaryContainer = surfaceVariant, onPrimaryContainer = onSurface,
+    secondaryContainer = surfaceVariant, onSecondaryContainer = onSurface,
+    tertiaryContainer = surfaceVariant, onTertiaryContainer = onSurface,
+)
+
+/** Hay XP, niveles y logros a la vista (todo menos el estilo «sin juego»). */
+val Preferences.gameOn: Boolean get() = gamification != GamificationStyle.OFF
 
 /** Color principal elegible (LevelUp Plus). Claro y oscuro con contraste AA frente a su texto. */
 data class Accent(
@@ -155,8 +167,9 @@ fun LevelUpTheme(prefs: Preferences, systemReducedMotion: Boolean, plus: Boolean
     // Sin Plus (p. ej. tras un reembolso) se vuelve al color de siempre, sin tocar la preferencia guardada.
     val accent = Accents.firstOrNull { it.key == prefs.accent && (plus || it.key == DEFAULT_ACCENT) } ?: Accents.first()
     val base = (if (dark) Dark else Light).withAccent(accent, dark)
-    val colors = if (prefs.highContrast) base.highContrast(dark) else base
-    val reduce = when (prefs.motion) {
+    val contrasted = if (prefs.highContrast) base.highContrast(dark) else base
+    val colors = if (prefs.lowStimulation) contrasted.muted() else contrasted
+    val reduce = prefs.lowStimulation || !prefs.gameOn || when (prefs.motion) {
         MotionPref.SYSTEM -> systemReducedMotion
         MotionPref.REDUCED -> true
         MotionPref.FULL -> false

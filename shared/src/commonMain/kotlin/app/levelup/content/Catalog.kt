@@ -47,6 +47,68 @@ object Catalog {
         simplerId = simpler, requires = requires,
     )
 
+
+    // Dónde se puede hacer cada reto y si no pide nada más que lo que llevas encima («sin»). Ver Tags.
+    private val contextTags: Map<String, String> = mapOf(
+        "fis.levantarse" to "casa trabajo sin", "fis.estirar" to "casa trabajo sin", "fis.caminar-10" to "casa exterior sin",
+        "fis.bailar-cancion" to "casa libre sin", "fis.escaleras" to "exterior trabajo sin", "fis.movilidad-10" to "casa trabajo sin",
+        "fis.caminar-1km" to "exterior sin", "fis.fuerza-suave" to "casa sin", "fis.ruta-nueva" to "exterior libre sin",
+        "fis.caminar-2km" to "exterior sin", "fis.bailar-15" to "casa libre sin", "fis.yoga-15" to "casa libre sin",
+        "fis.bici-20" to "exterior libre", "fis.actividad-30" to "exterior libre", "fis.caminar-4km" to "exterior sin",
+        "fis.fuerza-20" to "casa sin", "fis.hora-activa" to "exterior libre",
+
+        "soc.saludar-1" to "casa exterior trabajo sin", "soc.agradecer" to "casa trabajo sin", "soc.mensaje" to "casa trabajo libre sin",
+        "soc.cumplido" to "casa trabajo sin", "soc.saludar-3" to "exterior trabajo sin", "soc.preguntar" to "casa trabajo sin",
+        "soc.llamada" to "casa libre sin", "soc.ayudar" to "casa trabajo sin", "soc.sin-celular" to "casa trabajo libre sin",
+        "soc.reconectar" to "casa libre sin", "soc.cafe" to "exterior libre", "soc.plan" to "casa libre sin",
+        "soc.grupo" to "exterior libre", "soc.voluntariado" to "exterior libre sin",
+
+        "men.idea" to "casa trabajo libre sin", "men.aprender-5" to "casa trabajo libre sin", "men.leer-2" to "casa libre sin",
+        "men.palabras" to "casa trabajo libre sin", "men.curiosidad" to "casa libre sin", "men.acertijo" to "casa libre sin",
+        "men.aprender-10" to "casa libre sin", "men.leer-10" to "casa libre sin", "men.idioma-10" to "casa libre sin",
+        "men.resumen" to "casa trabajo sin", "men.charla" to "casa libre sin", "men.leer-30" to "casa libre sin",
+        "men.leccion" to "casa libre", "men.ensenar" to "casa trabajo sin", "men.estudio-60" to "casa libre sin",
+
+        "pro.prioridades" to "casa trabajo sin", "pro.anotar-pendiente" to "casa trabajo sin", "pro.enfoque-10" to "casa trabajo sin",
+        "pro.revisar-dia" to "casa trabajo sin", "pro.borrar-mensajes" to "casa trabajo sin", "pro.mesa-3" to "casa trabajo sin",
+        "pro.primer-paso" to "casa trabajo sin", "pro.bloque-25" to "casa trabajo sin", "pro.bandeja" to "casa trabajo sin",
+        "pro.calendario" to "casa trabajo sin", "pro.espacio" to "casa trabajo sin", "pro.pospuesta" to "casa trabajo sin",
+        "pro.tramite" to "casa trabajo exterior", "pro.planificar-semana" to "casa trabajo sin", "pro.bloques-3" to "casa trabajo sin",
+        "pro.proyecto" to "casa trabajo libre sin",
+
+        "bie.respirar" to "casa trabajo exterior sin", "bie.relajar-5" to "casa trabajo sin", "bie.agradecer-3" to "casa trabajo sin",
+        "bie.aire-libre" to "exterior sin", "bie.agua" to "casa trabajo sin", "bie.alarma-dormir" to "casa sin",
+        "bie.meditar-10" to "casa libre sin", "bie.paseo-atento" to "exterior sin", "bie.comer-despacio" to "casa trabajo sin",
+        "bie.dormir" to "casa sin", "bie.diario" to "casa libre sin", "bie.meditar-20" to "casa libre sin",
+        "bie.autocuidado-30" to "casa libre sin", "bie.tarde-calma" to "casa libre sin",
+
+        "cre.garabato" to "casa trabajo libre sin", "cre.foto" to "casa exterior libre sin", "cre.frase" to "casa trabajo libre sin",
+        "cre.ideas" to "casa libre sin", "cre.cancion-nueva" to "casa libre sin", "cre.receta-guardar" to "casa libre sin",
+        "cre.crear-15" to "casa libre sin", "cre.escribir-100" to "casa libre sin", "cre.musica" to "casa libre sin",
+        "cre.ingrediente" to "casa", "cre.collage" to "casa libre sin", "cre.crear-30" to "casa libre sin",
+        "cre.relato" to "casa libre sin", "cre.receta" to "casa", "cre.manualidad" to "casa libre", "cre.proyecto" to "casa libre",
+
+        "fin.gastos-dia" to "casa trabajo sin", "fin.saldo" to "casa trabajo sin", "fin.meta" to "casa sin",
+        "fin.concepto" to "casa libre sin", "fin.objeto" to "casa sin", "fin.suscripciones" to "casa sin",
+        "fin.facturas" to "casa sin", "fin.pausa-compra" to "casa exterior sin", "fin.comparar" to "casa exterior sin",
+        "fin.apartar" to "casa", "fin.presupuesto" to "casa sin", "fin.sin-gastos" to "casa exterior trabajo sin",
+        "fin.vender" to "casa sin", "fin.resumen" to "casa sin",
+
+        "dig.notificaciones" to "casa trabajo sin", "dig.sin-celular-5" to "casa trabajo sin", "dig.tiempo-uso" to "casa trabajo sin",
+        "dig.capturas" to "casa trabajo libre sin", "dig.comida-sin-celular" to "casa trabajo sin", "dig.sin-celular-15" to "casa libre sin",
+        "dig.enfoque-25" to "casa trabajo sin", "dig.limpiar-apps" to "casa libre sin", "dig.fotos" to "casa libre sin",
+        "dig.noche" to "casa sin", "dig.manana" to "casa sin", "dig.sin-celular-60" to "casa exterior libre sin",
+        "dig.tarde-offline" to "casa exterior libre sin",
+
+        "hog.cama" to "casa sin", "hog.cajon" to "casa trabajo sin", "hog.platos" to "casa sin", "hog.plantas" to "casa sin",
+        "hog.lista-arreglos" to "casa sin", "hog.diez-cosas" to "casa sin", "hog.limpieza-15" to "casa sin", "hog.cocina" to "casa sin",
+        "hog.ropa" to "casa sin", "hog.reciclaje" to "casa sin", "hog.armario" to "casa sin", "hog.arreglo" to "casa",
+        "hog.donar" to "casa sin", "hog.limpieza-fondo" to "casa sin",
+    )
+
+    private fun tagsOf(id: String): List<String> =
+        contextTags[id]?.split(' ')?.map { if (it == "sin") Tags.SIN_MATERIALES else it }.orEmpty()
+
     val challenges: List<Challenge> = listOf(
         // ── Físico ────────────────────────────────────────────────────────────────
         c("fis.levantarse", FISICO, 1, 2, "Muévete dos minutos",
@@ -523,7 +585,7 @@ object Catalog {
             "Limpia a fondo una habitación durante unos 45 minutos.",
             "La habitación quedó limpia.", "Para cuando la limpieza rápida no basta.",
             simpler = "hog.limpieza-15", frequency = WEEKLY),
-    )
+    ).map { it.copy(tags = tagsOf(it.id)) }
 
     val byId: Map<String, Challenge> = challenges.associateBy { it.id }
 }

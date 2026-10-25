@@ -67,7 +67,7 @@ class RemindersAndRulesTest {
     @Test fun eachFieldIsChecked() {
         val bad = valid.copy(
             title = "a", category = "nada", goal = "", difficulty = 9, minutes = 0, steps = List(11) { "paso" },
-            description = "x".repeat(301), doneWhen = "y".repeat(141),
+            description = "x".repeat(301), doneWhen = "y".repeat(141), minimum = "z".repeat(CustomChallengeRules.GOAL_MAX + 1),
         )
         val errors = CustomChallengeRules.validate(bad, setOf("mental"), emptyList())
         assertEquals(DraftField.entries.toSet(), errors.keys)

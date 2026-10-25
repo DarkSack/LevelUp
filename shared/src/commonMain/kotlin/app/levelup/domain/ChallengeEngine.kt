@@ -88,6 +88,22 @@ object ChallengeEngine {
         return null
     }
 
+    /**
+     * Reto sorpresa: uno del catálogo que nunca se completó, mejor de una categoría que no se suele elegir.
+     * Es una sugerencia: no se guarda ni cambia el plan del día hasta que la persona lo añade.
+     */
+    fun surprise(input: Input, todayIds: Set<String>, random: Random): Challenge? {
+        val prefs = input.prefs
+        val pool = input.challenges.filter { c ->
+            c.source == ChallengeSource.CATALOG && !c.isHabit && c.id !in input.completedEver && c.id !in todayIds &&
+                (c.availableFrom == null || c.availableFrom <= input.today) &&
+                (c.requires == null || c.requires in input.completedEver) &&
+                c.difficulty <= maxOf(2, prefs.difficulty + 1)
+        }
+        if (pool.isEmpty()) return null
+        return weightedPick(pool, random) { if (prefs.categories.isNotEmpty() && it.category !in prefs.categories) 3.0 else 1.0 }
+    }
+
     private fun eligible(c: Challenge, input: Input, relax: Int, exclude: Set<String>): Boolean {
         val prefs = input.prefs
         if (c.id in exclude || c.isHabit) return false

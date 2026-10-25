@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import app.levelup.domain.Preferences
+import app.levelup.domain.Days
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
@@ -62,6 +63,26 @@ class SyncTest {
     private fun device() = Device(context, server, clock).also { devices += it }
 
     @After fun tearDown() = devices.forEach { it.db.close() }
+
+    @Test fun favoritesAndGoalsReachTheOtherPhone() = runTest {
+        val a = device()
+        a.onboard()
+        a.sync.attach("u1")
+        a.repo.toggleFavorite("fis.estirar")
+        a.repo.saveGoal(null, "Correr 5 km", "", null).getOrThrow()
+        assertTrue(a.sync.sync().isSuccess)
+
+        val b = device()
+        b.sync.attach("u1")
+        assertTrue(b.sync.sync().isSuccess)
+        assertEquals(listOf("fis.estirar"), b.repo.favorites.first().map { it.challengeId })
+        assertEquals(listOf("Correr 5 km"), b.repo.goals.first().map { it.title })
+
+        a.repo.toggleFavorite("fis.estirar")
+        assertTrue(a.sync.sync().isSuccess)
+        assertTrue(b.sync.sync().isSuccess)
+        assertTrue(b.repo.favorites.first().isEmpty())
+    }
 
     @Test fun guestChangesAreNotQueued() = runTest {
         val a = device()
@@ -227,6 +248,8 @@ class MigrationTest {
             val repo = LevelUpRepository(db)
             repo.updatePreferences { it.copy(displayName = "Ana") }
             assertEquals("teal", repo.prefs().accent)
+            assertEquals(Days.ALL, repo.prefs().reminderDays, "columna nueva de la v3 con su valor por defecto")
+            assertTrue(db.dao().favoritesNow().isEmpty())
             assertEquals(0, db.syncDao().pendingCountNow())
         } finally {
             db.close()

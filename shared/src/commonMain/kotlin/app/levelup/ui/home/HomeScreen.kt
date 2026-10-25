@@ -10,21 +10,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.levelup.content.Avatars
 import app.levelup.content.Categories
 import app.levelup.content.Cosmetics
+import app.levelup.content.Lab
+import app.levelup.domain.Challenge
+import app.levelup.domain.DayBlock
 import app.levelup.domain.DayKind
 import app.levelup.domain.GamificationStyle
+import app.levelup.domain.GoalStatus
 import app.levelup.domain.InstanceStatus
 import app.levelup.domain.XpRules
 import app.levelup.ui.Fmt
@@ -40,8 +53,13 @@ import app.levelup.ui.components.PrimaryButton
 import app.levelup.ui.components.ScreenScaffold
 import app.levelup.ui.components.SecondaryButton
 import app.levelup.ui.components.SectionTitle
+import app.levelup.ui.extra.PlaceDialog
+import app.levelup.ui.extra.ResumeDialog
+import app.levelup.ui.extra.resumableHabits
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
+import app.levelup.ui.theme.gameOn
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
@@ -50,12 +68,22 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
     val progress by vm.progress.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
     val custom by vm.customCategories.collectAsStateWithLifecycle()
+    val customs by vm.customChallenges.collectAsStateWithLifecycle()
+    val goals by vm.goals.collectAsStateWithLifecycle()
     val visible = today.filter { it.status != InstanceStatus.REPLACED }
     val main = visible.firstOrNull { it.isOpen }
     val simple = prefs.simpleMode
+    val gameOn = prefs.gameOn
     val hour = remember { vm.hourNow() }
+    var askPlace by remember { mutableStateOf(false) }
+    var surprise by remember { mutableStateOf<Challenge?>(null) }
+    var noSurprise by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    ScreenScaffold("Inicio", bottomBar = tabBar) { padding ->
+    ScreenScaffold(
+        "Inicio", bottomBar = tabBar,
+        actions = { IconButton(onClick = nav::search) { Icon(Icons.Filled.Search, contentDescription = "Buscar") } },
+    ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(start = Space.l, end = Space.l, top = padding.calculateTopPadding() + Space.s,
                 bottom = padding.calculateBottomPadding() + Space.xl),
@@ -68,7 +96,32 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                     modifier = Modifier.semantics { heading() }.padding(bottom = Space.m),
                 )
             }
-            if (!simple) item { LevelCard(progress, prefs.equippedFrame, prefs.displayName, prefs.gamification) }
+            if (!simple && gameOn) {
+                item { LevelCard(progress, prefs.equippedFrame, prefs.displayName, Avatars.emoji(prefs.avatar), prefs.gamification) }
+            }
+
+            if (progress.returning) {
+                item {
+                    InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.secondaryContainer) {
+                        Text("Qué bien verte de nuevo", style = MaterialTheme.typography.titleMedium)
+                        Text("Hoy tienes retos cortos y sencillos para retomar sin presión. Lo que hiciste antes sigue contando.",
+                            style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            if (!simple && progress.weeklyReviewDue) {
+                item {
+                    InfoCard(Modifier.padding(top = Space.m)) {
+                        Text("Tu semana en un vistazo", style = MaterialTheme.typography.titleMedium)
+                        Text("Mira cómo fue, ajusta lo que no encaje y repasa tus metas. Son dos minutos.", style = MaterialTheme.typography.bodyMedium)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = vm::markWeeklyReviewed) { Text("Ahora no") }
+                            TextButton(onClick = nav::weeklyReview) { Text("Revisar") }
+                        }
+                    }
+                }
+            }
 
             if (visible.isEmpty() && progress.dayKind != DayKind.ACTIVE) {
                 item {
@@ -83,7 +136,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                         )
                         Text("Descansar también es parte del camino. Tu progreso sigue aquí.", style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.size(Space.m))
-                        SecondaryButton("Quiero un reto igualmente", vm::addExtraToday)
+                        SecondaryButton("Quiero un reto igualmente", { askPlace = true })
                     }
                 }
             }
@@ -111,11 +164,12 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                         Text(if (main.status == InstanceStatus.STARTED) "Reto principal · en curso" else "Reto principal",
                             style = MaterialTheme.typography.labelLarge)
                         Text(main.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = Space.xs))
-                        Text(metaLine(main, custom), style = MaterialTheme.typography.bodyMedium)
+                        Text(metaLine(main, custom, gameOn), style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.size(Space.m))
                         PrimaryButton("Completar", { vm.complete(main.id) })
                         Spacer(Modifier.size(Space.s))
                         SecondaryButton("Ver detalles", { nav.instance(main.id) })
+                        TextButton(onClick = { nav.focus(main.id) }) { Text("Modo concentración") }
                     }
                 }
             } else if (visible.isNotEmpty() && visible.none { it.isOpen }) {
@@ -124,7 +178,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                         Text("Retos de hoy terminados", style = MaterialTheme.typography.titleMedium)
                         Text("Lo que hiciste hoy ya cuenta. Si te quedan ganas, puedes añadir otro.", style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.size(Space.m))
-                        SecondaryButton("Añadir otro reto", vm::addExtraToday)
+                        SecondaryButton("Añadir otro reto", { askPlace = true })
                     }
                 }
             }
@@ -142,13 +196,66 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                         )
                     }
                 }
-                items(visible.filter { it.id != main?.id }, key = { it.id }) { i ->
-                    InstanceRow(i, custom, onComplete = { vm.complete(i.id) }, onOpen = { nav.instance(i.id) })
+                val rest = visible.filter { it.id != main?.id }
+                // Por momentos del día solo si alguno tiene momento: si no, la lista de siempre.
+                val groups = if (rest.any { it.block != null }) {
+                    (DayBlock.entries.map { it as DayBlock? } + null).map { b -> b to rest.filter { it.block == b } }.filter { it.second.isNotEmpty() }
+                } else {
+                    listOf(null to rest)
+                }
+                groups.forEach { (block, list) ->
+                    if (groups.size > 1 || block != null) {
+                        item(key = "b-$block") {
+                            Text(block?.let(Fmt::block) ?: "En cualquier momento", style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(top = Space.m).semantics { heading() })
+                        }
+                    }
+                    items(list, key = { it.id }) { i ->
+                        InstanceRow(i, custom, onComplete = { vm.complete(i.id) }, onOpen = { nav.instance(i.id) })
+                    }
+                }
+            }
+
+            if (!simple && Lab.SURPRISE in prefs.labFlags) {
+                item {
+                    SectionTitle("Reto sorpresa")
+                    InfoCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
+                        val s = surprise
+                        when {
+                            s != null -> {
+                                Text(s.title, style = MaterialTheme.typography.titleSmall)
+                                Text(s.goal, style = MaterialTheme.typography.bodyMedium)
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    TextButton(onClick = { nav.catalog(s.id) }) { Text("Ver") }
+                                    TextButton(onClick = { vm.addToToday(s.id); surprise = null }) { Text("Añadir a hoy") }
+                                }
+                            }
+                            noSurprise -> Text("Ya probaste todo lo que encaja contigo. ¡Impresionante!", style = MaterialTheme.typography.bodyMedium)
+                            else -> {
+                                Text("Algo que nunca has hecho. Solo es una idea: no cambia tu plan.", style = MaterialTheme.typography.bodyMedium)
+                                TextButton(onClick = {
+                                    scope.launch {
+                                        surprise = vm.surprise()
+                                        noSurprise = surprise == null
+                                    }
+                                }) { Text("Sorpréndeme") }
+                            }
+                        }
+                    }
+                }
+            }
+
+            val activeGoals = goals.filter { it.status == GoalStatus.ACTIVE }
+            if (!simple && activeGoals.isNotEmpty()) {
+                item {
+                    SectionTitle("Tus metas")
+                    activeGoals.take(3).forEach { Text("• ${it.title}", style = MaterialTheme.typography.bodyLarge) }
+                    TextButton(onClick = nav::goals) { Text("Ver mis metas") }
                 }
             }
 
             val mission = progress.activeMission
-            if (!simple && mission != null) {
+            if (!simple && gameOn && mission != null) {
                 item {
                     SectionTitle("Misión")
                     InfoCard {
@@ -164,7 +271,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                 }
             }
 
-            if (!simple && progress.categoryLevels.isNotEmpty()) {
+            if (!simple && gameOn && progress.categoryLevels.isNotEmpty()) {
                 item {
                     SectionTitle("Tus categorías")
                     progress.categoryLevels.entries.sortedByDescending { it.value.totalXp }.take(4).forEach { (key, lp) ->
@@ -176,14 +283,27 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
             }
         }
     }
+
+    if (askPlace) {
+        PlaceDialog(onPick = { place -> askPlace = false; vm.addExtraToday(place) }, onDismiss = { askPlace = false })
+    }
+    val pending = progress.pendingReturn
+    if (pending != null && progress.dayKind != DayKind.PAUSED) {
+        val habits = resumableHabits(customs)
+        if (habits.isEmpty()) {
+            LaunchedEffect(pending.id) { vm.resumeAfterPause(pending.id, emptySet()) }
+        } else {
+            ResumeDialog(pending, habits) { keep -> vm.resumeAfterPause(pending.id, keep) }
+        }
+    }
 }
 
 @Composable
-private fun LevelCard(progress: ProgressState, frameId: String, name: String, style: GamificationStyle) {
+private fun LevelCard(progress: ProgressState, frameId: String, name: String, emoji: String?, style: GamificationStyle) {
     val frame = Cosmetics.byId[frameId] ?: Cosmetics.byId.getValue(Cosmetics.DEFAULT)
     InfoCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(name, frame, progress.level.level)
+            Avatar(name, frame, progress.level.level, emoji = emoji)
             Spacer(Modifier.size(Space.l))
             Column(Modifier.weight(1f)) {
                 Text("Nivel ${progress.level.level} · ${XpRules.titleFor(progress.level.level)}", style = MaterialTheme.typography.titleMedium)

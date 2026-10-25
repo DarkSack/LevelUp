@@ -70,6 +70,10 @@ import androidx.compose.ui.unit.dp
 import app.levelup.ui.theme.LocalReduceMotion
 import app.levelup.ui.theme.Space
 import app.levelup.ui.welcome.WelcomeScreen
+import app.levelup.ui.extra.FocusScreen
+import app.levelup.ui.extra.GoalsScreen
+import app.levelup.ui.extra.SearchScreen
+import app.levelup.ui.extra.WeeklyReviewScreen
 import app.levelup.cloud.AccountState
 import app.levelup.ui.account.AccountScreen
 import app.levelup.ui.account.CloudViewModel
@@ -95,6 +99,10 @@ import kotlinx.serialization.Serializable
 @Serializable object SocialProfileRoute
 @Serializable object CreateGroupRoute
 @Serializable object PlusRoute
+@Serializable object SearchRoute
+@Serializable object GoalsRoute
+@Serializable object WeeklyReviewRoute
+@Serializable data class FocusRoute(val id: String? = null)
 
 /** Un solo lugar para los avisos: cada pantalla pinta este SnackbarHost en su Scaffold. */
 val LocalSnackbar = staticCompositionLocalOf { SnackbarHostState() }
@@ -113,6 +121,22 @@ class Nav(private val controller: NavHostController) {
     fun socialProfile() = controller.navigate(SocialProfileRoute)
     fun createGroup() = controller.navigate(CreateGroupRoute)
     fun plus() = controller.navigate(PlusRoute)
+    fun search() = controller.navigate(SearchRoute)
+    fun goals() = controller.navigate(GoalsRoute)
+    fun weeklyReview() = controller.navigate(WeeklyReviewRoute)
+    fun focus(id: String? = null) = controller.navigate(FocusRoute(id))
+
+    /** Enlaces de atajos, widget y automatizaciones. Solo abren pantallas: nunca completan ni devuelven datos. */
+    fun open(link: String) {
+        when {
+            link == "hoy" -> tab(HomeRoute)
+            link == "enfoque" -> focus()
+            link == "buscar" -> search()
+            link == "metas" -> goals()
+            link == "privacidad" -> settings("privacy")
+            link.startsWith("reto/") -> link.removePrefix("reto/").takeIf { it.isNotBlank() }?.let(::instance)
+        }
+    }
     fun tab(route: Any) = controller.navigate(route) {
         popUpTo(controller.graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
@@ -133,7 +157,8 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
     LaunchedEffect(vm) {
         vm.events.collect { event ->
             val current = vm.prefs.value ?: return@collect
-            val full = current.gamification == GamificationStyle.FULL
+            val full = current.gamification == GamificationStyle.FULL && !current.lowStimulation
+            val off = current.gamification == GamificationStyle.OFF
             when (event) {
                 is UiEvent.Completed -> {
                     if (current.haptics) haptics.performHapticFeedback(HapticFeedbackType.Confirm)
@@ -141,15 +166,20 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
                     if (full && (r.achievements.isNotEmpty() || r.missions.isNotEmpty() || r.levelAfter > r.levelBefore)) {
                         celebration = Celebration(r.achievements, r)
                     }
+                    val text = when {
+                        off -> "¡Hecho!"
+                        r.comeback -> "¡Qué bien que volviste! +${r.xpGained} XP"
+                        else -> "¡Hecho! +${r.xpGained} XP"
+                    }
                     launch {
-                        val action = snackbar.showSnackbar("¡Hecho! +${r.xpGained} XP", "Deshacer", duration = SnackbarDuration.Short)
+                        val action = snackbar.showSnackbar(text, "Deshacer", duration = SnackbarDuration.Short)
                         if (action == SnackbarResult.ActionPerformed) vm.undo(event.instanceId)
                     }
                 }
-                is UiEvent.Unlocked -> if (full) {
-                    celebration = Celebration(event.achievements, null)
-                } else {
-                    launch { snackbar.showSnackbar("Logro: ${event.achievements.joinToString { it.name }}") }
+                is UiEvent.Unlocked -> when {
+                    off -> Unit // sin juego: los logros se siguen guardando, pero no se anuncian
+                    full -> celebration = Celebration(event.achievements, null)
+                    else -> launch { snackbar.showSnackbar("Logro: ${event.achievements.joinToString { it.name }}") }
                 }
                 is UiEvent.Message -> launch { snackbar.showSnackbar(event.text) }
             }
@@ -158,6 +188,17 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
 
     LaunchedEffect(cloud) {
         cloud?.messages?.collect { launch { snackbar.showSnackbar(it) } }
+    }
+
+    val secure = vm.prefs.collectAsStateWithLifecycle().value?.secureScreens == true
+    LaunchedEffect(secure) { platform.setSecure(secure) }
+
+    val link by platform.deepLinks.collectAsStateWithLifecycle()
+    LaunchedEffect(link) {
+        link?.let {
+            nav.open(it)
+            platform.consumeDeepLink()
+        }
     }
 
     val reduce = LocalReduceMotion.current
@@ -186,6 +227,10 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
             composable<SocialProfileRoute> { if (cloud != null) SocialProfileScreen(cloud, nav) }
             composable<CreateGroupRoute> { if (cloud != null) CreateGroupScreen(cloud, nav, today) }
             composable<PlusRoute> { PlusScreen(vm, nav) }
+            composable<SearchRoute> { SearchScreen(vm, nav) }
+            composable<GoalsRoute> { GoalsScreen(vm, nav) }
+            composable<WeeklyReviewRoute> { WeeklyReviewScreen(vm, nav) }
+            composable<FocusRoute> { FocusScreen(vm, nav, it.toRoute<FocusRoute>().id) }
             composable<WelcomeReplayRoute> { WelcomeScreen(onStart = nav::back, startLabel = "Volver") }
         }
     }

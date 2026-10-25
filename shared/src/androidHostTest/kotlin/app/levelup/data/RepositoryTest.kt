@@ -3,9 +3,16 @@ package app.levelup.data
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import app.levelup.content.Catalog
+import app.levelup.content.Tags
 import app.levelup.domain.CustomChallengeDraft
+import app.levelup.domain.CustomStatus
 import app.levelup.domain.Days
+import app.levelup.domain.HitKind
 import app.levelup.domain.InstanceStatus
+import app.levelup.domain.NOTE_MAX
+import app.levelup.domain.XpRules
+import app.levelup.domain.XpSource
 import app.levelup.domain.MissionStatus
 import app.levelup.domain.Preferences
 import kotlinx.coroutines.flow.first
@@ -244,5 +251,107 @@ class RepositoryTest {
         assertEquals(true, repo.reminderNow()?.isRecovery)
         assertEquals(repo.today(), repo.prefs().lastRecoveryNotice)
         assertEquals(false, repo.reminderNow()?.isRecovery)
+    }
+
+    @Test fun noReminderOnDaysTheUserLeftOut() = runTest {
+        onboarded { it.copy(remindersEnabled = true, reminderDays = Days.of(DayOfWeek.TUESDAY)) }
+        assertNull(repo.reminderNow())
+        clock.advanceDays(1)
+        assertNotNull(repo.reminderNow())
+    }
+
+    @Test fun comingBackAfterAWeekIsGentleAndRecognizedOnce() = runTest {
+        onboarded()
+        repo.complete(repo.ensureToday().first().id)
+        clock.advanceDays(8)
+        assertTrue(repo.isReturning())
+        val today = repo.ensureToday()
+        assertTrue(today.size in 1..2, "regreso suave: ${today.size} retos")
+        assertTrue(today.sumOf { it.minutes } <= 10)
+
+        suspend fun comebackXp() = repo.xpEntries.first().filter { it.sourceType == XpSource.COMEBACK }.sumOf { it.amount }
+        val first = repo.complete(today.first().id)!!
+        assertTrue(first.comeback)
+        assertEquals(XpRules.COMEBACK_XP, comebackXp())
+        today.getOrNull(1)?.let { assertFalse(repo.complete(it.id)!!.comeback, "solo el primero del día") }
+        assertEquals(XpRules.COMEBACK_XP, comebackXp())
+
+        today.forEach { repo.undoComplete(it.id) }
+        assertEquals(0, comebackXp(), "deshacer quita también la XP de regreso")
+    }
+
+    @Test fun minimalVersionGivesTheEasiestXpAndUndoRestoresIt() = runTest {
+        onboarded()
+        val inst = repo.ensureToday().first()
+        repo.complete(inst.id, minimal = true)
+        val done = db.dao().instance(inst.id)!!
+        assertTrue(done.minimal)
+        assertEquals(XpRules.xpFor(1), done.xp)
+        repo.undoComplete(inst.id)
+        val undone = db.dao().instance(inst.id)!!
+        assertFalse(undone.minimal)
+        assertEquals(XpRules.xpFor(inst.difficulty), undone.xp)
+    }
+
+    @Test fun notesAreLimitedAndSearchable() = runTest {
+        onboarded()
+        val inst = repo.ensureToday().first()
+        assertTrue(repo.setNote(inst.id, "x".repeat(NOTE_MAX + 1)).isFailure)
+        assertTrue(repo.setNote(inst.id, "  Me sentí con energía  ").isSuccess)
+        assertEquals("Me sentí con energía", db.dao().instance(inst.id)!!.note)
+        assertEquals(listOf(inst.id), repo.search("ENERGIA").filter { it.kind == HitKind.NOTE }.map { it.id })
+        assertTrue(repo.setNote(inst.id, " ").isSuccess)
+        assertNull(db.dao().instance(inst.id)!!.note)
+    }
+
+    @Test fun extraForAPlaceOnlyPicksChallengesForThatPlace() = runTest {
+        onboarded()
+        repeat(4) {
+            val inst = assertNotNull(repo.addExtraToday(Tags.TRABAJO))
+            assertTrue(Tags.TRABAJO in Catalog.byId.getValue(inst.challengeId).tags)
+        }
+    }
+
+    @Test fun surpriseIsSomethingNeverDoneAndNotSaved() = runTest {
+        onboarded()
+        val todayIds = repo.ensureToday().map { it.challengeId }.toSet()
+        val s = assertNotNull(repo.surprise())
+        assertFalse(s.id in todayIds)
+        assertFalse(s.isHabit)
+        assertEquals(todayIds, repo.ensureToday().map { it.challengeId }.toSet())
+    }
+
+    @Test fun favoritesAndGoalsSurviveABackup() = runTest {
+        onboarded()
+        assertTrue(repo.toggleFavorite("fis.estirar"))
+        val goal = repo.saveGoal(null, "Terminar el curso de inglés", "Para viajar", null).getOrThrow()
+        assertTrue(repo.saveGoal(null, "x", "", null).isFailure)
+        val text = repo.exportBackup()
+
+        assertFalse(repo.toggleFavorite("fis.estirar"))
+        repo.deleteGoal(goal.id)
+        assertTrue(repo.importBackup(text).isSuccess)
+        assertEquals(listOf("fis.estirar"), repo.favorites.first().map { it.challengeId })
+        assertEquals(listOf(goal), repo.goals.first())
+    }
+
+    @Test fun afterAPauseOnlyTheChosenHabitsComeBack() = runTest {
+        onboarded()
+        repo.saveCustom(CustomChallengeDraft(title = "Leer un rato", category = "mental", goal = "Leer 10 páginas", habitDays = Days.ALL))
+        repo.saveCustom(CustomChallengeDraft(title = "Regar las plantas", category = "hogar", goal = "Regar todas", habitDays = Days.ALL))
+        val habits = repo.customChallenges.first().associateBy { it.title }
+        repo.startPause()
+        clock.advanceDays(3)
+        repo.endPause()
+        val pause = repo.pauses.first().single()
+
+        val keep = habits.getValue("Leer un rato").id
+        repo.resumeAfterPause(pause.id, setOf(keep))
+        val after = repo.customChallenges.first().associateBy { it.title }
+        assertEquals(CustomStatus.ACTIVE, after.getValue("Leer un rato").status)
+        assertEquals(CustomStatus.PAUSED, after.getValue("Regar las plantas").status)
+        assertEquals(pause.id, repo.prefs().lastPauseReviewed)
+        val open = repo.ensureToday().filter { it.isHabit && it.isOpen }.map { it.challengeId }
+        assertEquals(listOf(keep), open)
     }
 }

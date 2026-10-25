@@ -3,7 +3,11 @@ package app.levelup.data
 import app.levelup.domain.ChallengeInstance
 import app.levelup.domain.CustomCategory
 import app.levelup.domain.CustomChallenge
+import app.levelup.domain.Favorite
+import app.levelup.domain.GoalRules
 import app.levelup.domain.MissionRun
+import app.levelup.domain.NOTE_MAX
+import app.levelup.domain.PersonalGoal
 import app.levelup.domain.Pause
 import app.levelup.domain.Preferences
 import app.levelup.domain.UnlockedAchievement
@@ -26,11 +30,13 @@ data class Backup(
     val achievements: List<UnlockedAchievement> = emptyList(),
     val missions: List<MissionRun> = emptyList(),
     val pauses: List<Pause> = emptyList(),
+    val favorites: List<Favorite> = emptyList(),
+    val goals: List<PersonalGoal> = emptyList(),
 ) {
     companion object {
         const val FORMAT = "levelup-backup"
         /** Igual a la versión de la base de datos. Un archivo más nuevo que la app no se importa. */
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
         const val MAX_CHARS = 20_000_000
     }
 }
@@ -65,6 +71,10 @@ object BackupCodec {
             if (backup.instances.groupBy { it.challengeId to it.date }.any { it.value.size > 1 }) add("retos repetidos el mismo día")
             if (backup.xp.groupBy { it.sourceType to it.sourceId }.any { it.value.size > 1 }) add("experiencia duplicada")
             if (backup.customChallenges.any { it.title.isBlank() || it.difficulty !in 1..5 }) add("retos propios")
+            if (backup.instances.any { (it.note?.length ?: 0) > NOTE_MAX }) add("notas")
+            if (backup.goals.any { GoalRules.validate(it.title, it.why) != null }) add("metas")
+            if (backup.goals.map { it.id }.toSet().size != backup.goals.size) add("metas duplicadas")
+            if (backup.favorites.map { it.challengeId }.toSet().size != backup.favorites.size) add("favoritos duplicados")
         }
         if (problems.isNotEmpty()) return failure("El respaldo tiene datos dañados (${problems.joinToString()}). No se importó nada.")
         return Result.success(backup)

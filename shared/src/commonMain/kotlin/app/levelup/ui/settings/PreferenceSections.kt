@@ -110,6 +110,8 @@ fun AccessibilitySection(prefs: Preferences, onChange: PrefsChange) {
     )
     ToggleRow("Modo sencillo", prefs.simpleMode, { v -> onChange { it.copy(simpleMode = v) } },
         "Menos cosas en pantalla: tu reto principal, tus retos de hoy y poco más.")
+    ToggleRow("Baja estimulación", prefs.lowStimulation, { v -> onChange { it.copy(lowStimulation = v) } },
+        "Colores apagados, sin animaciones ni ventanas de celebración.")
     ChoiceRow(
         "Movimiento", listOf(MotionPref.SYSTEM to "Como el teléfono", MotionPref.REDUCED to "Reducido", MotionPref.FULL to "Completo"),
         prefs.motion, { m -> onChange { it.copy(motion = m) } },
@@ -139,6 +141,13 @@ fun RemindersSection(prefs: Preferences, notificationsAllowed: Boolean, onChange
         else "Solicitudes, felicitaciones e invitaciones, si tienes cuenta. Respetan tus horas de silencio.")
     if (!prefs.remindersEnabled) return
     fun shift(minute: Int, delta: Int) = (minute + delta + 24 * 60) % (24 * 60)
+    Text("Días con aviso", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Space.s))
+    MultiChoiceRow(weekdayOptions, Days.list(prefs.reminderDays).toSet()) { day ->
+        onChange { p ->
+            val mask = p.reminderDays xor Days.bit(day)
+            if (mask == 0) p else p.copy(reminderDays = mask) // para ningún día, mejor apagar los recordatorios
+        }
+    }
     StepperRow("Hora del aviso", Fmt.time(prefs.reminderMinute),
         onMinus = { onChange { it.copy(reminderMinute = shift(it.reminderMinute, -30)) } },
         onPlus = { onChange { it.copy(reminderMinute = shift(it.reminderMinute, 30)) } })
@@ -184,11 +193,12 @@ fun RestSection(prefs: Preferences, paused: Boolean, onChange: PrefsChange, onPa
 fun GameStyleSection(prefs: Preferences, onChange: PrefsChange) {
     ChoiceRow(
         null,
-        listOf(GamificationStyle.FULL to "Completo", GamificationStyle.CALM to "Tranquilo"),
+        listOf(GamificationStyle.FULL to "Completo", GamificationStyle.CALM to "Tranquilo", GamificationStyle.OFF to "Sin juego"),
         prefs.gamification, { g -> onChange { it.copy(gamification = g) } },
         description = when (prefs.gamification) {
             GamificationStyle.FULL -> "XP, niveles, rachas y celebraciones cuando desbloqueas algo."
             GamificationStyle.CALM -> "XP, niveles y logros, sin rachas ni ventanas de celebración."
+            GamificationStyle.OFF -> "Sin XP, niveles, rachas ni animaciones: solo tus retos, hábitos y metas."
         },
     )
 }

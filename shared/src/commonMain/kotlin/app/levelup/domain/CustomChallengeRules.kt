@@ -13,9 +13,14 @@ data class CustomChallengeDraft(
     /** Días fijos (máscara de [Days]). Distinto de 0 = es un hábito. */
     val habitDays: Int = 0,
     val steps: List<String> = emptyList(),
+    /** Lugar y «sin materiales» (claves de content/Tags.kt). */
+    val tags: List<String> = emptyList(),
+    /** La versión más pequeña que también cuenta. */
+    val minimum: String = "",
+    val block: DayBlock? = null,
 )
 
-enum class DraftField { TITLE, DESCRIPTION, CATEGORY, GOAL, DONE_WHEN, DIFFICULTY, MINUTES, STEPS }
+enum class DraftField { TITLE, DESCRIPTION, CATEGORY, GOAL, DONE_WHEN, DIFFICULTY, MINUTES, STEPS, MINIMUM }
 
 object CustomChallengeRules {
     const val TITLE_MAX = 60
@@ -50,6 +55,9 @@ object CustomChallengeRules {
         }
         if (draft.doneWhen.trim().length > GOAL_MAX) {
             errors[DraftField.DONE_WHEN] = "Puede tener hasta $GOAL_MAX caracteres."
+        }
+        if (draft.minimum.trim().length > GOAL_MAX) {
+            errors[DraftField.MINIMUM] = "La versión mínima puede tener hasta $GOAL_MAX caracteres."
         }
         if (draft.difficulty !in 1..5) errors[DraftField.DIFFICULTY] = "Elige una dificultad del 1 al 5."
         if (draft.minutes !in 1..240) errors[DraftField.MINUTES] = "La duración va de 1 a 240 minutos."

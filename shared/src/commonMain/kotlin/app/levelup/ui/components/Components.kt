@@ -101,7 +101,7 @@ fun LevelUpLogo(modifier: Modifier = Modifier, bars: List<Float> = listOf(1f, 1f
 
 /** Avatar con el marco cosmético equipado y, si se pasa, el nivel. */
 @Composable
-fun Avatar(name: String, frame: Cosmetic, level: Int?, size: Dp = 64.dp) {
+fun Avatar(name: String, frame: Cosmetic, level: Int?, size: Dp = 64.dp, emoji: String? = null) {
     val colors = frame.colors.map { Color(it) }
     val brush = if (colors.size == 1) Brush.linearGradient(listOf(colors[0], colors[0])) else Brush.sweepGradient(colors + colors.first())
     val description = buildString {
@@ -115,8 +115,8 @@ fun Avatar(name: String, frame: Cosmetic, level: Int?, size: Dp = 64.dp) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                name.trim().firstOrNull()?.uppercase() ?: "★",
-                style = MaterialTheme.typography.titleLarge,
+                emoji ?: name.trim().firstOrNull()?.uppercase() ?: "★",
+                style = if (emoji != null) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }

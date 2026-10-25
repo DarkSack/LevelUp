@@ -3,6 +3,8 @@ package app.levelup.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.levelup.Platform
+import app.levelup.ShareCard
+import app.levelup.content.Lab
 import app.levelup.content.AchievementCatalog
 import app.levelup.content.Cosmetics
 import app.levelup.content.MissionCatalog
@@ -18,17 +20,26 @@ import app.levelup.domain.ChallengeInstance
 import app.levelup.domain.Cosmetic
 import app.levelup.domain.CustomChallengeDraft
 import app.levelup.domain.CustomStatus
+import app.levelup.domain.DayBlock
 import app.levelup.domain.DayKind
 import app.levelup.domain.DraftField
 import app.levelup.domain.ExtendedStats
+import app.levelup.domain.GoalStatus
 import app.levelup.domain.Mission
 import app.levelup.domain.MissionRules
 import app.levelup.domain.MissionRun
 import app.levelup.domain.MissionStatus
+import app.levelup.domain.Pause
+import app.levelup.domain.PauseRules
+import app.levelup.domain.PersonalGoal
 import app.levelup.domain.Preferences
 import app.levelup.domain.Rating
+import app.levelup.domain.ReviewSuggestion
+import app.levelup.domain.SearchHit
 import app.levelup.domain.Stats
 import app.levelup.domain.Streaks
+import app.levelup.domain.WeeklyReview
+import app.levelup.domain.WeeklySummary
 import app.levelup.domain.XpRules
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -38,10 +49,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
 
 sealed interface UiEvent {
@@ -66,6 +79,11 @@ data class ProgressState(
     val achievements: List<AchievementView> = emptyList(),
     val frames: List<Cosmetic> = listOf(Cosmetics.byId.getValue(Cosmetics.DEFAULT)),
     val extended: ExtendedStats = ExtendedStats(),
+    /** Vuelve tras una temporada sin actividad y hoy aún no completó nada: retos de recuperación. */
+    val returning: Boolean = false,
+    /** Pausa terminada cuya vuelta falta repasar (qué hábitos retomar). */
+    val pendingReturn: Pause? = null,
+    val weeklyReviewDue: Boolean = false,
 )
 
 /**
@@ -85,6 +103,9 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
         day.flatMapLatest { repo.recentInstances(60) }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val customChallenges = repo.customChallenges.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val customCategories = repo.customCategories.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val favorites: StateFlow<Set<String>> =
+        repo.favorites.map { list -> list.map { it.challengeId }.toSet() }.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+    val goals: StateFlow<List<PersonalGoal>> = repo.goals.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val suggestions = MutableStateFlow<List<AdaptiveDifficulty.Suggestion>>(emptyList())
 
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 8)
@@ -106,6 +127,8 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
         val doneMissions = runs.filter { it.status == MissionStatus.COMPLETED }.map { it.missionId }.toSet()
         val active = runs.firstOrNull { it.status == MissionStatus.ACTIVE && !MissionRules.isExpired(it, today) }
             ?.let { run -> MissionCatalog.byId[run.missionId]?.let { it to run } }
+        val lastActive = completed.filter { it.isDone && it.date < today }.maxOfOrNull { it.date }
+        val doneToday = completed.any { it.isDone && it.date == today }
         val thisWeek = Streaks.weekStart(today)
         val weekStarts = (7 downTo 0).map { thisWeek.minus(it * 7, DateTimeUnit.DAY) }
         val xpByWeek = entries.groupBy { Streaks.weekStart(repo.dateOf(it.createdAt)) }.mapValues { (_, l) -> l.sumOf { it.amount } }
@@ -124,6 +147,9 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
             },
             frames = Cosmetics.unlocked(unlockedIds.keys, doneMissions, plusOwned),
             extended = ExtendedStats.compute(today, completed, entries.map { repo.dateOf(it.createdAt) to it.amount }),
+            returning = !doneToday && lastActive != null && lastActive.daysUntil(today) >= Stats.COMEBACK_GAP_DAYS,
+            pendingReturn = PauseRules.pendingReturn(today, pauses, prefs.lastPauseReviewed),
+            weeklyReviewDue = WeeklyReview.isDue(today, prefs.lastWeeklyReview, completed),
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ProgressState())
 
@@ -145,6 +171,14 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
     // ── Retos ─────────────────────────────────────────────────────────────────
 
     fun complete(id: String) = act { repo.complete(id)?.let { _events.emit(UiEvent.Completed(id, it)) } }
+    fun completeMinimal(id: String) = act { repo.complete(id, minimal = true)?.let { _events.emit(UiEvent.Completed(id, it)) } }
+    fun setBlock(id: String, block: DayBlock?) = act { repo.setBlock(id, block) }
+    fun setNote(id: String, note: String) = act {
+        repo.setNote(id, note).fold(
+            onSuccess = { _events.emit(UiEvent.Message(if (note.isBlank()) "Nota borrada." else "Nota guardada.")) },
+            onFailure = { _events.emit(UiEvent.Message(it.message ?: "No se pudo guardar la nota.")) },
+        )
+    }
     fun undo(id: String) = act { repo.undoComplete(id) }
     fun start(id: String) = act { repo.start(id) }
     fun pause(id: String) = act { repo.pause(id) }
@@ -172,10 +206,68 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
         _events.emit(UiEvent.Message(if (inst != null) "Añadido a hoy: ${inst.title}" else "No se pudo añadir."))
     }
 
-    fun addExtraToday() = act {
-        val inst = repo.addExtraToday()
-        _events.emit(UiEvent.Message(if (inst != null) "Reto añadido: ${inst.title}" else "No hay más retos disponibles hoy."))
+    fun addExtraToday(place: String? = null) = act {
+        val inst = repo.addExtraToday(place)
+        _events.emit(UiEvent.Message(if (inst != null) "Reto añadido: ${inst.title}" else "No hay más retos disponibles para ahí hoy."))
     }
+
+    suspend fun surprise(): Challenge? = repo.surprise()
+
+    suspend fun search(query: String): List<SearchHit> = repo.search(query)
+
+    fun toggleFavorite(challengeId: String) = act {
+        val now = repo.toggleFavorite(challengeId)
+        _events.emit(UiEvent.Message(if (now) "Guardado en favoritos." else "Quitado de favoritos."))
+    }
+
+    // ── Metas personales ──────────────────────────────────────────────────────
+
+    fun saveGoal(id: String?, title: String, why: String, targetDate: LocalDate?, onResult: (String?) -> Unit) = act {
+        repo.saveGoal(id, title, why, targetDate).fold(
+            onSuccess = { onResult(null); _events.emit(UiEvent.Message(if (id == null) "Meta creada." else "Meta guardada.")) },
+            onFailure = { onResult(it.message ?: "No se pudo guardar.") },
+        )
+    }
+
+    fun setGoalStatus(id: String, status: GoalStatus) = act {
+        repo.setGoalStatus(id, status)
+        if (status == GoalStatus.ACHIEVED) _events.emit(UiEvent.Message("¡Meta lograda! Bien hecho."))
+    }
+
+    fun deleteGoal(id: String) = act { repo.deleteGoal(id) }
+
+    // ── Revisión semanal ──────────────────────────────────────────────────────
+
+    suspend fun weeklySummary(): WeeklySummary = repo.weeklySummary()
+
+    fun markWeeklyReviewed() = act { repo.markWeeklyReviewed() }
+
+    fun applyReviewSuggestion(s: ReviewSuggestion) = act {
+        repo.applyReviewSuggestion(s)
+        platform.remindersChanged()
+        _events.emit(UiEvent.Message("Cambio aplicado."))
+    }
+
+    // ── Laboratorio y compartir ───────────────────────────────────────────────
+
+    fun setLab(id: String, on: Boolean) = act {
+        if (on && id == Lab.HEALTH) {
+            val health = platform.health
+            if (health == null || !health.available()) {
+                _events.emit(UiEvent.Message("Health Connect no está disponible en este teléfono."))
+                return@act
+            }
+            if (!health.hasPermission() && !health.requestPermission()) {
+                _events.emit(UiEvent.Message("Sin permiso no podemos leer tu actividad. Puedes darlo en Health Connect."))
+                return@act
+            }
+        }
+        repo.updatePreferences { p -> p.copy(labFlags = if (on) (p.labFlags + id).distinct() else p.labFlags - id) }
+    }
+
+    val health get() = platform.health
+
+    fun share(card: ShareCard) = platform.shareAchievement(card)
 
     suspend fun challenge(id: String): Challenge? = repo.challenge(id)
 
@@ -250,10 +342,15 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
 
     fun abandonMission(runId: String) = act { repo.abandonMission(runId) }
 
-    fun setPaused(paused: Boolean) = act {
-        if (paused) announce(repo.startPause()) else repo.endPause()
+    fun setPaused(paused: Boolean, until: LocalDate? = null) = act {
+        if (paused) announce(repo.startPause(until)) else repo.endPause()
         day.value = repo.today()
         repo.ensureToday()
+    }
+
+    fun resumeAfterPause(pauseId: String, keepHabits: Set<String>) = act {
+        repo.resumeAfterPause(pauseId, keepHabits)
+        _events.emit(UiEvent.Message("Listo. Puedes reanudar cualquier hábito desde Retos → Míos."))
     }
 
     // ── Datos ─────────────────────────────────────────────────────────────────
@@ -261,6 +358,11 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
     fun exportData() = act {
         val ok = platform.exportFile("levelup-respaldo-${repo.today()}.json", repo.exportBackup())
         if (ok) _events.emit(UiEvent.Message("Respaldo guardado."))
+    }
+
+    fun exportCsv() = act {
+        val ok = platform.exportFile("levelup-historial-${repo.today()}.csv", repo.exportCsv(), "text/csv")
+        if (ok) _events.emit(UiEvent.Message("Historial guardado en CSV."))
     }
 
     fun importData() = act {

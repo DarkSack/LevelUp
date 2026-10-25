@@ -1,5 +1,6 @@
 package app.levelup.ui
 
+import app.levelup.domain.DayBlock
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -69,5 +70,11 @@ object Fmt {
         3 -> "Media"
         4 -> "Exigente"
         else -> "Reto mayor"
+    }
+
+    fun block(b: DayBlock): String = when (b) {
+        DayBlock.MORNING -> "Mañana"
+        DayBlock.AFTERNOON -> "Tarde"
+        DayBlock.EVENING -> "Noche"
     }
 }

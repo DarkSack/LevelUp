@@ -33,7 +33,9 @@ import app.levelup.domain.ChallengeInstance
 import app.levelup.domain.CustomCategory
 import app.levelup.domain.InstanceStatus
 import app.levelup.ui.Fmt
+import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
+import app.levelup.ui.theme.gameOn
 
 fun statusText(i: ChallengeInstance): String = when (i.status) {
     InstanceStatus.PENDING -> "Pendiente"
@@ -44,11 +46,12 @@ fun statusText(i: ChallengeInstance): String = when (i.status) {
     InstanceStatus.REPLACED -> "Cambiado"
 }
 
-fun metaLine(i: ChallengeInstance, custom: List<CustomCategory>): String = buildList {
+fun metaLine(i: ChallengeInstance, custom: List<CustomCategory>, xp: Boolean = true): String = buildList {
     add(Categories.name(i.category, custom))
     add(Fmt.minutes(i.minutes))
-    add("+${i.xp} XP")
+    if (xp) add("+${i.xp} XP")
     if (i.isHabit) add("Hábito")
+    if (i.minimal) add("Versión mínima")
 }.joinToString(" · ")
 
 /**
@@ -82,7 +85,8 @@ fun InstanceRow(i: ChallengeInstance, custom: List<CustomCategory>, onComplete: 
                     style = MaterialTheme.typography.titleSmall,
                     textDecoration = if (i.isDone) TextDecoration.LineThrough else null,
                 )
-                Text(metaLine(i, custom), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(metaLine(i, custom, LocalPrefs.current.gameOn), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (!i.isOpen || i.status != InstanceStatus.PENDING) {
                     Text(statusText(i), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
@@ -94,7 +98,8 @@ fun InstanceRow(i: ChallengeInstance, custom: List<CustomCategory>, onComplete: 
 
 /** Fila del catálogo o de retos propios. */
 @Composable
-fun ChallengeRow(c: Challenge, custom: List<CustomCategory>, extra: String? = null, onOpen: () -> Unit) {
+fun ChallengeRow(c: Challenge, custom: List<CustomCategory>, extra: String? = null, favorite: Boolean = false, onOpen: () -> Unit) {
+    val gameOn = LocalPrefs.current.gameOn
     Card(
         Modifier.fillMaxWidth().padding(vertical = Space.xs).clickable(onClickLabel = "Ver detalles", onClick = onOpen),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -104,7 +109,8 @@ fun ChallengeRow(c: Challenge, custom: List<CustomCategory>, extra: String? = nu
             Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
                 Text(c.title, style = MaterialTheme.typography.titleSmall)
                 val meta = listOfNotNull(
-                    Categories.name(c.category, custom), Fmt.difficulty(c.difficulty), Fmt.minutes(c.minutes), "+${c.xp} XP", extra,
+                    Categories.name(c.category, custom), Fmt.difficulty(c.difficulty), Fmt.minutes(c.minutes),
+                    "+${c.xp} XP".takeIf { gameOn }, extra, "Favorito".takeIf { favorite },
                 ).joinToString(" · ")
                 Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

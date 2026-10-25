@@ -26,6 +26,7 @@ object Reminders {
         if (!prefs.remindersEnabled || prefs.notificationLevel == NotificationLevel.OFF) return null
         if (inQuietHours(now.hour * 60 + now.minute, prefs.quietStartMinute, prefs.quietEndMinute)) return null
         if (dayKind == DayKind.PAUSED || dayKind == DayKind.REST) return null
+        if (!Days.has(prefs.reminderDays, now.date.dayOfWeek)) return null
 
         val today = now.date
         val limit = today.minus(RECOVERY_AFTER_DAYS, DateTimeUnit.DAY)
