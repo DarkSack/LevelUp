@@ -12,7 +12,10 @@ kotlin {
         it.binaries.framework { baseName = "Shared"; isStatic = true }
     }
     sourceSets {
-        iosMain.dependencies { implementation("androidx.sqlite:sqlite-bundled:<versión de androidx.sqlite>") }
+        iosMain.dependencies {
+            implementation("androidx.sqlite:sqlite-bundled:<versión de androidx.sqlite>")
+            implementation("io.ktor:ktor-client-darwin:<versión de Ktor>") // motor HTTP de Supabase en iOS
+        }
     }
 }
 
@@ -29,7 +32,10 @@ dependencies {
 | Base de datos | `Room.databaseBuilder<AppDatabase>("<Documents>/levelup.db").setDriver(BundledSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO).build()` con la ruta de `NSDocumentDirectory` |
 | `Platform` | `appVersion` de `NSBundle`, `systemReducedMotion` = `UIAccessibilityIsReduceMotionEnabled()`, exportar/importar con `UIDocumentPickerViewController`, permiso con `UNUserNotificationCenter.requestAuthorization` |
 | Recordatorios | iOS no ejecuta código a una hora exacta. Al abrir la app y al cambiar preferencias, programar con `UNCalendarNotificationTrigger` los avisos de los próximos 7 días usando `Reminders.decide` (sin el aviso de regreso, que depende de días sin abrir la app; ese puede ir como aviso único a 3 días vista que se reprograma cada vez que se abre) |
-| Punto de entrada | `fun MainViewController() = ComposeUIViewController { App(repo, IosPlatform()) }`, con el repositorio creado una sola vez |
+| Sesión de la cuenta | Un `SessionManager` que guarde la sesión en el Llavero (Keychain) en vez de `SharedPreferences`; pasarlo a `Cloud(config, …)` y construir `CloudService` como `androidCloudService` |
+| Sincronización en segundo plano | `BGAppRefreshTask` para el equivalente de `SyncWork`; en iOS se ejecuta cuando el sistema quiere, así que sincronizar también al abrir (ya lo hace `CloudViewModel.onAppOpened`) |
+| LevelUp Plus | StoreKit 2 con un producto de compra única; implementar `plus`, `buyPlus` y `refreshPlus` de `Platform` |
+| Punto de entrada | `fun MainViewController() = ComposeUIViewController { App(repo, IosPlatform(), cloud) }`, con el repositorio creado una sola vez |
 
 ## 3. Proyecto Xcode (`iosApp/`)
 
@@ -45,6 +51,7 @@ de la app los decide el propietario (ver [PENDIENTES.md](PENDIENTES.md)).
 
 ## 5. App Store
 
-- Privacidad (etiquetas de App Store Connect): "Datos no recopilados", igual que en Play.
+- Privacidad (etiquetas de App Store Connect): los mismos datos que en la sección de seguridad de datos de Play (correo, ID de usuario, actividad y contenido de la app, solo con cuenta, no vinculados a rastreo).
+- App Store exige que se pueda borrar la cuenta desde la app: ya está (Cuenta y sincronización).
 - Copia de seguridad: los datos de la app entran en la copia de iCloud del dispositivo si el usuario la tiene activada; exportar/importar funciona igual que en Android.
 - Probablemente el nombre "LevelUp" ya esté ocupado en la App Store: hace falta otro nombre visible.
