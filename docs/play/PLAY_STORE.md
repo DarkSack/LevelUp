@@ -7,11 +7,43 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 
 | | |
 |---|---|
-| Generarlo | `./gradlew :androidApp:bundleRelease` → `androidApp/build/outputs/bundle/release/androidApp-release.aab` |
+| Archivo para Play | `E:\Dev\levelup\androidApp\build\outputs\bundle\release\androidApp-release.aab` (se sube este, no un APK) |
+| Reloj (Wear OS) | `E:\Dev\levelup\wearApp\build\outputs\bundle\release\wearApp-release.aab` (canal de Wear OS, ver la sección 5) |
+| Generarlo | `./gradlew :androidApp:bundleRelease :wearApp:bundleRelease` |
 | Paquete y versión | `sack.levelup`, versionName 0.1.0, versionCode 1 |
 | SDK | mínimo 26 (Android 8), objetivo 36 |
 | Firma | Llave de subida ya creada (`keystore.properties`, fuera de git). **Tú**: respaldar el `.jks` y su contraseña fuera del equipo |
-| Configuración | `supabase.properties` y `play.properties` en la raíz (fuera de git) antes de compilar el release |
+| Configuración | `supabase.properties` y `play.properties` en la raíz (fuera de git) antes de compilar el release. La clave de `play.properties` solo existe tras crear la app en Play Console: el primer bundle sale sin ella (sirve para la prueba interna, pero no comprueba las compras de Plus); después de copiarla hay que generar y subir otro |
+
+### Notas de la versión 0.1.0
+
+Se pegan tal cual en «Notas de la versión» al crear cada versión. `es-419` es español (Latinoamérica), el idioma
+predeterminado de la ficha; Play admite 500 caracteres por idioma (teléfono: 466; reloj: 166).
+
+Teléfono:
+
+```
+<es-419>
+Primera versión de LevelUp.
+• Más de 130 retos diarios en nueve áreas, según tus objetivos y tu tiempo.
+• Experiencia, niveles, títulos, 41 logros y misiones.
+• Sin castigos: simplifica, cambia o pospón un reto; los descansos no rompen tu racha.
+• Metas, favoritos, revisión semanal, widget de hoy y atajos.
+• Pasos y ejercicio de Health Connect en los retos físicos (opcional).
+• Cuenta opcional para sincronizar y retarte con amigos.
+• También en tu reloj Wear OS.
+</es-419>
+```
+
+Reloj (canal de Wear OS):
+
+```
+<es-419>
+Primera versión para Wear OS.
+• Ve los retos y metas de hoy en tu reloj y completa un reto sin sacar el teléfono.
+• Complicación para tu esfera con tu avance del día.
+</es-419>
+```
 
 ## 2. Ficha (español)
 
