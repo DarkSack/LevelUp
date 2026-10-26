@@ -11,6 +11,9 @@ fun localProperties(name: String): Properties =
 // Supabase (supabase.properties) y clave de licencia de Play (play.properties), fuera de git; ver los .example.
 // Sin ellos la app compila igual: sin cuenta y sin comprobar la firma de las compras.
 val supabase = localProperties("supabase.properties")
+// cuenta=no en supabase.properties: compila sin la nube aunque esté configurada (cuenta, amigos y grupos no aparecen).
+// Para publicar mientras el registro no funcione en producción (falta el correo propio, ver docs/PENDIENTES.md).
+val withAccount = supabase.getProperty("cuenta", "si") != "no"
 val play = localProperties("play.properties")
 
 plugins {
@@ -30,8 +33,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
-        buildConfigField("String", "SUPABASE_URL", "\"${supabase.getProperty("url", "")}\"")
-        buildConfigField("String", "SUPABASE_KEY", "\"${supabase.getProperty("publishableKey", "")}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"${if (withAccount) supabase.getProperty("url", "") else ""}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${if (withAccount) supabase.getProperty("publishableKey", "") else ""}\"")
         buildConfigField("String", "PLAY_LICENSE_KEY", "\"${play.getProperty("licenseKey", "")}\"")
     }
 

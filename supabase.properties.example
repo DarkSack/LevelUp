@@ -4,3 +4,4 @@
 url=https://TU-PROYECTO.supabase.co
 publishableKey=sb_publishable_...
 # Para probar contra el Supabase local (supabase start) desde un emulador: url=http://10.0.2.2:54321
+# cuenta=no compila la app sin cuenta ni amigos aunque url y la clave estén puestas (quitar la línea para volver a tenerlas).

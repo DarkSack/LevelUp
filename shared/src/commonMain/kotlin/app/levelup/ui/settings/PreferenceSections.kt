@@ -24,6 +24,7 @@ import app.levelup.ui.components.MultiChoiceRow
 import app.levelup.ui.components.SectionTitle
 import app.levelup.ui.components.StepperRow
 import app.levelup.ui.components.ToggleRow
+import app.levelup.ui.theme.LocalHasAccount
 import app.levelup.ui.theme.Space
 import kotlinx.datetime.DayOfWeek
 
@@ -136,7 +137,7 @@ fun RemindersSection(prefs: Preferences, notificationsAllowed: Boolean, onChange
     )
     ToggleRow("Recordatorios", prefs.remindersEnabled && notificationsAllowed, onToggle,
         if (prefs.remindersEnabled && !notificationsAllowed) "El permiso de notificaciones está desactivado en el teléfono." else null)
-    ToggleRow("Avisos de amigos", prefs.socialNotifications, { v -> onChange { it.copy(socialNotifications = v) } },
+    if (LocalHasAccount.current) ToggleRow("Avisos de amigos", prefs.socialNotifications, { v -> onChange { it.copy(socialNotifications = v) } },
         if (!notificationsAllowed) "Necesita el permiso de notificaciones del teléfono."
         else "Solicitudes, felicitaciones e invitaciones, si tienes cuenta. Respetan tus horas de silencio.")
     if (!prefs.remindersEnabled) return

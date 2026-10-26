@@ -154,6 +154,9 @@ val LocalReduceMotion = staticCompositionLocalOf { false }
 /** Preferencias actuales, para que cualquier pantalla respete modo sencillo, estilo de juego, etc. */
 val LocalPrefs = staticCompositionLocalOf { Preferences() }
 
+/** false = esta compilación no tiene la nube: no se ofrece cuenta, amigos ni nada que hable de ellos. */
+val LocalHasAccount = staticCompositionLocalOf { false }
+
 @Composable
 fun isDarkTheme(prefs: Preferences): Boolean = when (prefs.theme) {
     ThemePref.SYSTEM -> isSystemInDarkTheme()

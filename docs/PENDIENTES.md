@@ -34,7 +34,8 @@ a él, así que las compilaciones salen conectadas a producción.
 **Bloqueante: correo propio (SMTP).** En el plan gratis, con el remitente de serie, Supabase **no deja cambiar
 las plantillas** (lo rechazó al intentarlo) y solo envía 2 correos por hora. Las plantillas de serie mandan un
 enlace en inglés, no el código de 6 cifras que pide la app, así que hoy en producción **no se puede crear cuenta
-ni cambiar la contraseña desde la app**. Para arreglarlo:
+ni cambiar la contraseña desde la app**. Mientras tanto la 0.1.0 sale sin cuenta (`cuenta=no` en
+`supabase.properties`, ver [PLAY_STORE.md](play/PLAY_STORE.md) §7 para volver a activarla). Para arreglarlo:
 
 1. Crear una cuenta en un proveedor de correo (Resend, Brevo, Amazon SES…) y verificar un remitente. Con un
    dominio propio (por ejemplo `no-reply@tu-dominio`) los correos llegan mejor que con una dirección de Gmail o

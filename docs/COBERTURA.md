@@ -26,12 +26,12 @@ Nada se ha probado en un teléfono real ni contra el Supabase de producción con
 | 17 | Notificaciones | Parcial | Recordatorio diario a la hora elegida, de recuperación y avisos de amigos con horas de silencio; el permiso se pide al activarlos. **Faltan** avisos por logro y recordatorios distintos por hábito u hora. |
 | 18 | Privacidad y seguridad | Parcial | RLS, funciones que validan y limitan el uso, exportar, borrar datos y cuenta, política de privacidad. **Faltan** las condiciones de servicio, alojar la política en una URL pública y una auditoría de dependencias. |
 | 19 | Monetización | Hecho | LevelUp Plus (compra única) con restauración y firma comprobada. Sin suscripciones ni IA (decisión). Falta crear el producto en Play Console. |
-| 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. **Faltan**: splash propia (solo la del sistema en Android 12+), inglés (app y ficha), icono 512 × 512, gráfico 1024 × 500, capturas reales, notas de versión, datos de acceso para revisores, guía de pruebas internas y cerradas (y el requisito de prueba cerrada si la cuenta de Play es personal). EAS no aplica: firma Gradle. |
+| 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. Icono 512 × 512, gráfico 1024 × 500, capturas reales del teléfono y notas de versión en `docs/play/`. La 0.1.0 sale sin cuenta (`cuenta=no`). **Faltan**: splash propia (solo la del sistema en Android 12+), inglés (app y ficha), capturas del reloj, datos de acceso para revisores, guía de pruebas internas y cerradas (y el requisito de prueba cerrada si la cuenta de Play es personal). EAS no aplica: firma Gradle. |
 | 21 | App Store | Decisión | Fuera de esta versión; solo [IOS.md](IOS.md). |
 | 22 | Recursos comerciales y legales | Parcial | Hay descripciones corta y larga y política de privacidad. **Faltan** condiciones de servicio, textos de capturas, plan de localización, notas de revisión y de versión, y lista de verificación de publicación. |
 | 23 | CI | Parcial | GitHub Actions corre las pruebas y compila los APK de depuración del teléfono y del reloj. **Faltan** lint, pruebas pgTAP, auditoría de dependencias, compilar el AAB de release y la subida a Play con aprobación manual. |
 | 24 | Pruebas | Parcial | Unitarias: todas las reglas pedidas. Integración: Room, migración, sincronización, conflictos, RLS, amistades, bloqueos, borrado de cuenta. Interfaz (Robolectric): bienvenida, omitirla, onboarding interrumpido, completar un reto y su trofeo, accesibilidad, Plus. **Faltan** de interfaz: registro, sin conexión y reconexión, amigos y borrar cuenta; y todas las de accesibilidad y rendimiento en teléfono. |
-| 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) funciona en local, no en producción hasta el SMTP. El 15 solo cubre Android. El 16 está a medias (faltan gráficos, capturas e inglés). |
+| 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) funciona en local, no en producción hasta el SMTP. El 15 solo cubre Android. El 16 está a medias (faltan inglés y capturas del reloj). |
 | 26 | Forma de trabajo | Hecho | Fases con pruebas; pendientes en [PENDIENTES.md](PENDIENTES.md). |
 
 ## Funciones pedidas el 2026-10-25
@@ -100,11 +100,11 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 
 ## Lo que falta, en orden
 
-1. **SMTP propio** (del propietario) y subir las plantillas: sin esto nadie puede registrarse.
+1. **SMTP propio** (del propietario) y subir las plantillas: sin esto nadie puede registrarse (la 0.1.0 sale sin cuenta).
 2. **Play Console** (del propietario): crear la app, el producto `levelup_plus`, la clave de licencia y la URL de la política.
 3. **Probar en un teléfono**: instalar, TalkBack, texto grande, recordatorios, compra de prueba, registro real.
-4. Recursos de la tienda: icono 512, gráfico 1024 × 500 y capturas reales (se pueden sacar con Robolectric como
-   en Moneytor), notas de versión, notas para revisores y lista de verificación.
+4. Recursos de la tienda: notas para revisores, lista de verificación y capturas del reloj (icono 512, gráfico
+   1024 × 500, capturas del teléfono y notas de versión ya están).
 6. Condiciones de servicio (lo social las justifica) con los datos del propietario.
 7. Estado de sincronización en Inicio.
 8. CI: lint, pgTAP, auditoría de dependencias y AAB de release.

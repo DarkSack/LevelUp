@@ -72,6 +72,8 @@ room {
 apply(from = rootProject.file("gradle/robolectric-offline.gradle.kts"))
 
 // Prueba contra el Supabase local (CloudIntegrationTest): -PsupabaseLocalKey=<clave publicable de `supabase status`>.
+// Capturas para la ficha de Play (StoreScreenshots): solo corren con -Pcapturas=<carpeta>.
 tasks.withType<Test>().configureEach {
     providers.gradleProperty("supabaseLocalKey").orNull?.let { systemProperty("supabaseLocalKey", it) }
+    providers.gradleProperty("capturas").orNull?.let { systemProperty("levelup.capturas", it) }
 }

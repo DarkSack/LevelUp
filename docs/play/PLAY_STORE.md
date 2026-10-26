@@ -13,6 +13,7 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 | Paquete y versión | `sack.levelup`, versionName 0.1.0, versionCode 1 |
 | SDK | mínimo 26 (Android 8), objetivo 36 |
 | Firma | Llave de subida ya creada (`keystore.properties`, fuera de git). **Tú**: respaldar el `.jks` y su contraseña fuera del equipo |
+| Sin cuenta | La 0.1.0 sale **sin cuenta**: `cuenta=no` en `supabase.properties` compila sin la nube (no aparecen cuenta, amigos ni grupos) mientras el registro no funcione en producción (falta el SMTP propio). Al quitarlo, cambiar lo marcado en la sección 7 |
 | Configuración | `supabase.properties` y `play.properties` en la raíz (fuera de git) antes de compilar el release. La clave de `play.properties` solo existe tras crear la app en Play Console: el primer bundle sale sin ella (sirve para la prueba interna, pero no comprueba las compras de Plus); después de copiarla hay que generar y subir otro |
 
 ### Notas de la versión 0.1.0
@@ -30,7 +31,7 @@ Primera versión de LevelUp.
 • Sin castigos: simplifica, cambia o pospón un reto; los descansos no rompen tu racha.
 • Metas, favoritos, revisión semanal, widget de hoy y atajos.
 • Pasos y ejercicio de Health Connect en los retos físicos (opcional).
-• Cuenta opcional para sincronizar y retarte con amigos.
+• Sin cuenta: tus datos se quedan en tu teléfono.
 • También en tu reloj Wear OS.
 </es-419>
 ```
@@ -51,7 +52,7 @@ Primera versión para Wear OS.
 
 **Descripción breve** (80 máx.):
 
-> Retos pequeños para crear hábitos. Sube de nivel a tu ritmo, con o sin cuenta.
+> Retos pequeños para crear hábitos. Sube de nivel a tu ritmo, sin cuenta.
 
 **Descripción completa:**
 
@@ -78,12 +79,8 @@ Primera versión para Wear OS.
 >   mantener la atención.
 > • Texto más grande, alto contraste, menos movimiento y compatibilidad con TalkBack.
 >
-> CON AMIGOS, SI QUIERES
-> • Cuenta opcional para sincronizar tus teléfonos.
-> • Amigos, felicitaciones, retos en grupo y una clasificación semanal a la que solo entras si quieres.
->
 > PRIVADO
-> • Sin anuncios y sin rastreo. Sin cuenta funciona sin internet y tus datos se quedan en tu teléfono.
+> • Sin anuncios, sin rastreo y sin cuenta. Funciona sin internet y tus datos se quedan en tu teléfono.
 > • Exporta un respaldo cuando quieras.
 >
 > LEVELUP PLUS (OPCIONAL)
@@ -99,17 +96,21 @@ Primera versión para Wear OS.
 |---|---|
 | Política de privacidad | https://shop.sackito.online/privacidad/levelup (copia de [privacidad.md](privacidad.md) en `lib/privacidad-apps.ts` de rpgroll-shop: si cambia una, cambiar la otra) |
 | Anuncios | No contiene anuncios |
-| Acceso a la app | Todo disponible sin cuenta. Lo social necesita cuenta, pero cualquiera puede crearla en la app; si Play pide credenciales de revisión, **Tú** crea una cuenta de prueba |
-| Clasificación de contenido | Cuestionario IARC: sin violencia ni ubicación. **Sí** a compras digitales. **Sí** a interacción entre usuarios, limitada: solo reacciones predefinidas, sin chat ni texto libre, con bloqueo y denuncia |
+| Acceso a la app | Todo disponible sin restricciones: la 0.1.0 no tiene cuenta ni inicio de sesión |
+| Clasificación de contenido | Cuestionario IARC: sin violencia ni ubicación. **Sí** a compras digitales. **No** a interacción entre usuarios |
 | Público objetivo | 13 años o más. No dirigida a menores de 13 |
-| Borrado de cuenta | En la app (Cuenta y sincronización → Borrar mi cuenta) y la misma URL de la política: su sección «Tus derechos y cómo borrar tus datos» explica cómo pedirlo por correo sin la app |
+| Borrado de cuenta | No aplica: la 0.1.0 no permite crear cuentas |
 | Apps de salud | Retos de bienestar general, sin funciones médicas. **Declaración de Health Connect obligatoria**: la app pide `READ_STEPS` y `READ_EXERCISE` (opcional, en Laboratorio) para mostrar los pasos y minutos de ejercicio de hoy en los retos físicos; solo lectura, procesado en el teléfono, sin guardar ni subir nada. Play revisa este formulario aparte |
 
 ## 4. Seguridad de los datos
 
-Sin cuenta nada sale del teléfono. Con cuenta (opcional) los datos van a Supabase, cifrados en tránsito
-(HTTPS). Nada se comparte con terceros (Supabase es un proveedor que trata los datos por cuenta del
-desarrollador, lo que Play no cuenta como «compartir»).
+La 0.1.0 no tiene cuenta: nada sale del teléfono. Respuesta: **Recopila: No. Comparte: No.** Los pasos y el
+ejercicio de Health Connect se leen y se muestran solo en el teléfono (no se guardan ni se envían): según la ayuda
+de Play, lo que se procesa solo en el dispositivo no cuenta como recopilado, pero **Tú** confírmalo al rellenarlo.
+
+**Cuando vuelva la cuenta** (sin `cuenta=no`), el formulario pasa a ser este. Con cuenta (opcional) los datos van a
+Supabase, cifrados en tránsito (HTTPS). Nada se comparte con terceros (Supabase es un proveedor que trata los datos
+por cuenta del desarrollador, lo que Play no cuenta como «compartir»).
 
 | Pregunta | Respuesta propuesta |
 |---|---|
@@ -141,5 +142,33 @@ pueden coincidir con los del teléfono). Necesita capturas del reloj y pasa una 
 
 ## 6. Gráficos
 
-Pendientes: icono 512 × 512, gráfico destacado 1024 × 500 y capturas. Se pueden sacar de la interfaz real
-con Robolectric, como en Moneytor (`StoreScreenshots`).
+En `E:\Dev\levelup\docs\play\capturas\`, sacados de la interfaz real con Robolectric (`StoreScreenshots`):
+
+| Play | Archivo |
+|---|---|
+| Icono 512 × 512 | `icono-512.png` |
+| Gráfico destacado 1024 × 500 | `grafico-1024x500.png` |
+| Capturas del teléfono (1080 × 1920) | `0-bienvenida.png` … `5-metas.png`, en ese orden |
+
+Regenerarlos (tras cambiar la interfaz):
+`./gradlew :shared:testAndroidHostTest --tests "app.levelup.store.StoreScreenshots" -Pcapturas=E:/Dev/levelup/docs/play/capturas --rerun`.
+`animacion/` guarda la bienvenida a 0, 250, 500, 800 y 1100 ms para revisar sus fases; no se sube.
+
+Faltan las capturas del reloj (§5).
+
+## 7. Cuando vuelva la cuenta
+
+Al quitar `cuenta=no` (con el SMTP propio funcionando): en las notas, la línea «Sin cuenta…» pasa a «Cuenta opcional
+para sincronizar y retarte con amigos.»; la descripción breve vuelve a «…a tu ritmo, con o sin cuenta.»; la completa
+recupera antes de PRIVADO:
+
+> CON AMIGOS, SI QUIERES
+> • Cuenta opcional para sincronizar tus teléfonos.
+> • Amigos, felicitaciones, retos en grupo y una clasificación semanal a la que solo entras si quieres.
+
+y su primera línea de PRIVADO dice «Sin anuncios y sin rastreo. Sin cuenta funciona sin internet y tus datos se
+quedan en tu teléfono.». En la sección 3: acceso «Todo disponible sin cuenta. Lo social necesita cuenta, pero
+cualquiera puede crearla en la app; si Play pide credenciales de revisión, **Tú** crea una cuenta de prueba»; IARC
+**Sí** a interacción entre usuarios, limitada (solo reacciones predefinidas, sin chat ni texto libre, con bloqueo y
+denuncia); borrado de cuenta en la app (Cuenta y sincronización → Borrar mi cuenta) y la URL de la política (su
+sección «Tus derechos y cómo borrar tus datos»). Seguridad de los datos: las tablas de la sección 4.

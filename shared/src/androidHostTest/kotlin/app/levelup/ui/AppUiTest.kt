@@ -36,7 +36,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 
-private class FakePlatform(override val systemReducedMotion: Boolean = true) : Platform {
+internal class FakePlatform(override val systemReducedMotion: Boolean = true) : Platform {
     override val appVersion = "test"
     override suspend fun exportFile(fileName: String, content: String, mimeType: String) = true
     override suspend fun importFile(): String? = null
@@ -140,6 +140,16 @@ class AppUiTest {
         waitForText("Modo sencillo")
         compose.onNodeWithText("Modo sencillo").performScrollTo().performClick()
         compose.waitUntil(5_000) { runBlocking { repo.prefs().simpleMode } }
+    }
+
+    @Test fun withoutCloudProfileOffersNoAccountNorFriends() {
+        onboarded()
+        launch() // sin CloudViewModel, como una compilación con cuenta=no
+        waitForText("Perfil")
+        compose.onNodeWithText("Perfil").performClick()
+        waitForText("LevelUp Plus")
+        assertEquals(0, compose.onAllNodesWithText("Cuenta y sincronización").fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithText("Amigos y grupos").fetchSemanticsNodes().size)
     }
 
     @Test fun withoutGameThereIsNoXpNorLevels() {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import app.levelup.ui.MainNavigation
 import app.levelup.ui.components.LevelUpLogo
 import app.levelup.ui.onboarding.OnboardingFlow
 import app.levelup.ui.theme.LevelUpTheme
+import app.levelup.ui.theme.LocalHasAccount
 import app.levelup.ui.welcome.WelcomeScreen
 
 /** Punto de entrada de la interfaz, igual en todas las plataformas. */
@@ -45,12 +47,14 @@ fun App(vm: LevelUpViewModel, platform: Platform, cloud: CloudViewModel? = null)
     val plus by platform.plus.collectAsStateWithLifecycle()
     LevelUpTheme(current ?: Preferences(), platform.systemReducedMotion, plus.owned) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            when {
-                current == null -> LoadingScreen()
-                !current.onboardingDone && current.onboardingStep == 0 ->
-                    WelcomeScreen(onStart = { vm.updatePrefs { it.copy(onboardingStep = 1) } })
-                !current.onboardingDone -> OnboardingFlow(vm, current)
-                else -> MainNavigation(vm, cloud, platform)
+            CompositionLocalProvider(LocalHasAccount provides (cloud != null)) {
+                when {
+                    current == null -> LoadingScreen()
+                    !current.onboardingDone && current.onboardingStep == 0 ->
+                        WelcomeScreen(onStart = { vm.updatePrefs { it.copy(onboardingStep = 1) } })
+                    !current.onboardingDone -> OnboardingFlow(vm, current)
+                    else -> MainNavigation(vm, cloud, platform)
+                }
             }
         }
     }

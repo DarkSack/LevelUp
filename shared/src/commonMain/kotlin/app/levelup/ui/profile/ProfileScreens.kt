@@ -69,6 +69,7 @@ import app.levelup.ui.settings.RemindersSection
 import app.levelup.ui.settings.RestSection
 import app.levelup.ui.settings.RhythmSection
 import app.levelup.ui.theme.LocalPrefs
+import app.levelup.ui.theme.LocalHasAccount
 import app.levelup.ui.theme.Space
 
 private data class Entry(val section: String, val title: String, val subtitle: String)
@@ -95,6 +96,7 @@ private val entries = listOf(
 @Composable
 fun ProfileScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
     val prefs = LocalPrefs.current
+    val hasAccount = LocalHasAccount.current
     val p by vm.progress.collectAsStateWithLifecycle()
     var editName by remember { mutableStateOf(false) }
     val frame = Cosmetics.byId[prefs.equippedFrame] ?: Cosmetics.byId.getValue(Cosmetics.DEFAULT)
@@ -113,7 +115,7 @@ fun ProfileScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit
                     TextButton(onClick = { editName = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Editar nombre") }
                 }
             }
-            items(entries, key = { it.section }) { e ->
+            items(if (hasAccount) entries else entries.filter { it.section != "account" && it.section != "social" }, key = { it.section }) { e ->
                 Row(
                     Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable {
                         when (e.section) {
@@ -294,8 +296,8 @@ private fun DataSection(vm: LevelUpViewModel, nav: Nav, signedIn: Boolean) {
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     SectionTitle("Cambiar de teléfono")
-    listOf(
-        "Con cuenta: inicia sesión en el teléfono nuevo y todo se descarga solo.",
+    listOfNotNull(
+        "Con cuenta: inicia sesión en el teléfono nuevo y todo se descarga solo.".takeIf { LocalHasAccount.current },
         "Sin cuenta: exporta tus datos aquí, pasa el archivo al teléfono nuevo (correo, nube o cable) e impórtalo en Perfil → Tus datos.",
         "LevelUp Plus se recupera en Perfil → LevelUp Plus → «Ya lo compré: restaurar», con la misma cuenta de Google Play.",
     ).forEachIndexed { i, step -> Text("${i + 1}. $step", style = MaterialTheme.typography.bodyMedium) }
@@ -345,19 +347,24 @@ private fun DataSection(vm: LevelUpViewModel, nav: Nav, signedIn: Boolean) {
 
 @Composable
 private fun PrivacySection() {
-    listOf(
+    val hasAccount = LocalHasAccount.current
+    listOfNotNull(
         "Sin cuenta" to "Todo se queda en este teléfono: ajustes, retos, experiencia, logros y misiones. Nada sale de él.",
-        "Con cuenta (opcional)" to "Se guardan tu correo y una copia de tu progreso en Supabase, el proveedor de base de datos de " +
-            "LevelUp, para recuperarlo o usarlo en otro teléfono. La conexión va cifrada y solo tu cuenta puede leer tus datos.",
-        "Amigos (opcional)" to "Si creas un perfil social, otras personas ven tu nombre de usuario y tu nombre visible. Tus amigos " +
-            "ven tu nivel, tu racha y tu XP de la semana solo si lo permites. Tus retos, categorías e historial no se comparten nunca.",
+        ("Con cuenta (opcional)" to "Se guardan tu correo y una copia de tu progreso en Supabase, el proveedor de base de datos de " +
+            "LevelUp, para recuperarlo o usarlo en otro teléfono. La conexión va cifrada y solo tu cuenta puede leer tus datos.")
+            .takeIf { hasAccount },
+        ("Amigos (opcional)" to "Si creas un perfil social, otras personas ven tu nombre de usuario y tu nombre visible. Tus amigos " +
+            "ven tu nivel, tu racha y tu XP de la semana solo si lo permites. Tus retos, categorías e historial no se comparten nunca.")
+            .takeIf { hasAccount },
         "Copia de Android" to "Si tienes activada la copia de seguridad de Android, Google guarda una copia cifrada de los datos de tus " +
             "apps en tu cuenta, LevelUp incluida (sin tu sesión). Puedes desactivarla en los ajustes del teléfono.",
         "Anuncios y analítica" to "No hay anuncios, ni analítica, ni seguimiento. No hace falta ningún «modo sin analítica»: nunca la hubo.",
         "Health Connect (opcional)" to "Si lo activas en Laboratorio, LevelUp lee tus pasos y minutos de ejercicio de hoy para mostrarlos " +
             "en los retos físicos. Solo se leen en el teléfono: no se guardan ni se suben.",
-        "Permisos" to "Internet, para la cuenta y lo social, y notificaciones, solo si activas los recordatorios o los avisos de amigos.",
-        "Tus derechos" to "Exporta tus datos o bórralos en Perfil → Tus datos. Borra tu cuenta y todo lo de la nube en Perfil → Cuenta.",
+        "Permisos" to if (hasAccount) "Internet, para la cuenta y lo social, y notificaciones, solo si activas los recordatorios o los avisos de amigos."
+            else "Notificaciones, solo si activas los recordatorios.",
+        "Tus derechos" to "Exporta tus datos o bórralos en Perfil → Tus datos." +
+            if (hasAccount) " Borra tu cuenta y todo lo de la nube en Perfil → Cuenta." else "",
         "Salud" to "LevelUp no es un servicio médico ni hace diagnósticos. Adapta los retos a tu situación.",
         "Contacto" to "Johan Jafet Del Valle Santiago · donsackito@protonmail.com",
     ).forEach { (title, body) ->
