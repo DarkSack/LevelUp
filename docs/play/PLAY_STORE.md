@@ -97,12 +97,12 @@ Primera versión para Wear OS.
 
 | Sección | Respuesta |
 |---|---|
-| Política de privacidad | URL pública de [privacidad.md](privacidad.md) (**Tú**: alojarla) |
+| Política de privacidad | https://shop.sackito.online/privacidad/levelup (copia de [privacidad.md](privacidad.md) en `lib/privacidad-apps.ts` de rpgroll-shop: si cambia una, cambiar la otra) |
 | Anuncios | No contiene anuncios |
 | Acceso a la app | Todo disponible sin cuenta. Lo social necesita cuenta, pero cualquiera puede crearla en la app; si Play pide credenciales de revisión, **Tú** crea una cuenta de prueba |
 | Clasificación de contenido | Cuestionario IARC: sin violencia ni ubicación. **Sí** a compras digitales. **Sí** a interacción entre usuarios, limitada: solo reacciones predefinidas, sin chat ni texto libre, con bloqueo y denuncia |
 | Público objetivo | 13 años o más. No dirigida a menores de 13 |
-| Borrado de cuenta | En la app (Cuenta y sincronización → Borrar mi cuenta) y una URL pública con cómo pedirlo (**Tú**, ver PENDIENTES.md) |
+| Borrado de cuenta | En la app (Cuenta y sincronización → Borrar mi cuenta) y la misma URL de la política: su sección «Tus derechos y cómo borrar tus datos» explica cómo pedirlo por correo sin la app |
 | Apps de salud | Retos de bienestar general, sin funciones médicas. **Declaración de Health Connect obligatoria**: la app pide `READ_STEPS` y `READ_EXERCISE` (opcional, en Laboratorio) para mostrar los pasos y minutos de ejercicio de hoy en los retos físicos; solo lectura, procesado en el teléfono, sin guardar ni subir nada. Play revisa este formulario aparte |
 
 ## 4. Seguridad de los datos

@@ -74,9 +74,8 @@ Otros:
 
 ## Datos legales y enlaces
 
-- Alojar la política de privacidad ([docs/play/privacidad.md](play/privacidad.md)) en una URL pública.
-- Play pide una **URL para solicitar el borrado de la cuenta** sin instalar la app. Puede ser una sección de
-  la misma página de privacidad que diga cómo pedirlo por correo (ya está redactada en «Tus derechos»).
+- ~~Alojar la política de privacidad~~: hecho, https://shop.sackito.online/privacidad/levelup (2026-10-26). Sirve
+  también como **URL para solicitar el borrado de la cuenta**: su sección «Tus derechos» explica cómo pedirlo por correo.
 
 ## Moderación
 
