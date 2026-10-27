@@ -13,7 +13,7 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 | Paquete y versión | `sack.levelup`, versionName 0.1.0, versionCode 1 |
 | SDK | mínimo 26 (Android 8), objetivo 36 |
 | Firma | Llave de subida ya creada (`keystore.properties`, fuera de git). **Tú**: respaldar el `.jks` y su contraseña fuera del equipo |
-| Sin cuenta | La 0.1.0 sale **sin cuenta**: `cuenta=no` en `supabase.properties` compila sin la nube (no aparecen cuenta, amigos ni grupos) mientras el registro no funcione en producción (falta el SMTP propio). Al quitarlo, cambiar lo marcado en la sección 7 |
+| Sin cuenta | La 0.1.0 sale **sin cuenta**: `cuenta=no` en `supabase.properties` compila sin la nube (no aparecen cuenta, amigos ni grupos) mientras el registro no funcione en producción (falta el SMTP propio). Al quitarlo, cambiar lo marcado en la sección 9 |
 | Configuración | `supabase.properties` y `play.properties` en la raíz (fuera de git) antes de compilar el release. La clave de `play.properties` solo existe tras crear la app en Play Console: el primer bundle sale sin ella (sirve para la prueba interna, pero no comprueba las compras de Plus); después de copiarla hay que generar y subir otro |
 
 ### Notas de la versión 0.1.0
@@ -138,7 +138,7 @@ como recopilado, pero **Tú** confírmalo al rellenarlo.
 
 El módulo `wearApp` se publica en la **misma ficha**, en el canal de Wear OS (Configuración avanzada → Factores de
 forma → Wear OS), con su propio AAB (`./gradlew :wearApp:bundleRelease`, `versionCode` 100001 y siguientes, que no
-pueden coincidir con los del teléfono). Necesita capturas del reloj y pasa una revisión propia de Wear OS.
+pueden coincidir con los del teléfono). Pasa una revisión propia de Wear OS; sus capturas están en la sección 6.
 
 ## 6. Gráficos
 
@@ -149,16 +149,42 @@ En `E:\Dev\levelup\docs\play\capturas\`, sacados de la interfaz real con Robolec
 | Icono 512 × 512 | `icono-512.png` |
 | Gráfico destacado 1024 × 500 | `grafico-1024x500.png` |
 | Capturas del teléfono (1080 × 1920) | `0-bienvenida.png` … `5-metas.png`, en ese orden |
+| Capturas del reloj (454 × 454, cuadradas) | `reloj-1-hoy.png`, `reloj-2-sin-datos.png` |
 
 Regenerarlos (tras cambiar la interfaz):
 `./gradlew :shared:testAndroidHostTest --tests "app.levelup.store.StoreScreenshots" -Pcapturas=E:/Dev/levelup/docs/play/capturas --rerun`.
+Las del reloj (`WatchScreenshots`):
+`./gradlew :wearApp:testDebugUnitTest --tests "app.levelup.wear.WatchScreenshots" -Pcapturas=E:/Dev/levelup/docs/play/capturas --rerun`.
 `animacion/` guarda la bienvenida a 0, 250, 500, 800 y 1100 ms para revisar sus fases; no se sube.
 
-Faltan las capturas del reloj (§5).
+## 7. Notas para la revisión
 
-## 7. Cuando vuelva la cuenta
+En inglés, para el campo de instrucciones de «Acceso a la app» (o las notas de la versión de prueba) si Play las pide:
 
-Al quitar `cuenta=no` (con el SMTP propio funcionando): en las notas, la línea «Sin cuenta…» pasa a «Cuenta opcional
+```
+LevelUp works fully without an account or sign-in: open the app, follow the short 6-step setup (each step can be skipped) and
+the daily challenges appear on Home. There is no user-generated content shared with other people in this version.
+LevelUp Plus (one-time in-app purchase, product id levelup_plus) only unlocks decorative frames, app colors and
+extended stats: Profile > LevelUp Plus. Health Connect (steps and exercise minutes, read-only, processed on the
+device) is optional and lives in Profile > Lab. The Wear OS app shows today's challenges sent by the phone.
+```
+
+## 8. Lista antes de publicar
+
+- [ ] `supabase.properties` con `cuenta=no` (sin SMTP propio) o sin él (con SMTP y la sección 9 aplicada).
+- [ ] `play.properties` con la clave de licencia de Play y bundles regenerados después de copiarla.
+- [ ] Pruebas en verde: `./gradlew :shared:testAndroidHostTest` (y con `-PsupabaseLocalKey` si cambió la nube).
+- [ ] Bundles: `./gradlew :androidApp:bundleRelease :wearApp:bundleRelease`; `versionCode` subido en los dos.
+- [ ] Notas de la versión (sección 1) y capturas al día (sección 6).
+- [ ] Contenido de la app: privacidad, anuncios, acceso, IARC, público, Health Connect (sección 3).
+- [ ] Seguridad de los datos (sección 4).
+- [ ] Producto `levelup_plus` activo y probado con una cuenta de prueba de licencias.
+- [ ] Primero prueba interna (y la cerrada de 12 personas durante 14 días si la cuenta de Play es personal y nueva).
+- [ ] Instalar el AAB de la prueba interna en un teléfono real y repasar lo de «Pruebas que faltan» en PENDIENTES.
+
+## 9. Cuando vuelva la cuenta
+
+Al quitar `cuenta=no` (con el SMTP propio funcionando; las condiciones de uso, [condiciones.md](condiciones.md), publicadas en https://shop.sackito.online/condiciones/levelup): en las notas, la línea «Sin cuenta…» pasa a «Cuenta opcional
 para sincronizar y retarte con amigos.»; la descripción breve vuelve a «…a tu ritmo, con o sin cuenta.»; la completa
 recupera antes de PRIVADO:
 

@@ -50,6 +50,8 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions { unitTests.isIncludeAndroidResources = true }
 }
 
 dependencies {
@@ -60,4 +62,16 @@ dependencies {
     implementation(libs.wear.complications.data.source)
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+apply(from = rootProject.file("gradle/robolectric-offline.gradle.kts"))
+
+// Capturas del reloj para la ficha de Play (WatchScreenshots): solo corren con -Pcapturas=<carpeta>.
+tasks.withType<Test>().configureEach {
+    providers.gradleProperty("capturas").orNull?.let { systemProperty("levelup.capturas", it) }
 }

@@ -44,6 +44,17 @@ private fun WatchApp() {
             message = "Sin conexión con el teléfono"
         }
     }
+    WatchScreen(today, message) { i ->
+        scope.launch {
+            val ok = runCatching { WatchData.send(context, WatchData.PATH_COMPLETE, i.id) }.getOrDefault(false)
+            message = if (ok) "Enviado al teléfono" else "Sin conexión con el teléfono"
+        }
+    }
+}
+
+/** La pantalla con lo que haya: sin datos del teléfono, sin retos o la lista de hoy. Aparte para dibujarla en las capturas. */
+@Composable
+internal fun WatchScreen(today: Today?, message: String?, onComplete: (Today.Item) -> Unit) {
     val list = rememberScalingLazyListState()
     AppScaffold {
         ScreenScaffold(scrollState = list) {
@@ -60,12 +71,7 @@ private fun WatchApp() {
                         t.items.forEach { i ->
                             item(key = i.id) {
                                 Button(
-                                    onClick = {
-                                        if (!i.done) scope.launch {
-                                            val ok = runCatching { WatchData.send(context, WatchData.PATH_COMPLETE, i.id) }.getOrDefault(false)
-                                            message = if (ok) "Enviado al teléfono" else "Sin conexión con el teléfono"
-                                        }
-                                    },
+                                    onClick = { if (!i.done) onComplete(i) },
                                     enabled = !i.done,
                                     modifier = Modifier.fillMaxWidth(),
                                     label = { Text(i.title, maxLines = 2) },

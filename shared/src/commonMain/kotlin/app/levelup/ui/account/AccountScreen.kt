@@ -148,8 +148,8 @@ private fun GuestAccount(vm: CloudViewModel) {
             passwordField("Repite la contraseña", repeat, { repeat = it }, if (mismatch) "No coinciden." else null)
             ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
             Text(
-                "Te enviaremos un código para confirmar el correo. Al crear la cuenta aceptas la política de privacidad " +
-                    "(Perfil → Privacidad).",
+                "Te enviaremos un código para confirmar el correo. Al crear la cuenta aceptas las condiciones de uso " +
+                    "(shop.sackito.online/condiciones/levelup) y la política de privacidad (Perfil → Privacidad).",
                 style = MaterialTheme.typography.bodySmall,
             )
             PrimaryButton(
