@@ -83,7 +83,7 @@ estimulación, capturas protegidas, días de aviso, última revisión semanal y 
 
 - **Resumen del día** (`TodaySummary`, en el dominio): reto principal, cuántos van y metas en marcha. Room lo emite
   como `Flow`; `LevelUpApplication` lo escucha y repinta el widget y lo publica al reloj en cada cambio.
-- **Enlaces** `levelup://hoy|enfoque|buscar|metas|privacidad|reto/<id>`: los usan los atajos, el widget y cualquier
+- **Enlaces** `levelup://hoy|enfoque|buscar|metas|logros|privacidad|reto/<id>`: los usan los atajos, el widget y cualquier
   automatización. Solo abren pantallas (lista blanca en `AndroidPlatform.openIntent`); ninguno devuelve datos ni
   completa nada.
 - **Reloj:** Data Layer de Wear OS. El teléfono pone un `DataItem` en `/levelup/hoy`; el reloj manda mensajes a

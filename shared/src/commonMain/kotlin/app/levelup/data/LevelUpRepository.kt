@@ -517,6 +517,7 @@ class LevelUpRepository(
             tags = draft.tags.filter { it in Tags.all }.distinct(),
             minimum = draft.minimum.trim(),
             block = draft.block,
+            reminderMinute = draft.reminderMinute?.takeIf { draft.habitDays != 0 && it in 0 until 24 * 60 },
         )
         dao.upsertCustomChallenge(saved)
         addHabitToTodayIfScheduled(saved)
@@ -570,6 +571,21 @@ class LevelUpRepository(
         val message = Reminders.decide(nowLocal(), prefs, kind, pending, lastActive) ?: return null
         if (message.isRecovery) tx { dao.upsertPreferences(prefs().copy(lastRecoveryNotice = today)) }
         return message
+    }
+
+    /** Minutos del día con aviso propio de algún hábito activo. */
+    suspend fun habitReminderMinutes(): List<Int> =
+        dao.customChallengesNow().filter { it.status == CustomStatus.ACTIVE && it.habitDays != 0 }.mapNotNull { it.reminderMinute }
+
+    /** Hábitos de hoy sin hacer cuyo aviso propio toca ahora. */
+    suspend fun dueHabitReminders(): List<String> {
+        val prefs = prefs()
+        if (!prefs.onboardingDone) return emptyList()
+        val times = dao.customChallengesNow().filter { it.status == CustomStatus.ACTIVE && it.habitDays != 0 && it.reminderMinute != null }
+            .associate { it.id to it.reminderMinute!! }
+        if (times.isEmpty()) return emptyList()
+        val pending = ensureToday().filter { it.isOpen && it.challengeId in times }.map { it.title to times.getValue(it.challengeId) }
+        return Reminders.dueHabits(nowLocal(), prefs, ChallengeEngine.dayKind(today(), prefs, dao.pausesNow()), pending)
     }
 
     // ── Logros y estadísticas ─────────────────────────────────────────────────

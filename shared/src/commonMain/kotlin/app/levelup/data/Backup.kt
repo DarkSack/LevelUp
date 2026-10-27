@@ -70,7 +70,7 @@ object BackupCodec {
             if (backup.instances.map { it.id }.toSet().size != backup.instances.size) add("retos duplicados")
             if (backup.instances.groupBy { it.challengeId to it.date }.any { it.value.size > 1 }) add("retos repetidos el mismo día")
             if (backup.xp.groupBy { it.sourceType to it.sourceId }.any { it.value.size > 1 }) add("experiencia duplicada")
-            if (backup.customChallenges.any { it.title.isBlank() || it.difficulty !in 1..5 }) add("retos propios")
+            if (backup.customChallenges.any { it.title.isBlank() || it.difficulty !in 1..5 || (it.reminderMinute ?: 0) !in 0 until 24 * 60 }) add("retos propios")
             if (backup.instances.any { (it.note?.length ?: 0) > NOTE_MAX }) add("notas")
             if (backup.goals.any { GoalRules.validate(it.title, it.why) != null }) add("metas")
             if (backup.goals.map { it.id }.toSet().size != backup.goals.size) add("metas duplicadas")

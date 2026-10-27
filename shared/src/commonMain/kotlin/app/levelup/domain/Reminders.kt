@@ -16,6 +16,20 @@ object Reminders {
         else -> minuteOfDay >= start || minuteOfDay < end
     }
 
+    /** Margen de un aviso de hábito: WorkManager puede retrasarlo unos minutos. */
+    const val HABIT_WINDOW_MINUTES = 30
+
+    /** Títulos de los hábitos de hoy sin hacer (título y minuto de su aviso) cuyo aviso cayó en la última media hora. */
+    fun dueHabits(now: LocalDateTime, prefs: Preferences, dayKind: DayKind, pending: List<Pair<String, Int>>): List<String> {
+        val minute = now.hour * 60 + now.minute
+        if (prefs.notificationLevel == NotificationLevel.OFF || inQuietHours(minute, prefs.quietStartMinute, prefs.quietEndMinute)) return emptyList()
+        if (dayKind == DayKind.PAUSED || dayKind == DayKind.REST) return emptyList()
+        return pending.filter { (_, at) -> at <= minute && minute - at < HABIT_WINDOW_MINUTES }.map { it.first }
+    }
+
+    /** El primer minuto de [minutes] que llega después de [minute] (al día siguiente si ya pasaron todos); null si no hay. */
+    fun nextHabitMinute(minutes: Collection<Int>, minute: Int): Int? = minutes.minByOrNull { (it - minute - 1 + 24 * 60) % (24 * 60) }
+
     fun decide(
         now: LocalDateTime,
         prefs: Preferences,

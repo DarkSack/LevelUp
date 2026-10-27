@@ -157,7 +157,10 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     }
 
     override fun remindersChanged() {
-        scope.launch { ReminderWork.schedule(app, app.repo.prefs()) }
+        scope.launch {
+            ReminderWork.schedule(app, app.repo.prefs())
+            ReminderWork.scheduleHabits(app)
+        }
     }
 
     private companion object {

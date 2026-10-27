@@ -39,9 +39,9 @@ import kotlinx.serialization.json.Json
         XpEntry::class, UnlockedAchievement::class, MissionRun::class, Pause::class,
         OutboxEntry::class, SyncState::class, Favorite::class, PersonalGoal::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)

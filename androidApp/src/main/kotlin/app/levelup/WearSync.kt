@@ -44,7 +44,7 @@ class WearListenerService : WearableListenerService() {
         when (event.path) {
             WearSync.PATH_COMPLETE -> {
                 val id = event.data.decodeToString()
-                if (id.isNotBlank() && id.length <= 120) runBlocking { app.repo.complete(id) }
+                if (id.isNotBlank() && id.length <= 120) runBlocking { AchievementNotice.show(app, app.repo.complete(id)) }
             }
             WearSync.PATH_REFRESH -> runBlocking {
                 app.repo.ensureToday()

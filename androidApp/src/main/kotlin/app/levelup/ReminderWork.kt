@@ -13,6 +13,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.levelup.domain.Preferences
+import app.levelup.domain.Reminders
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
@@ -25,6 +26,8 @@ object ReminderWork {
     private const val CHANNEL = "reminders"
     private const val WORK = "daily-reminder"
     private const val NOTIFICATION_ID = 1
+    private const val HABIT_WORK = "habit-reminders"
+    private const val HABIT_NOTIFICATION_ID = 2
 
     fun createChannel(context: Context) {
         val channel = NotificationChannel(CHANNEL, context.getString(R.string.channel_reminders), NotificationManager.IMPORTANCE_DEFAULT)
@@ -44,6 +47,20 @@ object ReminderWork {
         work.enqueueUniqueWork(WORK, ExistingWorkPolicy.REPLACE, request)
     }
 
+    /** Avisos propios de los hábitos: un trabajo para la próxima hora con alguno; cada ejecución programa el siguiente. */
+    suspend fun scheduleHabits(app: LevelUpApplication, now: LocalDateTime = LocalDateTime.now()) {
+        val work = WorkManager.getInstance(app)
+        val next = Reminders.nextHabitMinute(app.repo.habitReminderMinutes(), now.hour * 60 + now.minute)
+        if (next == null) {
+            work.cancelUniqueWork(HABIT_WORK)
+            return
+        }
+        val request = OneTimeWorkRequestBuilder<HabitWorker>()
+            .setInitialDelay(delayUntil(next, now).toMillis(), TimeUnit.MILLISECONDS)
+            .build()
+        work.enqueueUniqueWork(HABIT_WORK, ExistingWorkPolicy.REPLACE, request)
+    }
+
     /** Hasta la próxima vez que el reloj marque [minuteOfDay]: hoy si aún no pasó, si no mañana. */
     fun delayUntil(minuteOfDay: Int, now: LocalDateTime): Duration {
         var next = now.toLocalDate().atTime(minuteOfDay / 60, minuteOfDay % 60)
@@ -51,31 +68,43 @@ object ReminderWork {
         return Duration.between(now, next)
     }
 
+    private fun notify(app: LevelUpApplication, id: Int, title: String, body: String) {
+        if (!NotificationManagerCompat.from(app).areNotificationsEnabled()) return
+        val open = PendingIntent.getActivity(
+            app, 0,
+            Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notification = NotificationCompat.Builder(app, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(app).notify(id, notification)
+        } catch (_: SecurityException) {
+            // El permiso se retiró justo ahora: no hay nada que hacer hasta que lo devuelvan.
+        }
+    }
+
     class Worker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val app = applicationContext as LevelUpApplication
-            val message = app.repo.reminderNow()
-            if (message != null && NotificationManagerCompat.from(app).areNotificationsEnabled()) {
-                val open = PendingIntent.getActivity(
-                    app, 0,
-                    Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-                )
-                val notification = NotificationCompat.Builder(app, CHANNEL)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle(message.title)
-                    .setContentText(message.body)
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(message.body))
-                    .setContentIntent(open)
-                    .setAutoCancel(true)
-                    .build()
-                try {
-                    NotificationManagerCompat.from(app).notify(NOTIFICATION_ID, notification)
-                } catch (_: SecurityException) {
-                    // El permiso se retiró justo ahora: no hay nada que hacer hasta que lo devuelvan.
-                }
-            }
+            app.repo.reminderNow()?.let { notify(app, NOTIFICATION_ID, it.title, it.body) }
             schedule(app, app.repo.prefs())
+            return Result.success()
+        }
+    }
+
+    class HabitWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+        override suspend fun doWork(): Result {
+            val app = applicationContext as LevelUpApplication
+            val due = app.repo.dueHabitReminders()
+            if (due.isNotEmpty()) notify(app, HABIT_NOTIFICATION_ID, app.getString(R.string.habit_reminder_title), due.joinToString(" · "))
+            scheduleHabits(app)
             return Result.success()
         }
     }

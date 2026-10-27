@@ -137,6 +137,7 @@ class Nav(private val controller: NavHostController) {
             link == "enfoque" -> focus()
             link == "buscar" -> search()
             link == "metas" -> goals()
+            link == "logros" -> achievements()
             link == "privacidad" -> settings("privacy")
             link.startsWith("reto/") -> link.removePrefix("reto/").takeIf { it.isNotBlank() }?.let(::instance)
         }

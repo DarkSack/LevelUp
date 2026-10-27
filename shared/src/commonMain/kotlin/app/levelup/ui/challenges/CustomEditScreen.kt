@@ -47,6 +47,7 @@ import app.levelup.ui.components.ScreenScaffold
 import app.levelup.ui.components.SecondaryButton
 import app.levelup.ui.components.SectionTitle
 import app.levelup.ui.components.StepperRow
+import app.levelup.ui.components.ToggleRow
 import app.levelup.ui.theme.Space
 import kotlinx.datetime.DayOfWeek
 
@@ -70,7 +71,7 @@ fun CustomEditScreen(vm: LevelUpViewModel, nav: Nav, id: String?) {
                 existing = c
                 draft = CustomChallengeDraft(
                     c.title, c.description, c.category, c.goal, c.doneWhen, c.difficulty, c.minutes, c.frequency, c.habitDays, c.steps,
-                    c.tags, c.minimum, c.block,
+                    c.tags, c.minimum, c.block, c.reminderMinute,
                 )
                 repeat = when {
                     c.habitDays != 0 -> Repeat.HABIT
@@ -133,6 +134,16 @@ fun CustomEditScreen(vm: LevelUpViewModel, nav: Nav, id: String?) {
                 MultiChoiceRow(DayOfWeek.entries.map { it to Fmt.weekdayShort(it) }, Days.list(draft.habitDays).toSet()) { day ->
                     val mask = draft.habitDays xor Days.bit(day)
                     if (mask != 0) draft = draft.copy(habitDays = mask)
+                }
+                val at = draft.reminderMinute
+                ToggleRow("Aviso propio", at != null, { on ->
+                    draft = draft.copy(reminderMinute = if (on) 9 * 60 else null)
+                    if (on) vm.askNotifications()
+                }, description = "Un aviso los días de este hábito, si aún no lo hiciste. Respeta tus horas de silencio.")
+                if (at != null) {
+                    StepperRow("Hora del aviso", Fmt.time(at),
+                        onMinus = { draft = draft.copy(reminderMinute = (at - 15 + 24 * 60) % (24 * 60)) },
+                        onPlus = { draft = draft.copy(reminderMinute = (at + 15) % (24 * 60)) })
                 }
             }
 

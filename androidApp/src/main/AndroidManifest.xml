@@ -38,7 +38,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Enlaces de atajos, widget y automatizaciones (levelup://hoy, enfoque, buscar, metas, privacidad,
+            <!-- Enlaces de atajos, widget y automatizaciones (levelup://hoy, enfoque, buscar, metas, logros, privacidad,
                  reto/<id>). Solo abren pantallas: no devuelven datos ni completan nada. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

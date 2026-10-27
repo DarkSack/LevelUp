@@ -287,6 +287,7 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
         val result = repo.saveCustom(draft, id)
         onResult(result.errors)
         if (result.errors.isEmpty()) {
+            platform.remindersChanged()
             _events.emit(UiEvent.Message(if (id == null) "Reto creado" else "Cambios guardados"))
             announce(result.unlocked)
         }
@@ -307,6 +308,13 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
     fun updatePrefs(change: (Preferences) -> Preferences) = act {
         announce(repo.updatePreferences(change))
         platform.remindersChanged()
+    }
+
+    /** Pide el permiso de notificaciones si falta (aviso propio de un hábito). */
+    fun askNotifications() = act {
+        if (!platform.notificationsAllowed() && !platform.requestNotifications()) {
+            _events.emit(UiEvent.Message("Sin permiso de notificaciones no podemos avisarte. Puedes darlo en los ajustes del teléfono."))
+        }
     }
 
     fun setReminders(enabled: Boolean) = act {

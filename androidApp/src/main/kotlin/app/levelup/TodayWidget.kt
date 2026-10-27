@@ -30,7 +30,7 @@ class TodayWidget : AppWidgetProvider() {
         if (intent.action != ACTION_COMPLETE) return
         val id = intent.getStringExtra(EXTRA_ID) ?: return
         async(context) { app ->
-            app.repo.complete(id)
+            AchievementNotice.show(app, app.repo.complete(id))
             render(context, app.repo.todaySummary.first())
         }
     }

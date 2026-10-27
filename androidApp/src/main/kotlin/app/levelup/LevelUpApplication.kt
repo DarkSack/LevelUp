@@ -34,6 +34,8 @@ class LevelUpApplication : Application() {
         super.onCreate()
         ReminderWork.createChannel(this)
         SyncWork.createChannel(this)
+        AchievementNotice.createChannel(this)
+        scope.launch { ReminderWork.scheduleHabits(this@LevelUpApplication) }
         scope.launch {
             repo.todaySummary.collect {
                 TodayWidget.render(this@LevelUpApplication, it)

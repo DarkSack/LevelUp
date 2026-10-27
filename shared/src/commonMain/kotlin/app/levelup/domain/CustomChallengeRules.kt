@@ -18,6 +18,7 @@ data class CustomChallengeDraft(
     /** La versión más pequeña que también cuenta. */
     val minimum: String = "",
     val block: DayBlock? = null,
+    val reminderMinute: Int? = null,
 )
 
 enum class DraftField { TITLE, DESCRIPTION, CATEGORY, GOAL, DONE_WHEN, DIFFICULTY, MINUTES, STEPS, MINIMUM }

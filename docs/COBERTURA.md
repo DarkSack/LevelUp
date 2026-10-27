@@ -20,10 +20,10 @@ Nada se ha probado en un teléfono real ni contra el Supabase de producción con
 | 11 | Accesibilidad | Parcial | Tamaño de texto, alto contraste, menos movimiento, modo sencillo, vibración y áreas de 48 dp en el código. Falta probarlo con TalkBack y texto al 200 % en un teléfono. |
 | 12 | Identidad visual | Hecho | Tema propio, claro y oscuro; colores y marcos de Plus. |
 | 13 | Pantallas | Parcial | Están las seis secciones. **Falta en Inicio el estado de sincronización** (solo se ve en Perfil → Cuenta). «Cuenta y sesiones» permite cerrar la sesión en los demás dispositivos, pero no lista los dispositivos. |
-| 14 | Datos | Parcial | Base local v3 (favoritos, metas, notas, momentos del día, versión mínima, etiquetas) con migraciones 1→2→3 probadas, ids deterministas. No hay tablas de dispositivos ni de compras en el servidor (la compra se comprueba en el teléfono: decisión «opción b»). |
+| 14 | Datos | Parcial | Base local v4 (favoritos, metas, notas, momentos del día, versión mínima, etiquetas, aviso por hábito) con migraciones 1→2→3→4 probadas, ids deterministas. No hay tablas de dispositivos ni de compras en el servidor (la compra se comprueba en el teléfono: decisión «opción b»). |
 | 15 | Backend y cuentas | Parcial | Desplegado el 2026-10-25 con RLS y 40 pruebas pgTAP. **La segunda migración (extras, 14 pruebas pgTAP más) solo está aplicada en local.** **Registro bloqueado en producción hasta poner SMTP propio.** No hay configuración separada de desarrollo y producción: las compilaciones usan siempre `supabase.properties`; el desarrollo usa el Supabase local. |
 | 16 | Sincronización | Hecho | Probada con dos teléfonos simulados y de punta a punta contra el Supabase local. |
-| 17 | Notificaciones | Parcial | Recordatorio diario a la hora elegida, de recuperación y avisos de amigos con horas de silencio; el permiso se pide al activarlos. **Faltan** avisos por logro y recordatorios distintos por hábito u hora. |
+| 17 | Notificaciones | Hecho | Recordatorio diario a la hora elegida, de recuperación, avisos de amigos con horas de silencio, aviso propio por hábito (hora en el editor del hábito) y aviso de logro cuando se consigue desde el widget o el reloj; el permiso se pide al activarlos. |
 | 18 | Privacidad y seguridad | Parcial | RLS, funciones que validan y limitan el uso, exportar, borrar datos y cuenta, política de privacidad. **Faltan** las condiciones de servicio, alojar la política en una URL pública y una auditoría de dependencias. |
 | 19 | Monetización | Hecho | LevelUp Plus (compra única) con restauración y firma comprobada. Sin suscripciones ni IA (decisión). Falta crear el producto en Play Console. |
 | 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. Icono 512 × 512, gráfico 1024 × 500, capturas reales del teléfono y notas de versión en `docs/play/`. La 0.1.0 sale sin cuenta (`cuenta=no`). **Faltan**: splash propia (solo la del sistema en Android 12+), inglés (app y ficha), capturas del reloj, datos de acceso para revisores, guía de pruebas internas y cerradas (y el requisito de prueba cerrada si la cuenta de Play es personal). EAS no aplica: firma Gradle. |
@@ -109,5 +109,5 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 7. Estado de sincronización en Inicio.
 8. CI: lint, pgTAP, auditoría de dependencias y AAB de release.
 9. Inglés: textos de la app (hoy están en el código) y ficha.
-10. Splash propia, avisos por logro y pruebas de interfaz que faltan.
+10. Splash propia y pruebas de interfaz que faltan.
 11. Probar en un dispositivo lo nuevo de Android: widget, atajos, compartir, capturas protegidas, Health Connect y el reloj.

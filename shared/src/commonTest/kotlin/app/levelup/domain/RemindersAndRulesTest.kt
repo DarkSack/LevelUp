@@ -34,6 +34,23 @@ class RemindersAndRulesTest {
         assertNull(Reminders.decide(evening, on, DayKind.PAUSED, listOf("Leer"), MONDAY))
     }
 
+    @Test fun habitRemindersFireInTheirHalfHourAndRespectSilence() {
+        val pending = listOf("Leer" to 19 * 60, "Estirar" to 18 * 60, "Agua" to 19 * 60 + 10)
+        assertEquals(listOf("Leer"), Reminders.dueHabits(LocalDateTime(MONDAY, LocalTime(19, 5)), on, DayKind.ACTIVE, pending))
+        assertEquals(listOf("Leer", "Agua"), Reminders.dueHabits(LocalDateTime(MONDAY, LocalTime(19, 20)), on, DayKind.ACTIVE, pending))
+        assertEquals(emptyList(), Reminders.dueHabits(evening, on, DayKind.REST, pending))
+        assertEquals(emptyList(), Reminders.dueHabits(evening, on.copy(quietStartMinute = 18 * 60, quietEndMinute = 20 * 60), DayKind.ACTIVE, pending))
+        // No depende del aviso diario: el hábito lo pidió aparte.
+        assertEquals(listOf("Leer"), Reminders.dueHabits(evening, on.copy(remindersEnabled = false), DayKind.ACTIVE, pending))
+    }
+
+    @Test fun nextHabitMinuteWrapsToTomorrow() {
+        assertEquals(19 * 60, Reminders.nextHabitMinute(listOf(9 * 60, 19 * 60), 12 * 60))
+        assertEquals(9 * 60, Reminders.nextHabitMinute(listOf(9 * 60, 19 * 60), 19 * 60))
+        assertEquals(9 * 60, Reminders.nextHabitMinute(listOf(9 * 60), 9 * 60))
+        assertNull(Reminders.nextHabitMinute(emptyList(), 0))
+    }
+
     @Test fun nothingPendingNothingToSay() {
         assertNull(Reminders.decide(evening, on, DayKind.ACTIVE, emptyList(), MONDAY))
     }

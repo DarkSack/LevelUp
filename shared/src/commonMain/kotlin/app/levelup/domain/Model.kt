@@ -163,6 +163,8 @@ data class CustomChallenge(
     @ColumnInfo(defaultValue = "[]") val tags: List<String> = emptyList(),
     @ColumnInfo(defaultValue = "") val minimum: String = "",
     val block: DayBlock? = null,
+    /** Aviso propio del hábito (minuto del día). null = sin aviso; solo cuenta en hábitos. */
+    val reminderMinute: Int? = null,
 ) {
     fun toChallenge() = Challenge(
         id = id, title = title, description = description, category = category, goal = goal,
