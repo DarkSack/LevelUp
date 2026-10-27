@@ -167,6 +167,6 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     private companion object {
         const val MAX_IMPORT_BYTES = 20 * 1024 * 1024
         const val HEALTH_RATIONALE = "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"
-        val LINKS = setOf("hoy", "enfoque", "buscar", "metas", "privacidad", "reto")
+        val LINKS = setOf("hoy", "enfoque", "buscar", "metas", "logros", "privacidad", "reto")
     }
 }
