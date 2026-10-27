@@ -295,6 +295,7 @@ fun TrophyBadge(tier: TrophyTier, state: AchievementState, size: Dp = 48.dp) {
         TrophyTier.BRONZE -> Color(0xFFB07A3B)
         TrophyTier.SILVER -> Color(0xFF8A939B)
         TrophyTier.GOLD -> Color(0xFFC99A0E)
+        TrophyTier.PLATINUM -> Color(0xFF5B7FA6)
     }
     val muted = MaterialTheme.colorScheme.outline
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {

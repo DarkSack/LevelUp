@@ -152,6 +152,18 @@ class AppUiTest {
         assertEquals(0, compose.onAllNodesWithText("Amigos y grupos").fetchSemanticsNodes().size)
     }
 
+    @Test fun secretAchievementsHideTheirNameUntilUnlocked() {
+        onboarded()
+        launch()
+        waitForText("Progreso")
+        compose.onNodeWithText("Progreso").performClick()
+        waitForText("Logros y trofeos")
+        compose.onNodeWithText("Logros y trofeos").performClick()
+        waitForText(" trofeos", substring = true)
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Logro secreto"))
+        assertEquals(0, compose.onAllNodesWithText("Un año contigo").fetchSemanticsNodes().size)
+    }
+
     @Test fun withoutGameThereIsNoXpNorLevels() {
         onboarded()
         prefs { it.copy(gamification = app.levelup.domain.GamificationStyle.OFF) }

@@ -477,7 +477,7 @@ class LevelUpRepository(
     suspend fun search(query: String): List<SearchHit> = Search.run(
         query,
         Catalog.challenges + dao.customChallengesNow().filter { it.status != CustomStatus.ARCHIVED }.map { it.toChallenge() },
-        AchievementCatalog.all,
+        dao.unlockedNow().map { it.achievementId }.toSet().let { got -> AchievementCatalog.all.filter { !it.hidden || it.id in got } },
         dao.goalsNow(),
         dao.withNotes(),
     )

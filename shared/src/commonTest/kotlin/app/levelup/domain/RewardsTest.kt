@@ -7,6 +7,7 @@ import app.levelup.content.Cosmetics
 import app.levelup.content.MissionCatalog
 import app.levelup.inst
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,6 +48,17 @@ class RewardsTest {
         assertEquals(AchievementState.UNLOCKED, AchievementRules.state(steps10, setOf("first_step", "steps_10")))
         assertEquals(4, steps10.progress(Stats(totalCompleted = 4)))
         assertEquals(10, steps10.progress(Stats(totalCompleted = 40)))
+    }
+
+    @Test fun secretsCountBalanceAndTheYearSinceTheFirstChallenge() {
+        val balanced = Stats(byCategory = mapOf("fisico" to 5, "mental" to 6, "hogar" to 5, "social" to 9, "bienestar" to 5))
+        assertTrue("secret_balance_5" in ids(AchievementRules.newlyUnlocked(all, balanced, 0, emptySet())))
+        assertFalse("secret_balance_5" in ids(AchievementRules.newlyUnlocked(all, balanced.copy(byCategory = balanced.byCategory + ("bienestar" to 4)), 0, emptySet())))
+
+        val stats = Stats.compute(LocalDate(2026, 10, 1), listOf(inst("a", LocalDate(2025, 10, 1))), 0, Preferences(), emptyList(), 0, 0)
+        assertEquals(365, stats.daysSinceFirst)
+        assertTrue("secret_year" in ids(AchievementRules.newlyUnlocked(all, stats, 0, emptySet())))
+        assertTrue(all.count { it.hidden } >= 4 && all.filter { it.hidden }.all { it.requires == null }, "Un secreto no puede depender de otro logro")
     }
 
     @Test fun catalogIsConsistent() {

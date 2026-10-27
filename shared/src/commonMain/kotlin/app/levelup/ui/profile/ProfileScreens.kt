@@ -269,6 +269,7 @@ private fun FramesSection(vm: LevelUpViewModel) {
                         f.unlockedBy == null -> "Disponible desde el inicio"
                         f.unlockedBy == Cosmetics.PLUS -> if (available) "Incluido en LevelUp Plus" else "Se consigue con LevelUp Plus"
                         available -> "Conseguido con «$source»"
+                        AchievementCatalog.byId[f.unlockedBy]?.hidden == true -> "Se consigue con un logro secreto"
                         else -> "Se consigue con «$source»"
                     },
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

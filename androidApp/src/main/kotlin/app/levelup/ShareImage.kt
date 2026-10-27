@@ -25,6 +25,7 @@ object ShareImage {
             TrophyTier.BRONZE -> 0xFF7C2D12.toInt() to 0xFFFDBA74.toInt()
             TrophyTier.SILVER -> 0xFF334155.toInt() to 0xFFE2E8F0.toInt()
             TrophyTier.GOLD -> 0xFF713F12.toInt() to 0xFFFDE047.toInt()
+            TrophyTier.PLATINUM -> 0xFF1E3A5F.toInt() to 0xFFBAE6FD.toInt()
         }
         canvas.drawColor(0xFF0F766E.toInt())
         val panel = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = background }

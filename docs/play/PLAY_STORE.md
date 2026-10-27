@@ -27,7 +27,7 @@ Teléfono:
 <es-419>
 Primera versión de LevelUp.
 • Más de 130 retos diarios en nueve áreas, según tus objetivos y tu tiempo.
-• Experiencia, niveles, títulos, 41 logros y misiones.
+• Experiencia, niveles, títulos, 53 logros (4 secretos) y misiones.
 • Sin castigos: simplifica, cambia o pospón un reto; los descansos no rompen tu racha.
 • Metas, favoritos, revisión semanal, widget de hoy y atajos.
 • Pasos y ejercicio de Health Connect en los retos físicos (opcional).
@@ -71,7 +71,7 @@ Primera versión para Wear OS.
 > • Días de descanso y pausas que no rompen tu racha. La experiencia ganada nunca se pierde.
 >
 > PROGRESO QUE SE VE
-> • Niveles generales y por categoría, títulos, 41 logros con trofeos, misiones de varios días y marcos para tu avatar.
+> • Niveles generales y por categoría, títulos, 53 logros con trofeos de bronce a platino (algunos secretos), misiones de varios días y marcos para tu avatar.
 > • Estilo tranquilo para quien prefiere menos celebraciones.
 >
 > PENSADA PARA CADA CABEZA

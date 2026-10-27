@@ -21,6 +21,8 @@ data class Stats(
     /** Máximo de semanas distintas en que se cumplió un mismo hábito. */
     val habitBestWeeks: Int = 0,
     val missionsCompleted: Int = 0,
+    /** Días desde el primer reto completado (0 sin ninguno). */
+    val daysSinceFirst: Int = 0,
 ) {
     val distinctCategories: Int get() = byCategory.count { it.value > 0 }
 
@@ -56,18 +58,19 @@ data class Stats(
                 comebacks = comebacks,
                 habitBestWeeks = habitBestWeeks,
                 missionsCompleted = missionsCompleted,
+                daysSinceFirst = dates.firstOrNull()?.daysUntil(today) ?: 0,
             )
         }
     }
 }
 
 enum class AchievementState { LOCKED, AVAILABLE, UNLOCKED }
-enum class TrophyTier { BRONZE, SILVER, GOLD }
+enum class TrophyTier { BRONZE, SILVER, GOLD, PLATINUM }
 
 /**
  * Un logro se cumple cuando `metric(stats) >= target`. Se evalúa con eventos de dominio (completar, crear un
  * reto, configurar descanso…), nunca desde la pantalla. `requires` encadena series: el segundo nivel queda
- * bloqueado hasta tener el primero.
+ * bloqueado hasta tener el primero. `hidden`: logro secreto, no se ve su nombre ni cómo conseguirlo hasta tenerlo.
  */
 class Achievement(
     val id: String,
@@ -78,6 +81,7 @@ class Achievement(
     val target: Int,
     val requires: String? = null,
     val xpReward: Int = 0,
+    val hidden: Boolean = false,
     val metric: (Stats) -> Int,
 ) {
     fun progress(stats: Stats): Int = metric(stats).coerceIn(0, target)

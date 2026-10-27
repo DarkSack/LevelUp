@@ -246,7 +246,7 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
                 }
             }
 
-            val next = p.achievements.filter { it.state == AchievementState.AVAILABLE && it.progress > 0 }
+            val next = p.achievements.filter { it.state == AchievementState.AVAILABLE && it.progress > 0 && !it.achievement.hidden }
                 .sortedByDescending { it.progress / it.achievement.target.toFloat() }.take(3)
             if (next.isNotEmpty()) {
                 item { SectionTitle("Próximos hitos") }
@@ -275,26 +275,31 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
                 }
             },
             icon = { TrophyBadge(a.tier, v.state, 56.dp) },
-            title = { Text(a.name) },
+            title = { Text(v.name) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
-                    Text(a.description)
+                    if (!v.secret) Text(a.description)
                     Text(stateLine(v))
                     val reward = listOfNotNull(
                         a.xpReward.takeIf { it > 0 }?.let { "+$it XP" },
                         Cosmetics.rewardOf(a.id)?.let { "marco ${it.name}" },
                     )
-                    if (reward.isNotEmpty()) Text("Recompensa: ${reward.joinToString(" y ")}")
+                    if (reward.isNotEmpty() && !v.secret) Text("Recompensa: ${reward.joinToString(" y ")}")
                 }
             },
         )
     }
 }
 
-private fun stateLine(v: AchievementView): String = when (v.state) {
-    AchievementState.UNLOCKED -> "Desbloqueado el ${v.unlockedOn?.let { Fmt.dayWithYear(it) } ?: "—"}"
-    AchievementState.LOCKED -> "Bloqueado: primero consigue «${AchievementCatalog.byId[v.achievement.requires]?.name}»"
-    AchievementState.AVAILABLE -> "Disponible: ${v.progress} de ${v.achievement.target}"
+/** Secreto sin conseguir: ni su nombre ni cómo conseguirlo. */
+private val AchievementView.secret get() = achievement.hidden && state != AchievementState.UNLOCKED
+private val AchievementView.name get() = if (secret) "Logro secreto" else achievement.name
+
+private fun stateLine(v: AchievementView): String = when {
+    v.secret -> "Se descubre al conseguirlo. Sigue a tu ritmo."
+    v.state == AchievementState.UNLOCKED -> "Desbloqueado el ${v.unlockedOn?.let { Fmt.dayWithYear(it) } ?: "—"}"
+    v.state == AchievementState.LOCKED -> "Bloqueado: primero consigue «${AchievementCatalog.byId[v.achievement.requires]?.name}»"
+    else -> "Disponible: ${v.progress} de ${v.achievement.target}"
 }
 
 @Composable
@@ -307,9 +312,9 @@ private fun AchievementRow(v: AchievementView, onClick: () -> Unit) {
         TrophyBadge(v.achievement.tier, v.state)
         Spacer(Modifier.size(Space.m))
         Column(Modifier.weight(1f)) {
-            Text(v.achievement.name, style = MaterialTheme.typography.titleSmall)
+            Text(v.name, style = MaterialTheme.typography.titleSmall)
             Text(stateLine(v), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (v.state == AchievementState.AVAILABLE) {
+            if (v.state == AchievementState.AVAILABLE && !v.secret) {
                 LabeledProgress(v.progress / v.achievement.target.toFloat(), "", Modifier.padding(top = Space.xs))
             }
         }
