@@ -1,6 +1,6 @@
 # Política de privacidad de LevelUp
 
-Última actualización: 25 de octubre de 2026. Responsable: Johan Jafet Del Valle Santiago,
+Última actualización: 26 de octubre de 2026. Responsable: Johan Jafet Del Valle Santiago,
 contacto: donsackito@protonmail.com.
 
 ## Lo corto

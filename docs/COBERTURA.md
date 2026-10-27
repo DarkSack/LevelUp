@@ -21,17 +21,17 @@ Nada se ha probado en un teléfono real ni contra el Supabase de producción con
 | 12 | Identidad visual | Hecho | Tema propio, claro y oscuro; colores y marcos de Plus. |
 | 13 | Pantallas | Hecho | Están las seis secciones. Inicio muestra el estado de la sincronización con cuenta. «Cuenta y sesiones» lista los dispositivos con la sesión iniciada (modelo y versión de Android) y cierra uno o todos los demás. |
 | 14 | Datos | Parcial | Base local v4 (favoritos, metas, notas, momentos del día, versión mínima, etiquetas, aviso por hábito) con migraciones 1→2→3→4 probadas, ids deterministas. No hay tablas de dispositivos ni de compras en el servidor (la compra se comprueba en el teléfono: decisión «opción b»). |
-| 15 | Backend y cuentas | Parcial | Desplegado con RLS: las tres migraciones (inicial, extras y sesiones) aplicadas en producción y 61 pruebas pgTAP en local. Cuenta con correo o nombre de usuario y contraseña, sin verificación ni recuperación por correo (decisión del propietario, 2026-10-26; falta apagar «Confirm email» en producción). Las compilaciones usan siempre producción (`supabase.properties`); el Supabase local solo sirve para las pruebas (decisión del propietario, 2026-10-26). |
+| 15 | Backend y cuentas | Parcial | Desplegado con RLS: las tres migraciones (inicial, extras y sesiones) aplicadas en producción y 61 pruebas pgTAP en local. Cuenta con correo o nombre de usuario y contraseña, sin verificación ni recuperación por correo (decisión del propietario, 2026-10-26; «Confirm email» apagado en producción ese día). Las compilaciones usan siempre producción (`supabase.properties`); el Supabase local solo sirve para las pruebas (decisión del propietario, 2026-10-26). |
 | 16 | Sincronización | Hecho | Probada con dos teléfonos simulados y de punta a punta contra el Supabase local. |
 | 17 | Notificaciones | Hecho | Recordatorio diario a la hora elegida, de recuperación, avisos de amigos con horas de silencio, aviso propio por hábito (hora en el editor del hábito) y aviso de logro cuando se consigue desde el widget o el reloj; el permiso se pide al activarlos. |
-| 18 | Privacidad y seguridad | Parcial | RLS, funciones que validan y limitan el uso, exportar, borrar datos y cuenta, política de privacidad publicada, condiciones de uso escritas y alertas de dependencias (Dependabot). **Falta** publicar las condiciones en la web. |
+| 18 | Privacidad y seguridad | Parcial | RLS, funciones que validan y limitan el uso, exportar, borrar datos y cuenta, política de privacidad publicada, condiciones de uso publicadas (shop.sackito.online/condiciones/levelup) y alertas de dependencias (Dependabot). |
 | 19 | Monetización | Hecho | LevelUp Plus (compra única) con restauración y firma comprobada. Sin suscripciones ni IA (decisión). Falta crear el producto en Play Console. |
 | 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. Icono 512 × 512, gráfico 1024 × 500, capturas reales del teléfono y notas de versión en `docs/play/`. La 1.0.0 sale con la cuenta opcional. Splash propia en Android 12+ (fondo de la marca y el logo). Capturas del reloj, notas para la revisión y lista antes de publicar (con la prueba interna y la cerrada) en `PLAY_STORE.md`. App, reloj, ficha y notas también en inglés y portugués de Brasil (las capturas siguen en español). EAS no aplica: firma Gradle. |
 | 21 | App Store | Decisión | Fuera de esta versión; solo [IOS.md](IOS.md). |
-| 22 | Recursos comerciales y legales | Parcial | Descripciones corta y larga, notas de la versión, notas para la revisión, lista de verificación, política de privacidad y condiciones de uso ([condiciones.md](play/condiciones.md); falta publicarlas en la web). Las capturas no llevan textos encima (decisión: se ve la app tal cual). |
+| 22 | Recursos comerciales y legales | Parcial | Descripciones corta y larga, notas de la versión, notas para la revisión, lista de verificación, política de privacidad y condiciones de uso ([condiciones.md](play/condiciones.md), publicadas en shop.sackito.online/condiciones/levelup). Las capturas no llevan textos encima (decisión: se ve la app tal cual). |
 | 23 | CI | Parcial | GitHub Actions corre las pruebas, lint, los APK de depuración y los AAB de release sin firmar (como artefacto), las pruebas pgTAP en un Supabase local, y envía el grafo de dependencias para las alertas de Dependabot (más `dependabot.yml` semanal). **Falta** la subida a Play con aprobación manual: necesita la app creada en Play Console y una cuenta de servicio. |
 | 24 | Pruebas | Parcial | Unitarias: todas las reglas pedidas. Integración: Room, migración, sincronización, conflictos, RLS, amistades, bloqueos, borrado de cuenta. Interfaz (Robolectric): bienvenida, omitirla, onboarding interrumpido, completar un reto y su trofeo, logros secretos, accesibilidad, Plus y, contra el Supabase local (`AccountUiTest`), registro con código, cambios sin conexión que suben al reconectar, amistad y borrar la cuenta. **Faltan** las de accesibilidad y rendimiento en un teléfono. |
-| 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) se cumple sin verificación por correo (en producción, tras apagar «Confirm email»). El 15 solo cubre Android. El 16 se cumple (inglés y portugués; capturas del reloj). |
+| 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) se cumple sin verificación por correo («Confirm email» apagado en producción). El 15 solo cubre Android. El 16 se cumple (inglés y portugués; capturas del reloj). |
 | 26 | Forma de trabajo | Hecho | Fases con pruebas; pendientes en [PENDIENTES.md](PENDIENTES.md). |
 
 ## Funciones pedidas el 2026-10-25
@@ -51,8 +51,8 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 | Lista de favoritos | Hecho | Corazón en el detalle, filtro «Solo favoritos»; se sincroniza y va en el respaldo |
 | Pausa de hábitos | Hecho | Pausar un hábito, o pausar todo con fecha de fin |
 | Recordatorios locales | Hecho | Hora, días de aviso, silencio e intensidad |
-| Widget | Hecho, sin probar en dispositivo | Reto principal, avance y botón «Hecho» |
-| Accesos directos | Hecho, sin probar en dispositivo | Reto del día, Concentración y Buscar |
+| Widget | Hecho | Reto principal, avance y botón «Hecho». Probado en dispositivo el 2026-10-25. |
+| Accesos directos | Hecho | Reto del día, Concentración y Buscar. Probado en dispositivo el 2026-10-25. |
 | Exportación JSON o CSV | Hecho | CSV con protección contra fórmulas |
 | Importación y restauración | Hecho | Respaldo v2 validado antes de reemplazar nada |
 | Búsqueda global | Hecho | Retos, hábitos, logros, metas y notas, sin acentos |
@@ -67,14 +67,14 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 | Reacciones rápidas | Hecho | Cinco reacciones predefinidas |
 | Mensajes de ánimo prediseñados | Hecho | Cinco mensajes; el servidor solo acepta los predefinidos |
 | Invitaciones para un reto juntos | Hecho | Invitar amigos a un reto en grupo |
-| Compartir tarjeta de logro como imagen | Hecho, sin probar en dispositivo | Botón «Compartir» en el detalle de un logro |
+| Compartir tarjeta de logro como imagen | Hecho | Botón «Compartir» en el detalle de un logro. Probado en dispositivo el 2026-10-25. |
 | Perfil con avatar, título y trofeos | Hecho | Avatar emoji; título y hasta 3 trofeos que el servidor valida |
 | Ocultar nivel o actividad | Hecho | Opciones de privacidad del perfil social |
 | Denunciar y bloquear | Hecho | En la app y validado en el servidor |
 | Abandonar grupos y retos | Hecho | «Salir» en el grupo; pausar o archivar retos propios |
 | Historial de participación | Hecho | Grupos → Historial (terminados o dejados) |
 | Importación validada | Hecho | Versión, duplicados, rangos, notas y metas |
-| Protección de capturas opcional | Hecho, sin probar en dispositivo | Perfil → Privacidad → Proteger mis pantallas |
+| Protección de capturas opcional | Hecho | Perfil → Privacidad → Proteger mis pantallas. Probado en dispositivo el 2026-10-25. |
 | Bloqueo y denuncia en backend | Hecho | Funciones con RLS y límites de uso |
 | Modo sin analítica | Hecho (no aplica) | La app no tiene analítica ni rastreo de ningún tipo |
 | Copia de seguridad transparente | Hecho | JSON legible y explicación de la copia de Android |
@@ -89,7 +89,7 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 | Modo oscuro del sistema | Hecho | Tema «Como el teléfono» |
 | Vibración háptica opcional | Hecho | Accesibilidad → Vibración |
 | Respaldo y transferencia | Hecho | Tus datos → Cambiar de teléfono |
-| Health Connect | Hecho, sin probar en dispositivo | Laboratorio; requiere la declaración de Play (ver PENDIENTES) |
+| Health Connect | Hecho | Laboratorio; requiere la declaración de Play (ver PENDIENTES). Probado en dispositivo el 2026-10-25. |
 | Sincronización teléfono y tablet | Hecho | Con la cuenta, igual que entre teléfonos |
 | Wear OS y complicaciones | Hecho, sin probar en dispositivo | Módulo `wearApp`; necesita su propio canal en Play |
 | Automatizaciones | Hecho | Enlaces `levelup://` que solo abren pantallas; no hay API que devuelva datos (decisión de privacidad) |
@@ -108,9 +108,9 @@ pierde un `{0}`. El reloj usa `values-en`/`values-pt`. El CSV exportado sigue en
 
 ## Lo que falta, en orden
 
-1. **Apagar «Confirm email» en Supabase** (del propietario): sin eso el registro falla en producción.
-2. **Play Console** (del propietario): crear la app, el producto `levelup_plus`, la clave de licencia y la URL de la política.
-3. **Probar en un teléfono**: instalar, TalkBack, texto grande, recordatorios, compra de prueba, registro real.
-4. Publicar las condiciones de uso en shop.sackito.online/condiciones/levelup (están en `docs/play/condiciones.md`).
-8. CI: subida a Play con aprobación manual (tras crear la app en Play Console y una cuenta de servicio).
-11. Probar en un dispositivo lo nuevo de Android: widget, atajos, compartir, capturas protegidas, Health Connect y el reloj.
+1. **Play Console** (del propietario): crear la app, el producto `levelup_plus`, la clave de licencia y la URL de la política.
+2. **Probar en un teléfono**: TalkBack, texto grande, recordatorios, compra de prueba y registro real. La 1.0.0 de
+   release (con R8) ya se recorrió sin cuenta en la tableta el 2026-10-26: bienvenida, Hoy, logro, Progreso, Retos,
+   Perfil, Cuenta, Plus, Amigos, Revisión, Metas, Concentración, Buscar, enlaces y compartir, sin cierres.
+3. CI: subida a Play con aprobación manual (tras crear la app en Play Console y una cuenta de servicio).
+4. Probar el reloj (Wear OS) en un dispositivo.

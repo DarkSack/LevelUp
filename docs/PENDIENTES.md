@@ -36,8 +36,9 @@ a él, así que las compilaciones salen conectadas a producción.
 nombre de usuario y contraseña, sin verificación y sin recuperar contraseñas olvidadas (se avisa al registrarse;
 con la sesión iniciada se cambia en Cuenta y sincronización). Las cuentas con nombre de usuario se guardan en
 Supabase como `levelup-<usuario>@sackito.online` (ver `Login` en `Cloud.kt`), una dirección que nunca recibe nada.
-**Tú: en Supabase → Authentication → Sign In / Providers → Email, apagar «Confirm email»**; sin eso el registro
-falla en producción. En local ya está apagado (`enable_confirmations = false`).
+En producción «Confirm email» está apagado (Authentication → Sign In / Providers → Email; lo apagó el propietario
+el 2026-10-26 y `/auth/v1/settings` da `mailer_autoconfirm: true`); si se vuelve a encender, el registro falla. En
+local también está apagado (`enable_confirmations = false`).
 
 **Más adelante: recuperar contraseñas (correo propio, SMTP).** En el plan gratis, con el remitente de serie,
 Supabase no deja cambiar las plantillas y solo envía 2 correos por hora. Si algún día se quiere recuperar

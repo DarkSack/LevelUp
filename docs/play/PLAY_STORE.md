@@ -215,6 +215,7 @@ Las capturas (sección 6) están en español: sirven para las tres fichas mientr
 | Sección | Respuesta |
 |---|---|
 | Política de privacidad | https://shop.sackito.online/privacidad/levelup (copia de [privacidad.md](privacidad.md) en `lib/privacidad-apps.ts` de rpgroll-shop: si cambia una, cambiar la otra) |
+| Condiciones de uso | https://shop.sackito.online/condiciones/levelup (copia de [condiciones.md](condiciones.md) en `lib/condiciones-apps.ts` de rpgroll-shop; la app la enlaza al crear la cuenta). Play no la pide, pero conviene tenerla a mano |
 | Anuncios | No contiene anuncios |
 | Acceso a la app | Todo disponible sin cuenta. Lo social (amigos, grupos, clasificación) necesita cuenta, pero cualquiera la crea en la app con un nombre de usuario y una contraseña, sin verificación por correo: no hacen falta credenciales de revisión |
 | Clasificación de contenido | Cuestionario IARC: sin violencia ni ubicación. **Sí** a compras digitales. **Sí** a interacción entre usuarios, limitada: solo reacciones y ánimos predefinidos, sin chat ni texto libre (lo único que escribe cada persona es su nombre de usuario y su nombre visible), con bloqueo y denuncia |
@@ -289,7 +290,7 @@ menu names above appear exactly as written.
 
 ## 8. Lista antes de publicar
 
-- [ ] `supabase.properties` sin `cuenta=no`, y en Supabase «Confirm email» apagado (Authentication → Sign In / Providers → Email).
+- [x] `supabase.properties` sin `cuenta=no`, y en Supabase «Confirm email» apagado (Authentication → Sign In / Providers → Email).
 - [ ] `play.properties` con la clave de licencia de Play y bundles regenerados después de copiarla.
 - [ ] Pruebas en verde: `./gradlew :shared:testAndroidHostTest` (y con `-PsupabaseLocalKey` si cambió la nube).
 - [ ] Bundles: `./gradlew :androidApp:bundleRelease :wearApp:bundleRelease`; `versionCode` subido en los dos.

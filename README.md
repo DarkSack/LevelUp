@@ -15,7 +15,7 @@ Versión `1.0.0` (`versionCode 1`), **sin publicar**. El código está completo 
 con pruebas automáticas. Nunca se ha instalado en un teléfono ni en un reloj reales.
 
 - **Backend en producción:** desplegado en Supabase. La cuenta es opcional, con correo o nombre de usuario y
-  contraseña, sin verificación por correo (falta apagar «Confirm email» en Supabase). Detalles en
+  contraseña, sin verificación por correo («Confirm email» apagado en Supabase). Detalles en
   [docs/PENDIENTES.md](docs/PENDIENTES.md).
 - **Qué falta respecto a la especificación:** [docs/COBERTURA.md](docs/COBERTURA.md).
 - **Fuera de esta versión:** iOS y el asistente de IA.
