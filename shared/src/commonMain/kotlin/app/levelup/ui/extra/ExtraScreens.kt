@@ -23,7 +23,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +79,7 @@ import kotlinx.coroutines.delay
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import app.levelup.i18n.tr
 
 // ── Búsqueda ──────────────────────────────────────────────────────────────────
 
@@ -121,7 +122,7 @@ fun SearchScreen(vm: LevelUpViewModel, nav: Nav) {
                     item(key = "h-$kind") { SectionTitle(kindName(kind)) }
                     items(group, key = { "${it.kind}-${it.id}" }) { h ->
                         Column(
-                            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClickLabel = "Abrir") {
+                            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClickLabel = tr("Abrir")) {
                                 when (h.kind) {
                                     HitKind.CHALLENGE, HitKind.HABIT -> nav.catalog(h.id)
                                     HitKind.ACHIEVEMENT -> nav.achievements()
@@ -132,7 +133,7 @@ fun SearchScreen(vm: LevelUpViewModel, nav: Nav) {
                             }.padding(vertical = Space.s).semantics(mergeDescendants = true) {},
                         ) {
                             Text(h.title, style = MaterialTheme.typography.titleSmall)
-                            val detail = listOfNotNull(h.date?.let { Fmt.day(it) }, h.detail.takeIf { it.isNotBlank() }).joinToString(" · ")
+                            val detail = listOfNotNull(h.date?.let { Fmt.day(it) }, h.detail.takeIf { it.isNotBlank() }).joinToString(" · ") { tr(it) }
                             if (detail.isNotEmpty()) {
                                 Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -167,7 +168,7 @@ fun FocusScreen(vm: LevelUpViewModel, nav: Nav, instanceId: String?) {
             val d = definition
             if (d != null) Text(d.goal, style = MaterialTheme.typography.bodyLarge)
             if (d != null && d.minimum.isNotBlank()) {
-                Text("Versión mínima: ${d.minimum}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr("Versión mínima: {0}", d.minimum), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (inst.isOpen) {
                 FocusTimer(inst.minutes)
@@ -217,9 +218,9 @@ fun GoalsScreen(vm: LevelUpViewModel, nav: Nav) {
                             Text(g.title, style = MaterialTheme.typography.titleSmall)
                             if (g.why.isNotBlank()) Text(g.why, style = MaterialTheme.typography.bodyMedium)
                             val dates = listOfNotNull(
-                                g.targetDate?.let { "Para el ${Fmt.dayWithYear(it)}" },
+                                g.targetDate?.let { tr("Para el {0}", Fmt.dayWithYear(it)) },
                                 g.achievedAt?.let { "Lograda" },
-                            ).joinToString(" · ")
+                            ).joinToString(" · ") { tr(it) }
                             if (dates.isNotEmpty()) Text(dates, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                 TextButton(onClick = { editing = g }) { Text("Editar") }
@@ -247,7 +248,7 @@ fun GoalsScreen(vm: LevelUpViewModel, nav: Nav) {
     deleting?.let { g ->
         AlertDialog(
             onDismissRequest = { deleting = null },
-            title = { Text("¿Eliminar «${g.title}»?") },
+            title = { Text(tr("¿Eliminar «{0}»?", g.title)) },
             text = { Text("No afecta a tus retos ni a tu progreso.") },
             confirmButton = { TextButton(onClick = { vm.deleteGoal(g.id); deleting = null }) { Text("Eliminar") } },
             dismissButton = { TextButton(onClick = { deleting = null }) { Text("Cancelar") } },
@@ -271,7 +272,7 @@ private fun GoalDialog(vm: LevelUpViewModel, goal: PersonalGoal?, today: LocalDa
                     isError = error != null, supportingText = { Text(error ?: "${title.length}/${GoalRules.TITLE_MAX}") })
                 OutlinedTextField(why, { why = it.take(GoalRules.WHY_MAX) }, label = { Text("Por qué te importa (opcional)") }, minLines = 2)
                 val options = buildList {
-                    goal?.targetDate?.let { add(-1 to "El ${Fmt.day(it)}") }
+                    goal?.targetDate?.let { add(-1 to tr("El {0}", Fmt.day(it))) }
                     addAll(listOf(0 to "Sin fecha", 1 to "1 mes", 3 to "3 meses", 6 to "6 meses", 12 to "1 año"))
                 }
                 ChoiceRow("¿Para cuándo?", options, months, { months = it })
@@ -295,13 +296,13 @@ private fun GoalDialog(vm: LevelUpViewModel, goal: PersonalGoal?, today: LocalDa
 
 private fun suggestionText(s: ReviewSuggestion): Pair<String, String> = when (s) {
     is ReviewSuggestion.FewerPerDay ->
-        "Quedaron bastantes retos sin hacer. Con menos al día puede ser más llevadero." to "Pasar a ${s.to} al día"
+        "Quedaron bastantes retos sin hacer. Con menos al día puede ser más llevadero." to tr("Pasar a {0} al día", s.to)
     is ReviewSuggestion.MorePerDay ->
-        "Hiciste casi todo y te resultó fácil. Si te apetece, puedes sumar uno." to "Pasar a ${s.to} al día"
+        "Hiciste casi todo y te resultó fácil. Si te apetece, puedes sumar uno." to tr("Pasar a {0} al día", s.to)
     is ReviewSuggestion.MoveReminder ->
-        "Sueles completar tus retos hacia las ${Fmt.time(s.minuteOfDay + 30)}." to "Avisarme a las ${Fmt.time(s.minuteOfDay)}"
+        tr("Sueles completar tus retos hacia las {0}.", Fmt.time(s.minuteOfDay + 30)) to tr("Avisarme a las {0}", Fmt.time(s.minuteOfDay))
     is ReviewSuggestion.ReminderDays ->
-        "Tu actividad se concentra en: ${Days.list(s.mask).joinToString { Fmt.weekday(it) }}." to "Avisarme solo esos días"
+        tr("Tu actividad se concentra en: {0}.", Days.list(s.mask).joinToString { Fmt.weekday(it) }) to "Avisarme solo esos días"
 }
 
 @Composable
@@ -318,17 +319,17 @@ fun WeeklyReviewScreen(vm: LevelUpViewModel, nav: Nav) {
             Modifier.padding(padding).verticalScroll(rememberScrollState()).padding(Space.l),
             verticalArrangement = Arrangement.spacedBy(Space.s),
         ) {
-            Text("Del ${Fmt.day(s.weekStart)} al ${Fmt.day(s.weekStart.plus(6, DateTimeUnit.DAY))}", style = MaterialTheme.typography.titleMedium)
+            Text(tr("Del {0} al {1}", Fmt.day(s.weekStart), Fmt.day(s.weekStart.plus(6, DateTimeUnit.DAY))), style = MaterialTheme.typography.titleMedium)
             InfoCard {
                 if (s.completed == 0) {
                     Text("Fue una semana tranquila. No pasa nada: esta empieza de cero.", style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    Text("Completaste ${s.completed} de ${Fmt.plural(s.planned, "reto", "retos")}.", style = MaterialTheme.typography.bodyLarge)
-                    Text("Días con actividad: ${s.activeDays}", style = MaterialTheme.typography.bodyMedium)
-                    if (prefs.gameOn) Text("XP ganada: ${s.xp}", style = MaterialTheme.typography.bodyMedium)
-                    s.topCategory?.let { Text("Lo que más hiciste: ${app.levelup.content.Categories.name(it, custom)}", style = MaterialTheme.typography.bodyMedium) }
+                    Text(tr("Completaste {0} de {1}.", s.completed, Fmt.plural(s.planned, "reto", "retos")), style = MaterialTheme.typography.bodyLarge)
+                    Text(tr("Días con actividad: {0}", s.activeDays), style = MaterialTheme.typography.bodyMedium)
+                    if (prefs.gameOn) Text(tr("XP ganada: {0}", s.xp), style = MaterialTheme.typography.bodyMedium)
+                    s.topCategory?.let { Text(tr("Lo que más hiciste: {0}", app.levelup.content.Categories.name(it, custom)), style = MaterialTheme.typography.bodyMedium) }
                     if (prefs.gameOn && s.achievements.isNotEmpty()) {
-                        Text("Logros: ${s.achievements.joinToString()}", style = MaterialTheme.typography.bodyMedium)
+                        Text(tr("Logros: {0}", s.achievements.joinToString { tr(it) }), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

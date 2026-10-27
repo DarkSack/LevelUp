@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="complication_label">Desafios de hoje</string>
+    <string name="complication_empty">Nenhum desafio de hoje no relógio</string>
+    <string name="complication_count">%1$d de %2$d desafios feitos hoje</string>
+    <string name="open_phone">Abra o LevelUp no celular para ver seus desafios de hoje.</string>
+    <string name="no_challenges">Hoje não há desafios. Descansar também conta.</string>
+    <string name="done_count">%1$d de %2$d feitos</string>
+    <string name="done">Feito</string>
+    <string name="tap_to_complete">Toque para concluir</string>
+    <string name="goals">Suas metas</string>
+    <string name="sent">Enviado ao celular</string>
+    <string name="no_connection">Sem conexão com o celular</string>
+</resources>

@@ -23,7 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,6 +71,7 @@ import app.levelup.ui.settings.RhythmSection
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.LocalHasAccount
 import app.levelup.ui.theme.Space
+import app.levelup.i18n.tr
 
 private data class Entry(val section: String, val title: String, val subtitle: String)
 
@@ -242,7 +243,7 @@ private fun FramesSection(vm: LevelUpViewModel) {
                 Modifier.size(52.dp)
                     .then(if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
                     .selectable(selected, role = Role.RadioButton) { vm.updatePrefs { it.copy(avatar = key) } }
-                    .semantics { contentDescription = if (key.isEmpty()) "Tu inicial" else key },
+                    .semantics { contentDescription = tr(if (key.isEmpty()) "Tu inicial" else key) },
                 contentAlignment = Alignment.Center,
             ) { Text(emoji, style = MaterialTheme.typography.titleLarge) }
         }
@@ -268,14 +269,14 @@ private fun FramesSection(vm: LevelUpViewModel) {
                     when {
                         f.unlockedBy == null -> "Disponible desde el inicio"
                         f.unlockedBy == Cosmetics.PLUS -> if (available) "Incluido en LevelUp Plus" else "Se consigue con LevelUp Plus"
-                        available -> "Conseguido con «$source»"
+                        available -> tr("Conseguido con «{0}»", source)
                         AchievementCatalog.byId[f.unlockedBy]?.hidden == true -> "Se consigue con un logro secreto"
-                        else -> "Se consigue con «$source»"
+                        else -> tr("Se consigue con «{0}»", source)
                     },
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (prefs.equippedFrame == f.id) Icon(Icons.Filled.Check, contentDescription = "En uso")
+            if (prefs.equippedFrame == f.id) Icon(Icons.Filled.Check, contentDescription = tr("En uso"))
         }
     }
 }
@@ -327,8 +328,8 @@ private fun DataSection(vm: LevelUpViewModel, nav: Nav, signedIn: Boolean) {
             title = { Text("¿Importar un respaldo?") },
             text = {
                 Text(
-                    "Tus datos actuales se reemplazarán por los del archivo" +
-                        (if (signedIn) ", también los de tu cuenta" else "") + ". Si el archivo no es válido, no se cambia nada.",
+                    if (signedIn) "Tus datos actuales se reemplazarán por los del archivo, también los de tu cuenta. Si el archivo no es válido, no se cambia nada."
+                    else "Tus datos actuales se reemplazarán por los del archivo. Si el archivo no es válido, no se cambia nada.",
                 )
             },
             confirmButton = { TextButton(onClick = { confirmImport = false; vm.importData() }) { Text("Elegir archivo") } },
@@ -364,8 +365,8 @@ private fun PrivacySection() {
             "en los retos físicos. Solo se leen en el teléfono: no se guardan ni se suben.",
         "Permisos" to if (hasAccount) "Internet, para la cuenta y lo social, y notificaciones, solo si activas los recordatorios o los avisos de amigos."
             else "Notificaciones, solo si activas los recordatorios.",
-        "Tus derechos" to "Exporta tus datos o bórralos en Perfil → Tus datos." +
-            if (hasAccount) " Borra tu cuenta y todo lo de la nube en Perfil → Cuenta." else "",
+        "Tus derechos" to if (hasAccount) "Exporta tus datos o bórralos en Perfil → Tus datos. Borra tu cuenta y todo lo de la nube en Perfil → Cuenta."
+            else "Exporta tus datos o bórralos en Perfil → Tus datos.",
         "Salud" to "LevelUp no es un servicio médico ni hace diagnósticos. Adapta los retos a tu situación.",
         "Contacto" to "Johan Jafet Del Valle Santiago · donsackito@protonmail.com",
     ).forEach { (title, body) ->
@@ -376,7 +377,7 @@ private fun PrivacySection() {
 
 @Composable
 private fun AboutSection(vm: LevelUpViewModel, nav: Nav, platform: Platform) {
-    Text("LevelUp ${platform.appVersion}", style = MaterialTheme.typography.titleMedium)
+    Text(tr("LevelUp {0}", platform.appVersion), style = MaterialTheme.typography.titleMedium)
     Text("Hábitos con retos pequeños y progreso a tu ritmo.", style = MaterialTheme.typography.bodyMedium)
     SectionTitle("Volver a ver")
     SecondaryButton("La bienvenida", nav::welcome)

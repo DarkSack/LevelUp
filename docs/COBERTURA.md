@@ -26,12 +26,12 @@ Nada se ha probado en un teléfono real ni contra el Supabase de producción con
 | 17 | Notificaciones | Hecho | Recordatorio diario a la hora elegida, de recuperación, avisos de amigos con horas de silencio, aviso propio por hábito (hora en el editor del hábito) y aviso de logro cuando se consigue desde el widget o el reloj; el permiso se pide al activarlos. |
 | 18 | Privacidad y seguridad | Parcial | RLS, funciones que validan y limitan el uso, exportar, borrar datos y cuenta, política de privacidad publicada, condiciones de uso escritas y alertas de dependencias (Dependabot). **Falta** publicar las condiciones en la web. |
 | 19 | Monetización | Hecho | LevelUp Plus (compra única) con restauración y firma comprobada. Sin suscripciones ni IA (decisión). Falta crear el producto en Play Console. |
-| 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. Icono 512 × 512, gráfico 1024 × 500, capturas reales del teléfono y notas de versión en `docs/play/`. La 0.1.0 sale sin cuenta (`cuenta=no`). Splash propia en Android 12+ (fondo de la marca y el logo). Capturas del reloj, notas para la revisión y lista antes de publicar (con la prueba interna y la cerrada) en `PLAY_STORE.md`. **Faltan**: inglés (app y ficha). EAS no aplica: firma Gradle. |
+| 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. Icono 512 × 512, gráfico 1024 × 500, capturas reales del teléfono y notas de versión en `docs/play/`. La 0.1.0 sale sin cuenta (`cuenta=no`). Splash propia en Android 12+ (fondo de la marca y el logo). Capturas del reloj, notas para la revisión y lista antes de publicar (con la prueba interna y la cerrada) en `PLAY_STORE.md`. App, reloj, ficha y notas también en inglés y portugués de Brasil (las capturas siguen en español). EAS no aplica: firma Gradle. |
 | 21 | App Store | Decisión | Fuera de esta versión; solo [IOS.md](IOS.md). |
 | 22 | Recursos comerciales y legales | Parcial | Descripciones corta y larga, notas de la versión, notas para la revisión, lista de verificación, política de privacidad y condiciones de uso ([condiciones.md](play/condiciones.md); falta publicarlas en la web). Las capturas no llevan textos encima (decisión: se ve la app tal cual). |
 | 23 | CI | Parcial | GitHub Actions corre las pruebas, lint, los APK de depuración y los AAB de release sin firmar (como artefacto), las pruebas pgTAP en un Supabase local, y envía el grafo de dependencias para las alertas de Dependabot (más `dependabot.yml` semanal). **Falta** la subida a Play con aprobación manual: necesita la app creada en Play Console y una cuenta de servicio. |
 | 24 | Pruebas | Parcial | Unitarias: todas las reglas pedidas. Integración: Room, migración, sincronización, conflictos, RLS, amistades, bloqueos, borrado de cuenta. Interfaz (Robolectric): bienvenida, omitirla, onboarding interrumpido, completar un reto y su trofeo, logros secretos, accesibilidad, Plus y, contra el Supabase local (`AccountUiTest`), registro con código, cambios sin conexión que suben al reconectar, amistad y borrar la cuenta. **Faltan** las de accesibilidad y rendimiento en un teléfono. |
-| 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) funciona en local, no en producción hasta el SMTP. El 15 solo cubre Android. El 16 está a medias (faltan inglés y capturas del reloj). |
+| 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) funciona en local, no en producción hasta el SMTP. El 15 solo cubre Android. El 16 se cumple (inglés y portugués; capturas del reloj). |
 | 26 | Forma de trabajo | Hecho | Fases con pruebas; pendientes en [PENDIENTES.md](PENDIENTES.md). |
 
 ## Funciones pedidas el 2026-10-25
@@ -98,6 +98,14 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 | Portabilidad del progreso | Hecho | Respaldo, CSV, cuenta y guía de cambio de teléfono |
 | Laboratorio de funciones | Hecho | Perfil → Laboratorio; apagarlo no toca el progreso |
 
+## Idiomas
+
+Español, inglés y portugués de Brasil, según el idioma del teléfono (en Android 13+ también solo para LevelUp).
+El texto en español del código es la clave: `Text` de `ui/components` traduce lo que pinta y `tr("…{0}…", args)`
+lo demás (avisos, TalkBack, notificaciones, widget). Las traducciones están en `i18n/TextosUi.kt` y
+`i18n/TextosCatalogo.kt`; `I18nTest` falla si un texto nuevo del código o del catálogo no tiene traducción o si
+pierde un `{0}`. El reloj usa `values-en`/`values-pt`. El CSV exportado sigue en español.
+
 ## Lo que falta, en orden
 
 1. **SMTP propio** (del propietario) y subir las plantillas: sin esto nadie puede registrarse (la 0.1.0 sale sin cuenta).
@@ -105,5 +113,4 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 3. **Probar en un teléfono**: instalar, TalkBack, texto grande, recordatorios, compra de prueba, registro real.
 4. Publicar las condiciones de uso en shop.sackito.online/condiciones/levelup (están en `docs/play/condiciones.md`).
 8. CI: subida a Play con aprobación manual (tras crear la app en Play Console y una cuenta de servicio).
-9. Inglés: textos de la app (hoy están en el código) y ficha.
 11. Probar en un dispositivo lo nuevo de Android: widget, atajos, compartir, capturas protegidas, Health Connect y el reloj.

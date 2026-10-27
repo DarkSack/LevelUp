@@ -15,7 +15,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +45,7 @@ import app.levelup.ui.components.ToggleRow
 import app.levelup.ui.theme.Space
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
+import app.levelup.i18n.tr
 
 private enum class Mode { SIGN_IN, SIGN_UP, CONFIRM, FORGOT, RESET }
 
@@ -161,7 +162,7 @@ private fun GuestAccount(vm: CloudViewModel) {
         }
         Mode.CONFIRM -> {
             SectionTitle("Confirma tu correo")
-            Text("Escribe el código que enviamos a $email. Puede tardar un par de minutos; mira también en spam.")
+            Text(tr("Escribe el código que enviamos a {0}. Puede tardar un par de minutos; mira también en spam.", email))
             codeField()
             PrimaryButton("Confirmar", { vm.confirm(email, code) }, enabled = !busy && code.length == 6)
             TextButton(onClick = { vm.resendCode(email) }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -178,7 +179,7 @@ private fun GuestAccount(vm: CloudViewModel) {
         }
         Mode.RESET -> {
             SectionTitle("Contraseña nueva")
-            Text("Escribe el código que enviamos a $email y tu contraseña nueva.")
+            Text(tr("Escribe el código que enviamos a {0} y tu contraseña nueva.", email))
             codeField()
             val problem = password.takeIf { it.isNotEmpty() }?.let(::passwordProblem)
             passwordField("Contraseña nueva", password, { password = it }, problem)
@@ -202,7 +203,7 @@ fun SyncStatusLine(vm: CloudViewModel, onClick: () -> Unit) {
     val syncing by vm.syncing.collectAsStateWithLifecycle()
     val text = when {
         syncing -> "Sincronizando…"
-        pending > 0 -> "${Fmt.plural(pending, "cambio", "cambios")} por subir"
+        pending > 0 -> tr("{0} por subir", Fmt.plural(pending, "cambio", "cambios"))
         state?.lastError != null -> "Sin sincronizar: se volverá a intentar"
         state?.lastSyncedAt != null -> "Todo sincronizado"
         else -> return
@@ -229,13 +230,13 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
     InfoCard {
         val status = when {
             syncing -> "Sincronizando…"
-            pending > 0 -> "${Fmt.plural(pending, "cambio pendiente", "cambios pendientes")} de subir. Se subirán solos cuando haya conexión."
+            pending > 0 -> tr("{0} de subir. Se subirán solos cuando haya conexión.", Fmt.plural(pending, "cambio pendiente", "cambios pendientes"))
             state?.lastError != null -> "No se pudo sincronizar la última vez. Se volverá a intentar."
             state?.lastSyncedAt != null -> "Todo sincronizado."
             else -> "Aún no se ha sincronizado."
         }
         Text(status, style = MaterialTheme.typography.bodyLarge)
-        state?.lastSyncedAt?.let { Text("Última vez: ${Fmt.dateTime(it)}", style = MaterialTheme.typography.bodySmall) }
+        state?.lastSyncedAt?.let { Text(tr("Última vez: {0}", Fmt.dateTime(it)), style = MaterialTheme.typography.bodySmall) }
     }
     SecondaryButton("Sincronizar ahora", vm::syncNow, enabled = !syncing && !busy)
 
@@ -249,10 +250,10 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
                 Column(Modifier.weight(1f)) {
                     Text(s.device ?: "Otro dispositivo", style = MaterialTheme.typography.bodyLarge)
                     val used = runCatching { Fmt.dateTime(Instant.parse(s.lastUsedAt).toEpochMilliseconds()) }.getOrNull()
-                    Text(if (s.current) "Este dispositivo" else used?.let { "Último uso: $it" }.orEmpty(),
+                    Text(if (s.current) "Este dispositivo" else used?.let { tr("Último uso: {0}", it) }.orEmpty(),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (!s.current) TextButton(onClick = { vm.endSession(s.id) }, enabled = !busy) { Text("Cerrar") }
+                if (!s.current) TextButton(onClick = { vm.endSession(s.id) }, enabled = !busy) { Text("Desconectar") }
             }
         }
     }
@@ -307,7 +308,7 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
 internal fun SignInRequired(nav: Nav, what: String) {
     Column(Modifier.fillMaxSize().padding(Space.l), verticalArrangement = Arrangement.spacedBy(Space.m)) {
         Text("Necesitas una cuenta", style = MaterialTheme.typography.titleLarge)
-        Text("$what necesita una cuenta. Lo personal (retos, XP, logros) funciona igual sin ella.")
+        Text(tr("{0} necesita una cuenta. Lo personal (retos, XP, logros) funciona igual sin ella.", what))
         PrimaryButton("Entrar o crear cuenta", nav::account)
     }
 }

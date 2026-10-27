@@ -23,7 +23,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -84,6 +84,7 @@ import app.levelup.ui.social.SocialScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import app.levelup.i18n.tr
 
 @Serializable object HomeRoute
 @Serializable object ChallengesRoute
@@ -174,26 +175,26 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
                     }
                     val text = when {
                         off -> "¡Hecho!"
-                        r.comeback -> "¡Qué bien que volviste! +${r.xpGained} XP"
-                        else -> "¡Hecho! +${r.xpGained} XP"
+                        r.comeback -> tr("¡Qué bien que volviste! +{0} XP", r.xpGained)
+                        else -> tr("¡Hecho! +{0} XP", r.xpGained)
                     }
                     launch {
-                        val action = snackbar.showSnackbar(text, "Deshacer", duration = SnackbarDuration.Short)
+                        val action = snackbar.showSnackbar(text, tr("Deshacer"), duration = SnackbarDuration.Short)
                         if (action == SnackbarResult.ActionPerformed) vm.undo(event.instanceId)
                     }
                 }
                 is UiEvent.Unlocked -> when {
                     off -> Unit // sin juego: los logros se siguen guardando, pero no se anuncian
                     full -> celebration = Celebration(event.achievements, null)
-                    else -> launch { snackbar.showSnackbar("Logro: ${event.achievements.joinToString { it.name }}") }
+                    else -> launch { snackbar.showSnackbar(tr("Logro: {0}", event.achievements.joinToString { tr(it.name) })) }
                 }
-                is UiEvent.Message -> launch { snackbar.showSnackbar(event.text) }
+                is UiEvent.Message -> launch { snackbar.showSnackbar(tr(event.text)) }
             }
         }
     }
 
     LaunchedEffect(cloud) {
-        cloud?.messages?.collect { launch { snackbar.showSnackbar(it) } }
+        cloud?.messages?.collect { launch { snackbar.showSnackbar(tr(it)) } }
     }
 
     val secure = vm.prefs.collectAsStateWithLifecycle().value?.secureScreens == true
@@ -283,7 +284,7 @@ private fun CelebrationDialog(c: Celebration, onDismiss: () -> Unit) {
         title = {
             Text(
                 when {
-                    levelUp -> "¡Subiste al nivel ${result.levelAfter}!"
+                    levelUp -> tr("¡Subiste al nivel {0}!", result.levelAfter)
                     c.achievements.size > 1 -> "¡Nuevos logros!"
                     c.achievements.size == 1 -> "¡Logro desbloqueado!"
                     else -> "¡Misión cumplida!"
@@ -295,8 +296,8 @@ private fun CelebrationDialog(c: Celebration, onDismiss: () -> Unit) {
                 Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 verticalArrangement = Arrangement.spacedBy(Space.m),
             ) {
-                if (levelUp) Text("Tu título ahora es «${XpRules.titleFor(result.levelAfter)}».")
-                result?.missions?.forEach { Text("Misión «${it.title}» completada: +${it.xpReward} XP") }
+                if (levelUp) Text(tr("Tu título ahora es «{0}».", XpRules.titleFor(result.levelAfter)))
+                result?.missions?.forEach { Text(tr("Misión «{0}» completada: +{1} XP", it.title, it.xpReward)) }
                 c.achievements.forEach { a ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.graphicsLayer { scaleX = scale; scaleY = scale }) {
@@ -306,10 +307,10 @@ private fun CelebrationDialog(c: Celebration, onDismiss: () -> Unit) {
                         Column {
                             Text(a.name, style = MaterialTheme.typography.titleSmall)
                             val reward = buildList {
-                                if (a.xpReward > 0) add("+${a.xpReward} XP")
-                                Cosmetics.rewardOf(a.id)?.let { add("marco ${it.name}") }
+                                if (a.xpReward > 0) add(tr("+{0} XP", a.xpReward))
+                                Cosmetics.rewardOf(a.id)?.let { add(tr("marco {0}", it.name)) }
                             }.joinToString(" · ")
-                            Text(listOf(a.description, reward).filter { it.isNotBlank() }.joinToString("\n"), style = MaterialTheme.typography.bodySmall)
+                            Text(listOf(a.description, reward).filter { it.isNotBlank() }.joinToString("\n") { tr(it) }, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

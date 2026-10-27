@@ -19,7 +19,8 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 ### Notas de la versión 0.1.0
 
 Se pegan tal cual en «Notas de la versión» al crear cada versión. `es-419` es español (Latinoamérica), el idioma
-predeterminado de la ficha; Play admite 500 caracteres por idioma (teléfono: 466; reloj: 166).
+predeterminado de la ficha, y van también en inglés (`en-US`) y portugués (`pt-BR`), los otros idiomas de la app;
+Play admite 500 caracteres por idioma (teléfono: 472, 476 y 487; reloj: 166, 200 y 180).
 
 Teléfono:
 
@@ -34,6 +35,26 @@ Primera versión de LevelUp.
 • Sin cuenta: tus datos se quedan en tu teléfono.
 • También en tu reloj Wear OS.
 </es-419>
+<en-US>
+First release of LevelUp.
+• Over 130 daily challenges in nine areas, matched to your goals and your time.
+• Experience, levels, titles, 53 achievements (4 secret) and missions.
+• No penalties: simplify, swap or postpone a challenge; rest days don't break your streak.
+• Goals, favorites, weekly review, today widget and shortcuts.
+• Health Connect steps and exercise in physical challenges (optional).
+• No account: your data stays on your phone.
+• Also on your Wear OS watch.
+</en-US>
+<pt-BR>
+Primeira versão do LevelUp.
+• Mais de 130 desafios diários em nove áreas, conforme seus objetivos e seu tempo.
+• Experiência, níveis, títulos, 53 conquistas (4 secretas) e missões.
+• Sem castigos: simplifique, troque ou adie um desafio; o descanso não quebra sua sequência.
+• Metas, favoritos, revisão semanal, widget de hoje e atalhos.
+• Passos e exercício do Health Connect nos desafios físicos (opcional).
+• Sem conta: seus dados ficam no seu celular.
+• Também no seu relógio Wear OS.
+</pt-BR>
 ```
 
 Reloj (canal de Wear OS):
@@ -44,6 +65,16 @@ Primera versión para Wear OS.
 • Ve los retos y metas de hoy en tu reloj y completa un reto sin sacar el teléfono.
 • Complicación para tu esfera con tu avance del día.
 </es-419>
+<en-US>
+First release for Wear OS.
+• See today's challenges and goals on your watch and complete a challenge without taking out your phone.
+• A complication for your watch face with your progress for the day.
+</en-US>
+<pt-BR>
+Primeira versão para Wear OS.
+• Veja os desafios e metas de hoje no relógio e conclua um desafio sem tirar o celular do bolso.
+• Complicação para o mostrador com seu avanço do dia.
+</pt-BR>
 ```
 
 ## 2. Ficha (español)
@@ -89,6 +120,83 @@ Primera versión para Wear OS.
 
 **Categoría:** Salud y bienestar o Productividad (**Tú** eliges). **Correo de contacto:** donsackito@protonmail.com.
 **Desarrollador:** Johan Jafet Del Valle Santiago.
+
+## 2.1 Ficha en inglés y portugués
+
+La app sigue el idioma del teléfono (español, inglés o portugués de Brasil; en Android 13+ también se elige solo para
+LevelUp). En Play Console: Ficha principal → **Administrar traducciones → Agregar tus propias traducciones** →
+`en-US` y `pt-BR`, y pegar:
+
+**en-US**: nombre `LevelUp`; descripción breve:
+
+> Small challenges to build habits. Level up at your own pace, no account needed.
+
+> Every small step counts. Each day LevelUp suggests a few concrete challenges, chosen to fit your goals and the
+> time you have, and turns your consistency into progress: experience, levels, titles, achievements and missions.
+>
+> CHALLENGES THAT FIT YOU
+> • Over 130 challenges in nine areas: physical, mind, social, productivity, wellbeing, creativity, finances,
+>   digital life and home.
+> • You choose how many challenges a day and how much time; the difficulty adjusts to how they're going.
+> • Create your own challenges and habits with fixed days.
+>
+> NO PENALTIES
+> • A hard day? Simplify the challenge, swap it or leave it for another day.
+> • Rest days and breaks don't break your streak. The experience you earn is never lost.
+>
+> PROGRESS YOU CAN SEE
+> • Overall and per-category levels, titles, 53 achievements with bronze to platinum trophies (some of them secret), multi-day missions and frames for your avatar.
+> • A calm style for anyone who prefers fewer celebrations.
+>
+> DESIGNED FOR EVERY MIND
+> • Visible steps, an optional timer, simple mode and gentle reminders, helpful if starting or keeping focus is
+>   hard for you.
+> • Larger text, high contrast, reduced motion and TalkBack support.
+>
+> PRIVATE
+> • No ads, no tracking and no account. It works offline and your data stays on your phone.
+> • Export a backup whenever you want.
+>
+> LEVELUP PLUS (OPTIONAL)
+> • One-time purchase: exclusive frames, app colors and extended stats. Nothing in Plus is needed to make
+>   progress.
+
+**pt-BR**: nome `LevelUp`; descrição breve:
+
+> Pequenos desafios para criar hábitos. Suba de nível no seu ritmo, sem conta.
+
+> Cada pequeno passo conta. Todo dia o LevelUp sugere alguns desafios concretos, escolhidos conforme seus objetivos
+> e o tempo que você tem, e transforma sua constância em progresso: experiência, níveis, títulos, conquistas e
+> missões.
+>
+> DESAFIOS NA SUA MEDIDA
+> • Mais de 130 desafios em nove áreas: físico, mente, social, produtividade, bem-estar, criatividade, finanças,
+>   vida digital e casa.
+> • Você escolhe quantos desafios por dia e quanto tempo; a dificuldade se ajusta conforme eles vão indo.
+> • Crie seus próprios desafios e hábitos com dias fixos.
+>
+> SEM CASTIGOS
+> • Um dia difícil? Simplifique o desafio, troque ou deixe para outro dia.
+> • Dias de descanso e pausas que não quebram sua sequência. A experiência ganha nunca se perde.
+>
+> PROGRESSO QUE SE VÊ
+> • Níveis gerais e por categoria, títulos, 53 conquistas com troféus de bronze a platina (algumas secretas), missões de vários dias e molduras para o seu avatar.
+> • Estilo tranquilo para quem prefere menos comemorações.
+>
+> PENSADO PARA CADA CABEÇA
+> • Passos visíveis, temporizador opcional, modo simples e avisos gentis, úteis se for difícil começar ou manter
+>   a atenção.
+> • Texto maior, alto contraste, menos movimento e compatibilidade com o TalkBack.
+>
+> PRIVADO
+> • Sem anúncios, sem rastreamento e sem conta. Funciona sem internet e seus dados ficam no seu celular.
+> • Exporte um backup quando quiser.
+>
+> LEVELUP PLUS (OPCIONAL)
+> • Compra única: molduras exclusivas, cores para o app e estatísticas ampliadas. Nada do Plus é necessário para
+>   progredir.
+
+Las capturas (sección 6) están en español: sirven para las tres fichas mientras no haya otras.
 
 ## 3. Contenido de la app
 
@@ -167,6 +275,8 @@ the daily challenges appear on Home. There is no user-generated content shared w
 LevelUp Plus (one-time in-app purchase, product id levelup_plus) only unlocks decorative frames, app colors and
 extended stats: Profile > LevelUp Plus. Health Connect (steps and exercise minutes, read-only, processed on the
 device) is optional and lives in Profile > Lab. The Wear OS app shows today's challenges sent by the phone.
+The app follows the phone language (Spanish, English or Brazilian Portuguese); with the phone in English the
+menu names above appear exactly as written.
 ```
 
 ## 8. Lista antes de publicar

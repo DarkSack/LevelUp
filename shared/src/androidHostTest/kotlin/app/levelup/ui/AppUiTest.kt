@@ -164,6 +164,20 @@ class AppUiTest {
         assertEquals(0, compose.onAllNodesWithText("Un año contigo").fetchSemanticsNodes().size)
     }
 
+    @Test fun withThePhoneInEnglishTheAppIsInEnglish() {
+        app.levelup.i18n.I18n.language = "en"
+        try {
+            onboarded()
+            launch()
+            waitForText("Main challenge")
+            assertEquals(0, compose.onAllNodesWithText("Reto principal").fetchSemanticsNodes().size)
+            compose.onNodeWithText("Complete").performClick()
+            waitForText("Done!", substring = true)
+        } finally {
+            app.levelup.i18n.I18n.language = "es"
+        }
+    }
+
     @Test fun withoutGameThereIsNoXpNorLevels() {
         onboarded()
         prefs { it.copy(gamification = app.levelup.domain.GamificationStyle.OFF) }

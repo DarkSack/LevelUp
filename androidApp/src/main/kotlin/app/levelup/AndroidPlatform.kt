@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import app.levelup.i18n.tr
 
 /**
  * Vive en la Application, no en la actividad: el ViewModel la guarda y sobrevive a los giros de pantalla.
@@ -73,7 +74,7 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
                 .putExtra(Intent.EXTRA_TEXT, "Conseguí «${card.title}» en LevelUp.")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             send.clipData = ClipData.newRawUri(null, uri) // así el permiso de lectura llega a través del selector
-            withContext(Dispatchers.Main) { activity.startActivity(Intent.createChooser(send, "Compartir logro")) }
+            withContext(Dispatchers.Main) { activity.startActivity(Intent.createChooser(send, tr("Compartir logro"))) }
         }
     }
 

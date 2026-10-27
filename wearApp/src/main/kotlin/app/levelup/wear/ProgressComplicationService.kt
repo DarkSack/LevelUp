@@ -26,7 +26,7 @@ class ProgressComplicationService : SuspendingComplicationDataSourceService() {
     private fun build(type: ComplicationType, done: Int, total: Int): ComplicationData? {
         val text = PlainComplicationText.Builder(if (total == 0) "–" else "$done/$total").build()
         val description = PlainComplicationText.Builder(
-            if (total == 0) "Sin retos de hoy en el reloj" else "$done de $total retos hechos hoy",
+            if (total == 0) getString(R.string.complication_empty) else getString(R.string.complication_count, done, total),
         ).build()
         val tap = PendingIntent.getActivity(
             this, 0, Intent(this, WatchActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,

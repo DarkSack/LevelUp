@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import app.levelup.i18n.tr
 
 /**
  * Widget de Inicio: el reto principal, cuántos van y un botón para completarlo.
@@ -60,13 +61,13 @@ class TodayWidget : AppWidgetProvider() {
             views.setTextViewText(
                 R.id.widget_title,
                 when {
-                    main != null -> summary.mainTitle
-                    summary.total > 0 -> "Retos de hoy terminados"
-                    else -> "Abre LevelUp para ver tus retos"
+                    main != null -> summary.mainTitle?.let(::tr)
+                    summary.total > 0 -> tr("Retos de hoy terminados")
+                    else -> tr("Abre LevelUp para ver tus retos")
                 },
             )
             val label = context.getString(R.string.widget_label)
-            views.setTextViewText(R.id.widget_progress, if (summary.total > 0) "$label · ${summary.done} de ${summary.total}" else label)
+            views.setTextViewText(R.id.widget_progress, if (summary.total > 0) tr("{0} · {1} de {2}", label, summary.done, summary.total) else label)
             views.setOnClickPendingIntent(R.id.widget_root, open(context, if (main != null) "levelup://reto/$main" else "levelup://hoy", 1))
             if (main != null) {
                 views.setViewVisibility(R.id.widget_complete, View.VISIBLE)

@@ -9,6 +9,7 @@ import com.google.android.gms.wearable.WearableListenerService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
+import app.levelup.i18n.tr
 
 /**
  * Teléfono → reloj por el Data Layer de Wear OS (solo entre el teléfono y el reloj emparejados, misma app y firma).
@@ -24,13 +25,13 @@ object WearSync {
         val request = PutDataMapRequest.create(PATH_TODAY).apply {
             dataMap.putString("fecha", s.date.toString())
             dataMap.putString("principalId", s.mainId.orEmpty())
-            dataMap.putString("principalTitulo", s.mainTitle.orEmpty())
+            dataMap.putString("principalTitulo", tr(s.mainTitle.orEmpty()))
             dataMap.putInt("hechosHoy", s.done)
             dataMap.putInt("total", s.total)
             dataMap.putStringArrayList("ids", ArrayList(s.items.map { it.id }))
-            dataMap.putStringArrayList("titulos", ArrayList(s.items.map { it.title }))
+            dataMap.putStringArrayList("titulos", ArrayList(s.items.map { tr(it.title) }))
             dataMap.putIntegerArrayList("hechos", ArrayList(s.items.map { if (it.done) 1 else 0 }))
-            dataMap.putStringArrayList("metas", ArrayList(s.goals))
+            dataMap.putStringArrayList("metas", ArrayList(s.goals.map { tr(it) }))
         }.asPutDataRequest().setUrgent()
         runCatching { Wearable.getDataClient(context).putDataItem(request).await() }
     }

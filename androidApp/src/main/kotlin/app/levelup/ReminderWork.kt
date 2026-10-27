@@ -17,6 +17,7 @@ import app.levelup.domain.Reminders
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
+import app.levelup.i18n.tr
 
 /**
  * Un aviso al día a la hora elegida. Cada ejecución programa la siguiente; qué dice (o si calla) lo decide
@@ -93,7 +94,7 @@ object ReminderWork {
     class Worker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val app = applicationContext as LevelUpApplication
-            app.repo.reminderNow()?.let { notify(app, NOTIFICATION_ID, it.title, it.body) }
+            app.repo.reminderNow()?.let { notify(app, NOTIFICATION_ID, tr(it.title), tr(it.body)) }
             schedule(app, app.repo.prefs())
             return Result.success()
         }
@@ -103,7 +104,7 @@ object ReminderWork {
         override suspend fun doWork(): Result {
             val app = applicationContext as LevelUpApplication
             val due = app.repo.dueHabitReminders()
-            if (due.isNotEmpty()) notify(app, HABIT_NOTIFICATION_ID, app.getString(R.string.habit_reminder_title), due.joinToString(" · "))
+            if (due.isNotEmpty()) notify(app, HABIT_NOTIFICATION_ID, app.getString(R.string.habit_reminder_title), due.joinToString(" · ") { tr(it) })
             scheduleHabits(app)
             return Result.success()
         }

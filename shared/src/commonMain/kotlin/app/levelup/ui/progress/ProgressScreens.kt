@@ -16,7 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,6 +61,7 @@ import app.levelup.ShareCard
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
 import app.levelup.ui.theme.gameOn
+import app.levelup.i18n.tr
 
 @Composable
 fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
@@ -78,11 +79,11 @@ fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Uni
         ) {
             if (prefs.gameOn) item {
                 InfoCard(Modifier.padding(top = Space.s)) {
-                    Text("Nivel ${p.level.level} · ${XpRules.titleFor(p.level.level)}", style = MaterialTheme.typography.titleLarge)
-                    LabeledProgress(p.level.fraction, "${p.level.totalXp} XP en total · ${p.level.xpForNext - p.level.xpInLevel} para el siguiente nivel",
+                    Text(tr("Nivel {0} · {1}", p.level.level, XpRules.titleFor(p.level.level)), style = MaterialTheme.typography.titleLarge)
+                    LabeledProgress(p.level.fraction, tr("{0} XP en total · {1} para el siguiente nivel", p.level.totalXp, p.level.xpForNext - p.level.xpInLevel),
                         color = MaterialTheme.colorScheme.secondary)
                     XpRules.nextTitle(p.level.level)?.let { (lvl, title) ->
-                        Text("En el nivel $lvl tu título será «$title».", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Space.xs))
+                        Text(tr("En el nivel {0} tu título será «{1}».", lvl, title), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Space.xs))
                     }
                 }
                 PrimaryButton("Logros y trofeos", nav::achievements, Modifier.padding(top = Space.m))
@@ -94,7 +95,7 @@ fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Uni
                     item { Text("Completa tu primer reto para ver tus categorías.", style = MaterialTheme.typography.bodyMedium) }
                 }
                 items(p.categoryLevels.entries.sortedByDescending { it.value.totalXp }, key = { it.key }) { (key, lp) ->
-                    LabeledProgress(lp.fraction, "${Categories.name(key, custom)} · nivel ${lp.level} · ${lp.totalXp} XP",
+                    LabeledProgress(lp.fraction, tr("{0} · nivel {1} · {2} XP", Categories.name(key, custom), lp.level, lp.totalXp),
                         Modifier.padding(vertical = Space.xs))
                 }
                 item {
@@ -133,7 +134,7 @@ fun ProgressScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Uni
                     val weekStart = Streaks.weekStart(today)
                     val done = recent.count { it.challengeId == h.id && it.isDone && it.date >= weekStart }
                     val planned = Days.list(h.habitDays).size
-                    LabeledProgress(done / planned.toFloat(), "${h.title} · $done de $planned", Modifier.padding(vertical = Space.xs))
+                    LabeledProgress(done / planned.toFloat(), tr("{0} · {1} de {2}", h.title, done, planned), Modifier.padding(vertical = Space.xs))
                 }
             }
         }
@@ -154,7 +155,7 @@ private fun WeeklyChart(weeks: List<Pair<kotlinx.datetime.LocalDate, Int>>) {
     val max = (weeks.maxOfOrNull { it.second } ?: 0).coerceAtLeast(1)
     val bar = MaterialTheme.colorScheme.secondary
     val track = MaterialTheme.colorScheme.surfaceVariant
-    val description = "XP por semana: " + weeks.joinToString("; ") { (start, xp) -> "semana del ${Fmt.day(start)}, $xp XP" }
+    val description = tr("XP por semana: {0}", weeks.joinToString("; ") { (start, xp) -> tr("semana del {0}, {1} XP", Fmt.day(start), xp) })
     Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description }) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             weeks.forEach { (_, xp) ->
@@ -187,7 +188,7 @@ private fun WeeksRow(weeks: List<Streaks.Week>) {
         weeks.forEach { w ->
             Column(
                 Modifier.weight(1f).semantics(mergeDescendants = true) {
-                    contentDescription = "Semana del ${Fmt.day(w.start)}: ${w.activeDays} de ${w.goal} días" + if (w.met) ", cumplida" else ""
+                    contentDescription = tr(if (w.met) "Semana del {0}: {1} de {2} días, cumplida" else "Semana del {0}: {1} de {2} días", Fmt.day(w.start), w.activeDays, w.goal)
                 },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -209,7 +210,7 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
     ScreenScaffold("Logros y trofeos", onBack = nav::back) { padding ->
         LazyColumn(contentPadding = PaddingValues(start = Space.l, end = Space.l, top = padding.calculateTopPadding(), bottom = Space.xxl)) {
             item {
-                Text("$unlockedCount de ${p.achievements.size} trofeos", style = MaterialTheme.typography.titleMedium,
+                Text(tr("{0} de {1} trofeos", unlockedCount, p.achievements.size), style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(top = Space.s))
             }
 
@@ -218,10 +219,10 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
             if (active != null) {
                 item {
                     InfoCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
-                        Text("En marcha: ${active.first.title}", style = MaterialTheme.typography.titleSmall)
+                        Text(tr("En marcha: {0}", active.first.title), style = MaterialTheme.typography.titleSmall)
                         Text(active.first.description, style = MaterialTheme.typography.bodyMedium)
                         LabeledProgress(p.missionProgress / active.first.goal.target.toFloat(),
-                            "${p.missionProgress} de ${active.first.goal.target} · hasta el ${Fmt.day(active.second.endsOn)}",
+                            tr("{0} de {1} · hasta el {2}", p.missionProgress, active.first.goal.target, Fmt.day(active.second.endsOn)),
                             color = MaterialTheme.colorScheme.tertiary)
                         TextButton(onClick = { vm.abandonMission(active.second.id) }) { Text("Dejar la misión") }
                     }
@@ -238,7 +239,7 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
                 items(available, key = { it.id }) { m ->
                     InfoCard(Modifier.padding(vertical = Space.xs)) {
                         Text(m.title, style = MaterialTheme.typography.titleSmall)
-                        Text("${m.description} · +${m.xpReward} XP" + (Cosmetics.rewardOf(m.id)?.let { " · marco ${it.name}" } ?: ""),
+                        Text(tr("{0} · +{1} XP", m.description, m.xpReward) + (Cosmetics.rewardOf(m.id)?.let { tr(" · marco {0}", it.name) } ?: ""),
                             style = MaterialTheme.typography.bodySmall)
                         if (m.id in p.missionsCompleted) Text("Ya la completaste", style = MaterialTheme.typography.labelMedium)
                         SecondaryButton("Empezar", { vm.startMission(m.id) }, Modifier.padding(top = Space.s))
@@ -281,10 +282,10 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
                     if (!v.secret) Text(a.description)
                     Text(stateLine(v))
                     val reward = listOfNotNull(
-                        a.xpReward.takeIf { it > 0 }?.let { "+$it XP" },
-                        Cosmetics.rewardOf(a.id)?.let { "marco ${it.name}" },
+                        a.xpReward.takeIf { it > 0 }?.let { tr("+{0} XP", it) },
+                        Cosmetics.rewardOf(a.id)?.let { tr("marco {0}", it.name) },
                     )
-                    if (reward.isNotEmpty() && !v.secret) Text("Recompensa: ${reward.joinToString(" y ")}")
+                    if (reward.isNotEmpty() && !v.secret) Text(tr("Recompensa: {0}", reward.joinToString(tr(" y "))))
                 }
             },
         )
@@ -297,15 +298,15 @@ private val AchievementView.name get() = if (secret) "Logro secreto" else achiev
 
 private fun stateLine(v: AchievementView): String = when {
     v.secret -> "Se descubre al conseguirlo. Sigue a tu ritmo."
-    v.state == AchievementState.UNLOCKED -> "Desbloqueado el ${v.unlockedOn?.let { Fmt.dayWithYear(it) } ?: "—"}"
-    v.state == AchievementState.LOCKED -> "Bloqueado: primero consigue «${AchievementCatalog.byId[v.achievement.requires]?.name}»"
-    else -> "Disponible: ${v.progress} de ${v.achievement.target}"
+    v.state == AchievementState.UNLOCKED -> tr("Desbloqueado el {0}", v.unlockedOn?.let { Fmt.dayWithYear(it) } ?: "—")
+    v.state == AchievementState.LOCKED -> tr("Bloqueado: primero consigue «{0}»", AchievementCatalog.byId[v.achievement.requires]?.name)
+    else -> tr("Disponible: {0} de {1}", v.progress, v.achievement.target)
 }
 
 @Composable
 private fun AchievementRow(v: AchievementView, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(onClickLabel = "Ver detalle", onClick = onClick)
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(onClickLabel = tr("Ver detalle"), onClick = onClick)
             .padding(vertical = Space.xs).semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
     ) {

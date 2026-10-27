@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_reminders">Lembretes</string>
+    <string name="channel_reminders_description">Um aviso por dia com seus desafios, no horário que você escolher.</string>
+    <string name="channel_social">Amigos</string>
+    <string name="channel_social_description">Solicitações, parabéns e convites para desafios em grupo.</string>
+    <string name="channel_achievements">Conquistas</string>
+    <string name="channel_achievements_description">Quando você ganha uma conquista pelo widget ou pelo relógio.</string>
+    <string name="habit_reminder_title">Hora do seu hábito</string>
+    <string name="achievement_unlocked">Conquista desbloqueada!</string>
+    <string name="widget_label">Desafio principal</string>
+    <string name="widget_loading">Carregando…</string>
+    <string name="widget_complete">Feito</string>
+    <string name="widget_description">Seu desafio principal e quantos você já fez hoje.</string>
+    <string name="shortcut_today">Desafio do dia</string>
+    <string name="shortcut_today_long">Ver o desafio do dia</string>
+    <string name="shortcut_focus">Concentração</string>
+    <string name="shortcut_focus_long">Começar no modo concentração</string>
+    <string name="shortcut_search">Buscar</string>
+</resources>

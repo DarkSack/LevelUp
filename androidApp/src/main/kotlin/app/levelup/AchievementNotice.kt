@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import app.levelup.data.CompletionResult
 import app.levelup.domain.GamificationStyle
+import app.levelup.i18n.tr
 
 /**
  * Logro conseguido sin la app abierta (botón del widget o el reloj). Con la app abierta lo celebra la propia
@@ -37,8 +38,8 @@ object AchievementNotice {
             val notification = NotificationCompat.Builder(app, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(app.getString(R.string.achievement_unlocked))
-                .setContentText(a.name)
-                .setStyle(NotificationCompat.BigTextStyle().bigText("${a.name}\n${a.description}"))
+                .setContentText(tr(a.name))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(tr(a.name) + "\n" + tr(a.description)))
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .build()

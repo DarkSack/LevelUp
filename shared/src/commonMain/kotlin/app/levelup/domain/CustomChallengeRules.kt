@@ -1,5 +1,7 @@
 package app.levelup.domain
 
+import app.levelup.i18n.tr
+
 /** Lo que el usuario escribe en el formulario de un reto propio. */
 data class CustomChallengeDraft(
     val title: String = "",
@@ -42,30 +44,30 @@ object CustomChallengeRules {
         val title = draft.title.trim()
         when {
             title.length < 3 -> errors[DraftField.TITLE] = "Escribe un título de al menos 3 letras."
-            title.length > TITLE_MAX -> errors[DraftField.TITLE] = "El título puede tener hasta $TITLE_MAX caracteres."
+            title.length > TITLE_MAX -> errors[DraftField.TITLE] = tr("El título puede tener hasta {0} caracteres.", TITLE_MAX)
             otherTitles.any { normalize(it) == normalize(title) } -> errors[DraftField.TITLE] = "Ya tienes un reto con ese título."
         }
         if (draft.description.trim().length > TEXT_MAX) {
-            errors[DraftField.DESCRIPTION] = "La descripción puede tener hasta $TEXT_MAX caracteres."
+            errors[DraftField.DESCRIPTION] = tr("La descripción puede tener hasta {0} caracteres.", TEXT_MAX)
         }
         if (draft.category !in validCategories) errors[DraftField.CATEGORY] = "Elige una categoría."
         val goal = draft.goal.trim()
         when {
             goal.length < 3 -> errors[DraftField.GOAL] = "Describe qué hay que hacer (por ejemplo: «Leer 10 páginas»)."
-            goal.length > GOAL_MAX -> errors[DraftField.GOAL] = "El objetivo puede tener hasta $GOAL_MAX caracteres."
+            goal.length > GOAL_MAX -> errors[DraftField.GOAL] = tr("El objetivo puede tener hasta {0} caracteres.", GOAL_MAX)
         }
         if (draft.doneWhen.trim().length > GOAL_MAX) {
-            errors[DraftField.DONE_WHEN] = "Puede tener hasta $GOAL_MAX caracteres."
+            errors[DraftField.DONE_WHEN] = tr("Puede tener hasta {0} caracteres.", GOAL_MAX)
         }
         if (draft.minimum.trim().length > GOAL_MAX) {
-            errors[DraftField.MINIMUM] = "La versión mínima puede tener hasta $GOAL_MAX caracteres."
+            errors[DraftField.MINIMUM] = tr("La versión mínima puede tener hasta {0} caracteres.", GOAL_MAX)
         }
         if (draft.difficulty !in 1..5) errors[DraftField.DIFFICULTY] = "Elige una dificultad del 1 al 5."
         if (draft.minutes !in 1..240) errors[DraftField.MINUTES] = "La duración va de 1 a 240 minutos."
         val steps = draft.steps.map { it.trim() }.filter { it.isNotEmpty() }
         when {
-            steps.size > MAX_STEPS -> errors[DraftField.STEPS] = "Hasta $MAX_STEPS pasos."
-            steps.any { it.length > STEP_MAX } -> errors[DraftField.STEPS] = "Cada paso puede tener hasta $STEP_MAX caracteres."
+            steps.size > MAX_STEPS -> errors[DraftField.STEPS] = tr("Hasta {0} pasos.", MAX_STEPS)
+            steps.any { it.length > STEP_MAX } -> errors[DraftField.STEPS] = tr("Cada paso puede tener hasta {0} caracteres.", STEP_MAX)
         }
         return errors
     }

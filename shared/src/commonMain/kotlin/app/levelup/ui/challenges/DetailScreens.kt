@@ -20,7 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,6 +63,7 @@ import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
 import app.levelup.ui.theme.gameOn
 import kotlinx.coroutines.delay
+import app.levelup.i18n.tr
 
 /** Detalle de un reto concreto de hoy: pasos, temporizador opcional y acciones sin penalización. */
 @Composable
@@ -95,10 +96,10 @@ fun InstanceDetailScreen(vm: LevelUpViewModel, nav: Nav, instanceId: String) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CategoryLabel(inst.category, custom)
                 Spacer(Modifier.size(Space.m))
-                Text(Fmt.minutes(inst.minutes) + if (prefs.gameOn) " · +${inst.xp} XP" else "", style = MaterialTheme.typography.labelMedium)
+                Text(Fmt.minutes(inst.minutes) + if (prefs.gameOn) tr(" · +{0} XP", inst.xp) else "", style = MaterialTheme.typography.labelMedium)
             }
             DifficultyLabel(inst.difficulty)
-            Text("Estado: ${statusText(inst)}" + if (inst.minimal) " (versión mínima)" else "",
+            Text(tr("Estado: {0}", statusText(inst)) + if (inst.minimal) tr(" (versión mínima)") else "",
                 style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             if (inst.isHabit) Text("Es uno de tus hábitos.", style = MaterialTheme.typography.bodySmall)
 
@@ -197,7 +198,7 @@ fun CatalogDetailScreen(vm: LevelUpViewModel, nav: Nav, challengeId: String) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CategoryLabel(challenge.category, custom)
                 Spacer(Modifier.size(Space.m))
-                Text(Fmt.minutes(challenge.minutes) + if (gameOn) " · +${challenge.xp} XP" else "", style = MaterialTheme.typography.labelMedium)
+                Text(Fmt.minutes(challenge.minutes) + if (gameOn) tr(" · +{0} XP", challenge.xp) else "", style = MaterialTheme.typography.labelMedium)
             }
             DifficultyLabel(challenge.difficulty)
             ChallengeInfo(challenge)
@@ -222,7 +223,7 @@ private fun FavoriteButton(favorite: Boolean, onToggle: () -> Unit) {
     IconButton(onClick = onToggle) {
         Icon(
             if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-            contentDescription = if (favorite) "Quitar de favoritos" else "Guardar en favoritos",
+            contentDescription = tr(if (favorite) "Quitar de favoritos" else "Guardar en favoritos"),
         )
     }
 }
@@ -250,7 +251,7 @@ private fun HealthCard(vm: LevelUpViewModel, minutes: Int, onComplete: (() -> Un
     val d = data ?: return
     InfoCard(container = MaterialTheme.colorScheme.secondaryContainer) {
         Text("Tu actividad de hoy", style = MaterialTheme.typography.titleSmall)
-        Text("${d.steps} pasos · ${d.exerciseMinutes} min de ejercicio (Health Connect)", style = MaterialTheme.typography.bodyMedium)
+        Text(tr("{0} pasos · {1} min de ejercicio (Health Connect)", d.steps, d.exerciseMinutes), style = MaterialTheme.typography.bodyMedium)
         if (onComplete != null && d.exerciseMinutes >= minutes) {
             Text("Parece que ya lo hiciste.", style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = onComplete, modifier = Modifier.heightIn(min = 48.dp)) { Text("Marcarlo como hecho") }
@@ -265,7 +266,7 @@ private fun ChallengeInfo(c: Challenge) {
     Text(c.goal, style = MaterialTheme.typography.bodyLarge)
     if (c.minimum.isNotBlank()) {
         SectionTitle("Versión mínima")
-        Text("Para días difíciles: ${c.minimum}", style = MaterialTheme.typography.bodyLarge)
+        Text(tr("Para días difíciles: {0}", c.minimum), style = MaterialTheme.typography.bodyLarge)
     }
     if (c.doneWhen.isNotBlank()) {
         SectionTitle("Está hecho cuando")
@@ -295,8 +296,8 @@ fun FocusTimer(targetMinutes: Int) {
         val mm = (seconds / 60).toString().padStart(2, '0')
         val ss = (seconds % 60).toString().padStart(2, '0')
         Text("$mm:$ss", style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.semantics { contentDescription = "${seconds / 60} minutos y ${seconds % 60} segundos" })
-        Text("Duración estimada: ${Fmt.minutes(targetMinutes)}", style = MaterialTheme.typography.bodySmall)
+            modifier = Modifier.semantics { contentDescription = tr("{0} minutos y {1} segundos", seconds / 60, seconds % 60) })
+        Text(tr("Duración estimada: {0}", Fmt.minutes(targetMinutes)), style = MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
             OutlinedButton(onClick = { running = !running }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(if (running) "Pausar" else if (seconds == 0) "Empezar" else "Seguir")

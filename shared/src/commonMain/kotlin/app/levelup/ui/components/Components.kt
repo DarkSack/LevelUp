@@ -38,7 +38,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import app.levelup.ui.LocalSnackbar
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -68,6 +67,7 @@ import app.levelup.ui.theme.Space
 import app.levelup.ui.theme.categoryColor
 import app.levelup.ui.theme.isDarkTheme
 import app.levelup.ui.theme.LocalPrefs
+import app.levelup.i18n.tr
 
 /**
  * Símbolo de LevelUp: tres barras que suben como escalones y una chispa encima.
@@ -75,7 +75,7 @@ import app.levelup.ui.theme.LocalPrefs
  */
 @Composable
 fun LevelUpLogo(modifier: Modifier = Modifier, bars: List<Float> = listOf(1f, 1f, 1f), spark: Float = 1f) {
-    Canvas(modifier.semantics { contentDescription = "Logotipo de LevelUp" }) {
+    Canvas(modifier.semantics { contentDescription = tr("Logotipo de LevelUp") }) {
         val s = size.minDimension
         val origin = Offset((size.width - s) / 2, (size.height - s) / 2)
         drawRoundRect(Brand.Teal, origin, Size(s, s), CornerRadius(s * 0.24f))
@@ -105,8 +105,8 @@ fun Avatar(name: String, frame: Cosmetic, level: Int?, size: Dp = 64.dp, emoji: 
     val colors = frame.colors.map { Color(it) }
     val brush = if (colors.size == 1) Brush.linearGradient(listOf(colors[0], colors[0])) else Brush.sweepGradient(colors + colors.first())
     val description = buildString {
-        append("Avatar con marco ${frame.name}")
-        if (level != null) append(", nivel $level")
+        append(tr("Avatar con marco {0}", frame.name))
+        if (level != null) append(tr(", nivel {0}", level))
     }
     Box(Modifier.size(size).clearAndSetSemantics { contentDescription = description }) {
         Box(
@@ -170,7 +170,7 @@ fun DifficultyLabel(difficulty: Int, modifier: Modifier = Modifier) {
     Text(
         "●".repeat(difficulty) + "○".repeat(5 - difficulty) + "  " + Fmt.difficulty(difficulty),
         style = MaterialTheme.typography.labelMedium,
-        modifier = modifier.clearAndSetSemantics { contentDescription = "Dificultad $difficulty de 5, ${Fmt.difficulty(difficulty)}" },
+        modifier = modifier.clearAndSetSemantics { contentDescription = tr("Dificultad {0} de 5, {1}", difficulty, Fmt.difficulty(difficulty)) },
     )
 }
 
@@ -267,11 +267,11 @@ fun StepperRow(title: String, value: String, onMinus: (() -> Unit)?, onPlus: (()
             }
         }
         OutlinedButton(onClick = { onMinus?.invoke() }, enabled = onMinus != null, contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.size(48.dp).semantics { contentDescription = "Menos $title" }) { Text("−") }
+            modifier = Modifier.size(48.dp).semantics { contentDescription = tr("Menos {0}", title) }) { Text("−") }
         Text(value, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
             modifier = Modifier.widthIn(min = 72.dp).padding(horizontal = Space.s))
         OutlinedButton(onClick = { onPlus?.invoke() }, enabled = onPlus != null, contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.size(48.dp).semantics { contentDescription = "Más $title" }) { Text("+") }
+            modifier = Modifier.size(48.dp).semantics { contentDescription = tr("Más {0}", title) }) { Text("+") }
     }
 }
 
@@ -334,7 +334,7 @@ fun ScreenScaffold(
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = tr("Volver"))
                         }
                     }
                 },

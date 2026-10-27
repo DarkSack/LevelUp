@@ -23,6 +23,7 @@ import app.levelup.ui.social.noticeText
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
+import app.levelup.i18n.tr
 
 /**
  * Sincronización en segundo plano: poco después de cada cambio (con red y reintentos) y cada 6 horas mientras
@@ -96,7 +97,7 @@ object SyncWork {
         )
         val notification = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(if (lines.size == 1) "LevelUp" else "${lines.size} avisos de tus amigos")
+            .setContentTitle(if (lines.size == 1) "LevelUp" else tr("{0} avisos de tus amigos", lines.size))
             .setContentText(lines.first())
             .setStyle(NotificationCompat.InboxStyle().also { style -> lines.take(5).forEach { style.addLine(it) } })
             .setContentIntent(open)

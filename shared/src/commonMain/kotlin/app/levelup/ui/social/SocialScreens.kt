@@ -34,7 +34,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -94,6 +94,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import app.levelup.i18n.tr
 
 private fun frameOf(id: String) = Cosmetics.byId[id] ?: Cosmetics.byId.getValue(Cosmetics.DEFAULT)
 
@@ -110,7 +111,7 @@ fun SocialScreen(vm: CloudViewModel?, local: LevelUpViewModel, nav: Nav, today: 
         onBack = nav::back,
         actions = {
             if (profile != null) {
-                IconButton(onClick = nav::socialProfile) { Icon(Icons.Filled.Settings, contentDescription = "Ajustes del perfil social") }
+                IconButton(onClick = nav::socialProfile) { Icon(Icons.Filled.Settings, contentDescription = tr("Ajustes del perfil social")) }
             }
         },
     ) { padding ->
@@ -143,7 +144,7 @@ private fun SocialContent(vm: CloudViewModel, local: LevelUpViewModel, nav: Nav,
             val unread = notices.count { !it.read }
             Column(Modifier.fillMaxSize()) {
                 PrimaryTabRow(selectedTabIndex = tab) {
-                    listOf("Amigos", "Grupos", "Clasificación", if (unread > 0) "Avisos ($unread)" else "Avisos").forEachIndexed { i, label ->
+                    listOf("Amigos", "Grupos", "Clasificación", if (unread > 0) tr("Avisos ({0})", unread) else "Avisos").forEachIndexed { i, label ->
                         Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label, maxLines = 1) })
                     }
                 }
@@ -231,7 +232,7 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
     InfoCard {
         PersonRow(p) {
             Box {
-                IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "Más opciones para ${p.displayName}") }
+                IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = tr("Más opciones para {0}", p.displayName)) }
                 DropdownMenu(menu, { menu = false }) {
                     DropdownMenuItem({ Text("Quitar de amigos") }, { menu = false; confirm = "remove" })
                     DropdownMenuItem({ Text("Bloquear") }, { menu = false; confirm = "block" })
@@ -240,20 +241,20 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
             }
         }
         val details = buildList {
-            p.level?.let { add("Nivel $it · ${XpRules.titleFor(it)}") }
-            p.streak?.takeIf { it > 0 }?.let { add("Racha de ${Fmt.plural(it, "día", "días")}") }
-            p.weeklyXp?.let { add("$it XP esta semana") }
-            p.lastActiveAt?.let { Fmt.lastSeen(it, today) }?.let { add("Activo $it") }
+            p.level?.let { add(tr("Nivel {0} · {1}", it, XpRules.titleFor(it))) }
+            p.streak?.takeIf { it > 0 }?.let { add(tr("Racha de {0}", Fmt.plural(it, "día", "días"))) }
+            p.weeklyXp?.let { add(tr("{0} XP esta semana", it)) }
+            p.lastActiveAt?.let { Fmt.lastSeen(it, today) }?.let { add(tr("Activo {0}", it)) }
         }
-        if (details.isNotEmpty()) Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
-        p.title?.let { Text("Título: «${XpRules.titleFor(it)}»", style = MaterialTheme.typography.bodySmall) }
+        if (details.isNotEmpty()) Text(details.joinToString(" · ") { tr(it) }, style = MaterialTheme.typography.bodySmall)
+        p.title?.let { Text(tr("Título: «{0}»", XpRules.titleFor(it)), style = MaterialTheme.typography.bodySmall) }
         val trophies = p.trophies.mapNotNull { AchievementCatalog.byId[it]?.name }
-        if (trophies.isNotEmpty()) Text("Trofeos: ${trophies.joinToString()}", style = MaterialTheme.typography.bodySmall)
+        if (trophies.isNotEmpty()) Text(tr("Trofeos: {0}", trophies.joinToString { tr(it) }), style = MaterialTheme.typography.bodySmall)
         Text("Felicitar", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = Space.s))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Reactions.forEach { (kind, emoji) ->
                 IconButton(onClick = { vm.react(p.userId, kind) }) {
-                    Text(emoji, modifier = Modifier.semantics { this.contentDescription = "Enviar $kind a ${p.displayName}" })
+                    Text(emoji, modifier = Modifier.semantics { this.contentDescription = tr("Enviar {0} a {1}", kind, p.displayName) })
                 }
             }
             Box {
@@ -269,7 +270,7 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
     confirm?.let { action ->
         AlertDialog(
             onDismissRequest = { confirm = null },
-            title = { Text(if (action == "block") "¿Bloquear a ${p.displayName}?" else "¿Quitar a ${p.displayName}?") },
+            title = { Text(if (action == "block") tr("¿Bloquear a {0}?", p.displayName) else tr("¿Quitar a {0}?", p.displayName)) },
             text = {
                 Text(
                     if (action == "block") "Dejaréis de ser amigos, no podrá encontrarte ni enviarte nada. No se le avisa."
@@ -293,7 +294,7 @@ private fun ReportDialog(p: ProfileCard, vm: CloudViewModel, onDone: () -> Unit)
     var alsoBlock by remember { mutableStateOf(true) }
     AlertDialog(
         onDismissRequest = onDone,
-        title = { Text("Denunciar a ${p.displayName}") },
+        title = { Text(tr("Denunciar a {0}", p.displayName)) },
         text = {
             Column {
                 ReportReasons.forEach { (key, label) ->
@@ -358,7 +359,8 @@ private fun GroupCalendar(groups: List<GroupChallenge>, today: LocalDate) {
     InfoCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { offset-- }) { Text("‹", style = MaterialTheme.typography.titleLarge) }
-            Text("${Fmt.monthName(first.month).replaceFirstChar { it.uppercase() }} de ${first.year}",
+            // "{1} de {0}" y no "{0} de {1}": esa clave ya es la de Fmt.day y en inglés lleva otro orden.
+            Text(tr("{1} de {0}", first.year, Fmt.monthName(first.month)).replaceFirstChar { it.uppercase() },
                 Modifier.weight(1f).semantics { heading() }, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleSmall)
             TextButton(onClick = { offset++ }) { Text("›", style = MaterialTheme.typography.titleLarge) }
         }
@@ -375,7 +377,7 @@ private fun GroupCalendar(groups: List<GroupChallenge>, today: LocalDate) {
                     Box(
                         Modifier.weight(1f).heightIn(min = 36.dp).clearAndSetSemantics {
                             if (date != null) contentDescription = Fmt.day(date) +
-                                if (active.isEmpty()) "" else ": " + active.joinToString { challengeTitle(it.challengeId) }
+                                if (active.isEmpty()) "" else ": " + active.joinToString { tr(challengeTitle(it.challengeId)) }
                         },
                         contentAlignment = Alignment.Center,
                     ) {
@@ -407,12 +409,12 @@ private fun HistoryRow(h: GroupHistoryItem) {
         val result = when {
             h.myStatus == "left" -> "Lo dejaste"
             h.mode == "coop" && h.groupCompleted >= h.target -> "Meta lograda entre todos"
-            h.mode == "coop" -> "${h.groupCompleted} de ${h.target} entre todos"
+            h.mode == "coop" -> tr("{0} de {1} entre todos", h.groupCompleted, h.target)
             else -> "Competición"
         }
         Text(
-            "Del ${Fmt.day(h.startsOn)} al ${Fmt.day(h.endsOn)} · ${Fmt.plural(h.members, "persona", "personas")} · " +
-                "tú: ${Fmt.plural(h.myCompleted, "vez", "veces")} · $result",
+            tr("Del {0} al {1} · {2} · ", Fmt.day(h.startsOn), Fmt.day(h.endsOn), Fmt.plural(h.members, "persona", "personas")) +
+                tr("tú: {0} · {1}", Fmt.plural(h.myCompleted, "vez", "veces"), result),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -423,15 +425,15 @@ private fun GroupCard(g: GroupChallenge, me: String, vm: CloudViewModel, busy: B
     InfoCard {
         Text(challengeTitle(g.challengeId), style = MaterialTheme.typography.titleMedium)
         Text(
-            "${if (g.mode == "coop") "Juntos" else "Competición"} · del ${Fmt.day(g.startsOn)} al ${Fmt.day(g.endsOn)}",
+            tr("{0} · del {1} al {2}", if (g.mode == "coop") "Juntos" else "Competición", Fmt.day(g.startsOn), Fmt.day(g.endsOn)),
             style = MaterialTheme.typography.bodySmall,
         )
         val joined = g.members.filter { it.status == "joined" }
         if (g.mode == "coop") {
             val total = joined.sumOf { it.completed }
-            LabeledProgress((total.toFloat() / g.target).coerceIn(0f, 1f), "$total de ${g.target} entre todos", Modifier.padding(vertical = Space.s))
+            LabeledProgress((total.toFloat() / g.target).coerceIn(0f, 1f), tr("{0} de {1} entre todos", total, g.target), Modifier.padding(vertical = Space.s))
         } else {
-            Text("Meta: ${g.target} veces", style = MaterialTheme.typography.bodySmall)
+            Text(tr("Meta: {0} veces", g.target), style = MaterialTheme.typography.bodySmall)
         }
         joined.sortedByDescending { it.completed }.forEach { m ->
             Text(
@@ -547,8 +549,8 @@ private fun LeaderboardTab(vm: CloudViewModel) {
                     Text("${rows.indexOf(r) + 1}.", modifier = Modifier.size(32.dp, 24.dp))
                     Avatar(r.displayName, frameOf(r.frame), null, 32.dp)
                     Spacer(Modifier.size(Space.s))
-                    Text(r.displayName + if (r.isMe) " (tú)" else "", Modifier.weight(1f), fontWeight = if (r.isMe) FontWeight.Bold else null)
-                    Text("${r.weeklyXp} XP")
+                    Text(r.displayName + if (r.isMe) tr(" (tú)") else "", Modifier.weight(1f), fontWeight = if (r.isMe) FontWeight.Bold else null)
+                    Text(tr("{0} XP", r.weeklyXp))
                 }
             }
         }
@@ -560,13 +562,13 @@ private fun LeaderboardTab(vm: CloudViewModel) {
 fun noticeText(n: SocialNotice): String {
     val who = n.actor?.displayName ?: "Alguien"
     return when (n.kind) {
-        "friend_request" -> "$who quiere ser tu amigo."
-        "friend_accepted" -> "$who aceptó tu solicitud."
-        "reaction" -> Encouragements.firstOrNull { it.first == n.refId }?.let { "$who te dice: «${it.second}»" }
-            ?: "$who te felicitó ${Reactions.firstOrNull { it.first == n.refId }?.second.orEmpty()}".trim()
-        "group_invite" -> "$who te invitó a un reto en grupo."
-        "group_joined" -> "$who se unió a tu reto en grupo."
-        else -> "Novedad de $who."
+        "friend_request" -> tr("{0} quiere ser tu amigo.", who)
+        "friend_accepted" -> tr("{0} aceptó tu solicitud.", who)
+        "reaction" -> Encouragements.firstOrNull { it.first == n.refId }?.let { tr("{0} te dice: «{1}»", who, it.second) }
+            ?: tr("{0} te felicitó {1}", who, Reactions.firstOrNull { it.first == n.refId }?.second.orEmpty()).trim()
+        "group_invite" -> tr("{0} te invitó a un reto en grupo.", who)
+        "group_joined" -> tr("{0} se unió a tu reto en grupo.", who)
+        else -> tr("Novedad de {0}.", who)
     }
 }
 

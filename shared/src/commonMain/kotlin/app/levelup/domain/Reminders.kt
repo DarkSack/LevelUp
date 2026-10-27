@@ -3,6 +3,7 @@ package app.levelup.domain
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
+import app.levelup.i18n.tr
 
 data class ReminderMessage(val title: String, val body: String, val isRecovery: Boolean = false)
 
@@ -53,9 +54,9 @@ object Reminders {
             )
         }
         if (pendingTitles.isEmpty()) return null
-        val title = if (pendingTitles.size == 1) "Un reto para hoy" else "${pendingTitles.size} retos para hoy"
+        val title = if (pendingTitles.size == 1) "Un reto para hoy" else tr("{0} retos para hoy", pendingTitles.size)
         val body = if (prefs.notificationLevel == NotificationLevel.NORMAL) {
-            pendingTitles.take(3).joinToString(" · ")
+            pendingTitles.take(3).joinToString(" · ") { tr(it) }
         } else {
             pendingTitles.first()
         }

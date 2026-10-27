@@ -14,7 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,6 +42,7 @@ import app.levelup.ui.extra.PlaceDialog
 import app.levelup.ui.components.ScreenScaffold
 import app.levelup.ui.components.SecondaryButton
 import app.levelup.ui.theme.Space
+import app.levelup.i18n.tr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,7 +157,7 @@ private fun MineTab(vm: LevelUpViewModel, nav: Nav) {
                 }
                 items(group, key = { it.id }) { c ->
                     val ch = c.toChallenge()
-                    val extra = if (ch.isHabit) "Hábito: " + app.levelup.domain.Days.list(c.habitDays).joinToString { Fmt.weekdayShort(it) } else null
+                    val extra = if (ch.isHabit) tr("Hábito: {0}", app.levelup.domain.Days.list(c.habitDays).joinToString { Fmt.weekdayShort(it) }) else null
                     ChallengeRow(ch, categories, extra) { nav.editCustom(c.id) }
                 }
             }

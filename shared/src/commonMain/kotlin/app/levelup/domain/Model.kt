@@ -8,6 +8,7 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import kotlinx.serialization.Serializable
+import app.levelup.i18n.tr
 
 enum class Frequency { DAILY, WEEKLY, ONCE }
 enum class ChallengeSource { CATALOG, CUSTOM }
@@ -291,8 +292,8 @@ object GoalRules {
     /** Texto del error para el usuario, o null si vale. */
     fun validate(title: String, why: String): String? = when {
         title.trim().length < 3 -> "Escribe la meta con al menos 3 letras."
-        title.trim().length > TITLE_MAX -> "La meta puede tener hasta $TITLE_MAX caracteres."
-        why.trim().length > WHY_MAX -> "El motivo puede tener hasta $WHY_MAX caracteres."
+        title.trim().length > TITLE_MAX -> tr("La meta puede tener hasta {0} caracteres.", TITLE_MAX)
+        why.trim().length > WHY_MAX -> tr("El motivo puede tener hasta {0} caracteres.", WHY_MAX)
         else -> null
     }
 }

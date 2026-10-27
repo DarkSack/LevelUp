@@ -8,21 +8,22 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
+import app.levelup.i18n.tr
 
-// shortcut: textos solo en español dentro del código; al añadir otro idioma, pasarlos a composeResources (values-xx/strings.xml).
+/** Fechas y cifras ya traducidas al idioma de la app (ver i18n/I18n.kt). */
 object Fmt {
     private val months = listOf(
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
     )
 
-    fun day(date: LocalDate): String = "${date.day} de ${months[date.month.ordinal]}"
+    fun day(date: LocalDate): String = tr("{0} de {1}", date.day, months[date.month.ordinal])
 
-    fun dayWithYear(date: LocalDate): String = "${day(date)} de ${date.year}"
+    fun dayWithYear(date: LocalDate): String = tr("{0} de {1} de {2}", date.day, months[date.month.ordinal], date.year)
 
-    fun monthName(month: Month): String = months[month.ordinal]
+    fun monthName(month: Month): String = tr(months[month.ordinal])
 
-    fun weekday(day: DayOfWeek): String = when (day) {
+    fun weekday(day: DayOfWeek): String = tr(when (day) {
         DayOfWeek.MONDAY -> "lunes"
         DayOfWeek.TUESDAY -> "martes"
         DayOfWeek.WEDNESDAY -> "miércoles"
@@ -30,9 +31,9 @@ object Fmt {
         DayOfWeek.FRIDAY -> "viernes"
         DayOfWeek.SATURDAY -> "sábado"
         DayOfWeek.SUNDAY -> "domingo"
-    }
+    })
 
-    fun weekdayShort(day: DayOfWeek): String = weekday(day).take(2).replaceFirstChar { it.uppercase() }
+    fun weekdayShort(day: DayOfWeek): String = tr(listOf("Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do")[day.ordinal])
 
     fun minutes(min: Int): String = when {
         min < 60 -> "$min min"
@@ -55,26 +56,26 @@ object Fmt {
     fun lastSeen(iso: String, today: LocalDate, zone: TimeZone = TimeZone.currentSystemDefault()): String? {
         val date = runCatching { Instant.parse(iso) }.getOrNull()?.toLocalDateTime(zone)?.date ?: return null
         return when (val days = date.daysUntil(today)) {
-            0 -> "hoy"
-            1 -> "ayer"
-            in 2..6 -> "hace $days días"
-            else -> "el ${day(date)}"
+            0 -> tr("hoy")
+            1 -> tr("ayer")
+            in 2..6 -> tr("hace {0} días", days)
+            else -> tr("el {0}", day(date))
         }
     }
 
-    fun plural(n: Int, one: String, many: String): String = "$n ${if (n == 1) one else many}"
+    fun plural(n: Int, one: String, many: String): String = "$n ${tr(if (n == 1) one else many)}"
 
-    fun difficulty(d: Int): String = when (d) {
+    fun difficulty(d: Int): String = tr(when (d) {
         1 -> "Muy fácil"
         2 -> "Fácil"
         3 -> "Media"
         4 -> "Exigente"
         else -> "Reto mayor"
-    }
+    })
 
-    fun block(b: DayBlock): String = when (b) {
+    fun block(b: DayBlock): String = tr(when (b) {
         DayBlock.MORNING -> "Mañana"
         DayBlock.AFTERNOON -> "Tarde"
         DayBlock.EVENING -> "Noche"
-    }
+    })
 }

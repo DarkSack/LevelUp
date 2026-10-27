@@ -1,6 +1,7 @@
 package app.levelup.wear
 
 import android.os.Bundle
+import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
@@ -37,24 +39,24 @@ private fun WatchApp() {
     val context = LocalContext.current
     val today by remember { WatchData.flow(context) }.collectAsStateWithLifecycle(null)
     val scope = rememberCoroutineScope()
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<Int?>(null) }
     // Al abrir, pedir al teléfono los datos de hoy por si cambió el día.
     LaunchedEffect(Unit) {
         if (!runCatching { WatchData.send(context, WatchData.PATH_REFRESH) }.getOrDefault(false)) {
-            message = "Sin conexión con el teléfono"
+            message = R.string.no_connection
         }
     }
     WatchScreen(today, message) { i ->
         scope.launch {
             val ok = runCatching { WatchData.send(context, WatchData.PATH_COMPLETE, i.id) }.getOrDefault(false)
-            message = if (ok) "Enviado al teléfono" else "Sin conexión con el teléfono"
+            message = if (ok) R.string.sent else R.string.no_connection
         }
     }
 }
 
 /** La pantalla con lo que haya: sin datos del teléfono, sin retos o la lista de hoy. Aparte para dibujarla en las capturas. */
 @Composable
-internal fun WatchScreen(today: Today?, message: String?, onComplete: (Today.Item) -> Unit) {
+internal fun WatchScreen(today: Today?, @StringRes message: Int?, onComplete: (Today.Item) -> Unit) {
     val list = rememberScalingLazyListState()
     AppScaffold {
         ScreenScaffold(scrollState = list) {
@@ -63,11 +65,11 @@ internal fun WatchScreen(today: Today?, message: String?, onComplete: (Today.Ite
                 val t = today
                 when {
                     t == null || t.stale -> item {
-                        Text("Abre LevelUp en el teléfono para ver tus retos de hoy.", textAlign = TextAlign.Center)
+                        Text(stringResource(R.string.open_phone), textAlign = TextAlign.Center)
                     }
-                    t.total == 0 -> item { Text("Hoy no hay retos. Descansar también cuenta.", textAlign = TextAlign.Center) }
+                    t.total == 0 -> item { Text(stringResource(R.string.no_challenges), textAlign = TextAlign.Center) }
                     else -> {
-                        item { Text("${t.done} de ${t.total} hechos", style = MaterialTheme.typography.titleMedium) }
+                        item { Text(stringResource(R.string.done_count, t.done, t.total), style = MaterialTheme.typography.titleMedium) }
                         t.items.forEach { i ->
                             item(key = i.id) {
                                 Button(
@@ -75,17 +77,17 @@ internal fun WatchScreen(today: Today?, message: String?, onComplete: (Today.Ite
                                     enabled = !i.done,
                                     modifier = Modifier.fillMaxWidth(),
                                     label = { Text(i.title, maxLines = 2) },
-                                    secondaryLabel = { Text(if (i.done) "Hecho" else "Tocar para completar") },
+                                    secondaryLabel = { Text(stringResource(if (i.done) R.string.done else R.string.tap_to_complete)) },
                                 )
                             }
                         }
                         if (t.goals.isNotEmpty()) {
-                            item { ListHeader { Text("Tus metas") } }
+                            item { ListHeader { Text(stringResource(R.string.goals)) } }
                             t.goals.forEach { g -> item { Text("• $g") } }
                         }
                     }
                 }
-                message?.let { m -> item { Text(m, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) } }
+                message?.let { m -> item { Text(stringResource(m), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center) } }
             }
         }
     }

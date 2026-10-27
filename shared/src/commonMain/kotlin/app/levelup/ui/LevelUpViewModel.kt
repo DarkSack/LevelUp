@@ -56,6 +56,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
+import app.levelup.i18n.tr
 
 sealed interface UiEvent {
     data class Completed(val instanceId: String, val result: CompletionResult) : UiEvent
@@ -191,24 +192,24 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
 
     fun replace(id: String) = act {
         val next = repo.replace(id)
-        _events.emit(UiEvent.Message(if (next != null) "Nuevo reto: ${next.title}" else "No encontramos otro reto parecido ahora."))
+        _events.emit(UiEvent.Message(if (next != null) tr("Nuevo reto: {0}", next.title) else "No encontramos otro reto parecido ahora."))
     }
 
     fun simplify(id: String) = act {
         repo.simplify(id).fold(
-            onSuccess = { _events.emit(UiEvent.Message("Versión más sencilla: ${it.title}")) },
+            onSuccess = { _events.emit(UiEvent.Message(tr("Versión más sencilla: {0}", it.title))) },
             onFailure = { _events.emit(UiEvent.Message(it.message ?: "No se pudo simplificar.")) },
         )
     }
 
     fun addToToday(challengeId: String) = act {
         val inst = repo.addToToday(challengeId)
-        _events.emit(UiEvent.Message(if (inst != null) "Añadido a hoy: ${inst.title}" else "No se pudo añadir."))
+        _events.emit(UiEvent.Message(if (inst != null) tr("Añadido a hoy: {0}", inst.title) else "No se pudo añadir."))
     }
 
     fun addExtraToday(place: String? = null) = act {
         val inst = repo.addExtraToday(place)
-        _events.emit(UiEvent.Message(if (inst != null) "Reto añadido: ${inst.title}" else "No hay más retos disponibles para ahí hoy."))
+        _events.emit(UiEvent.Message(if (inst != null) tr("Reto añadido: {0}", inst.title) else "No hay más retos disponibles para ahí hoy."))
     }
 
     suspend fun surprise(): Challenge? = repo.surprise()

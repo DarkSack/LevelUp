@@ -21,7 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +48,7 @@ import app.levelup.ui.settings.GoalsSection
 import app.levelup.ui.settings.RemindersSection
 import app.levelup.ui.settings.RhythmSection
 import app.levelup.ui.theme.Space
+import app.levelup.i18n.tr
 
 const val LAST_STEP = 6
 
@@ -64,9 +65,9 @@ fun OnboardingFlow(vm: LevelUpViewModel, prefs: Preferences) {
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = Space.s), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { go(step - 1) }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Paso anterior")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = tr("Paso anterior"))
             }
-            Text("Paso $step de $LAST_STEP", style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+            Text(tr("Paso {0} de {1}", step, LAST_STEP), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
             if (step < LAST_STEP) {
                 TextButton(onClick = { go(step + 1) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Omitir") }
             }
@@ -157,15 +158,15 @@ private fun ReadyStep(vm: LevelUpViewModel, prefs: Preferences) {
         else -> list.forEach { c ->
             InfoCard {
                 Text(c.title, style = MaterialTheme.typography.titleSmall)
-                Text("${Categories.name(c.category)} · ${Fmt.minutes(c.minutes)} · +${c.xp} XP", style = MaterialTheme.typography.bodySmall)
+                Text(tr("{0} · {1} · +{2} XP", Categories.name(c.category), Fmt.minutes(c.minutes), c.xp), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
     InfoCard(container = MaterialTheme.colorScheme.secondaryContainer) {
         Text("Experiencia y niveles", style = MaterialTheme.typography.titleSmall)
         Text(
-            "Cada reto da entre ${XpRules.xpFor(1)} y ${XpRules.xpFor(5)} XP según su dificultad. Con " +
-                "${XpRules.totalForLevel(2)} XP llegas al nivel 2. Cada categoría tiene además su propio nivel.",
+            tr("Cada reto da entre {0} y {1} XP según su dificultad. Con {2} XP llegas al nivel 2. Cada categoría tiene además su propio nivel.",
+                XpRules.xpFor(1), XpRules.xpFor(5), XpRules.totalForLevel(2)),
             style = MaterialTheme.typography.bodyMedium,
         )
     }

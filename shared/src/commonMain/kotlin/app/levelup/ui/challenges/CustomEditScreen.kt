@@ -15,7 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +50,7 @@ import app.levelup.ui.components.StepperRow
 import app.levelup.ui.components.ToggleRow
 import app.levelup.ui.theme.Space
 import kotlinx.datetime.DayOfWeek
+import app.levelup.i18n.tr
 
 private enum class Repeat(val label: String) { WHEN_FITS("Cuando toque"), WEEKLY("Una vez por semana"), ONCE("Una sola vez"), HABIT("Hábito: días fijos") }
 
@@ -162,12 +163,12 @@ fun CustomEditScreen(vm: LevelUpViewModel, nav: Nav, id: String?) {
                     OutlinedTextField(
                         step,
                         { value -> draft = draft.copy(steps = draft.steps.toMutableList().also { it[index] = value.take(CustomChallengeRules.STEP_MAX) }) },
-                        label = { Text("Paso ${index + 1}") },
+                        label = { Text(tr("Paso {0}", index + 1)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                     IconButton(onClick = { draft = draft.copy(steps = draft.steps.filterIndexed { i, _ -> i != index }) }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Quitar paso ${index + 1}")
+                        Icon(Icons.Filled.Close, contentDescription = tr("Quitar paso {0}", index + 1))
                     }
                 }
             }

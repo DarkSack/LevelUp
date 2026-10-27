@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LevelUp</string>
+    <string name="app_name" translatable="false">LevelUp</string>
     <string name="complication_label">Retos de hoy</string>
+    <string name="complication_empty">Sin retos de hoy en el reloj</string>
+    <string name="complication_count">%1$d de %2$d retos hechos hoy</string>
+    <string name="open_phone">Abre LevelUp en el teléfono para ver tus retos de hoy.</string>
+    <string name="no_challenges">Hoy no hay retos. Descansar también cuenta.</string>
+    <string name="done_count">%1$d de %2$d hechos</string>
+    <string name="done">Hecho</string>
+    <string name="tap_to_complete">Tocar para completar</string>
+    <string name="goals">Tus metas</string>
+    <string name="sent">Enviado al teléfono</string>
+    <string name="no_connection">Sin conexión con el teléfono</string>
 </resources>

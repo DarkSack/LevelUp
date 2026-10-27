@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LevelUp</string>
+    <string name="app_name" translatable="false">LevelUp</string>
     <string name="channel_reminders">Recordatorios</string>
     <string name="channel_reminders_description">Un aviso al día con tus retos, a la hora que elijas.</string>
     <string name="channel_social">Amigos</string>

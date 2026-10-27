@@ -18,7 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +36,7 @@ import app.levelup.ui.Fmt
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
 import app.levelup.ui.theme.gameOn
+import app.levelup.i18n.tr
 
 fun statusText(i: ChallengeInstance): String = when (i.status) {
     InstanceStatus.PENDING -> "Pendiente"
@@ -49,10 +50,10 @@ fun statusText(i: ChallengeInstance): String = when (i.status) {
 fun metaLine(i: ChallengeInstance, custom: List<CustomCategory>, xp: Boolean = true): String = buildList {
     add(Categories.name(i.category, custom))
     add(Fmt.minutes(i.minutes))
-    if (xp) add("+${i.xp} XP")
+    if (xp) add(tr("+{0} XP", i.xp))
     if (i.isHabit) add("Hábito")
     if (i.minimal) add("Versión mínima")
-}.joinToString(" · ")
+}.joinToString(" · ") { tr(it) }
 
 /**
  * Fila de un reto del día. El botón redondo lo completa; el resto de la fila abre el detalle.
@@ -71,14 +72,14 @@ fun InstanceRow(i: ChallengeInstance, custom: List<CustomCategory>, onComplete: 
                     modifier = Modifier.size(48.dp).padding(Space.s))
             } else if (i.isOpen) {
                 FilledTonalIconButton(onClick = onComplete, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Filled.Check, contentDescription = "Completar ${i.title}")
+                    Icon(Icons.Filled.Check, contentDescription = tr("Completar {0}", i.title))
                 }
             } else {
                 Spacer(Modifier.width(48.dp))
             }
             Column(
-                Modifier.weight(1f).clickable(onClickLabel = "Ver detalles", onClick = onOpen).padding(Space.m)
-                    .semantics(mergeDescendants = true) { stateDescription = statusText(i) },
+                Modifier.weight(1f).clickable(onClickLabel = tr("Ver detalles"), onClick = onOpen).padding(Space.m)
+                    .semantics(mergeDescendants = true) { stateDescription = tr(statusText(i)) },
             ) {
                 Text(
                     i.title,
@@ -101,7 +102,7 @@ fun InstanceRow(i: ChallengeInstance, custom: List<CustomCategory>, onComplete: 
 fun ChallengeRow(c: Challenge, custom: List<CustomCategory>, extra: String? = null, favorite: Boolean = false, onOpen: () -> Unit) {
     val gameOn = LocalPrefs.current.gameOn
     Card(
-        Modifier.fillMaxWidth().padding(vertical = Space.xs).clickable(onClickLabel = "Ver detalles", onClick = onOpen),
+        Modifier.fillMaxWidth().padding(vertical = Space.xs).clickable(onClickLabel = tr("Ver detalles"), onClick = onOpen),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -110,8 +111,8 @@ fun ChallengeRow(c: Challenge, custom: List<CustomCategory>, extra: String? = nu
                 Text(c.title, style = MaterialTheme.typography.titleSmall)
                 val meta = listOfNotNull(
                     Categories.name(c.category, custom), Fmt.difficulty(c.difficulty), Fmt.minutes(c.minutes),
-                    "+${c.xp} XP".takeIf { gameOn }, extra, "Favorito".takeIf { favorite },
-                ).joinToString(" · ")
+                    tr("+{0} XP", c.xp).takeIf { gameOn }, extra, "Favorito".takeIf { favorite },
+                ).joinToString(" · ") { tr(it) }
                 Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)

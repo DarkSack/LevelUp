@@ -15,6 +15,7 @@ import app.levelup.domain.XpEntry
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import app.levelup.i18n.tr
 
 /** Archivo de respaldo: JSON legible con todas las tablas. */
 @Serializable
@@ -76,7 +77,7 @@ object BackupCodec {
             if (backup.goals.map { it.id }.toSet().size != backup.goals.size) add("metas duplicadas")
             if (backup.favorites.map { it.challengeId }.toSet().size != backup.favorites.size) add("favoritos duplicados")
         }
-        if (problems.isNotEmpty()) return failure("El respaldo tiene datos dañados (${problems.joinToString()}). No se importó nada.")
+        if (problems.isNotEmpty()) return failure(tr("El respaldo tiene datos dañados ({0}). No se importó nada.", problems.joinToString { tr(it) }))
         return Result.success(backup)
     }
 

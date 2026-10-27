@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="complication_label">Today\'s challenges</string>
+    <string name="complication_empty">No challenges for today on the watch</string>
+    <string name="complication_count">%1$d of %2$d challenges done today</string>
+    <string name="open_phone">Open LevelUp on your phone to see today\'s challenges.</string>
+    <string name="no_challenges">No challenges today. Resting counts too.</string>
+    <string name="done_count">%1$d of %2$d done</string>
+    <string name="done">Done</string>
+    <string name="tap_to_complete">Tap to complete</string>
+    <string name="goals">Your goals</string>
+    <string name="sent">Sent to your phone</string>
+    <string name="no_connection">No connection to your phone</string>
+</resources>

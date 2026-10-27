@@ -13,6 +13,7 @@ import android.text.TextPaint
 import androidx.core.content.FileProvider
 import app.levelup.domain.TrophyTier
 import java.io.File
+import app.levelup.i18n.tr
 
 /** Dibuja la tarjeta de un logro en un PNG cuadrado y la deja en caché para la hoja de compartir. */
 object ShareImage {
@@ -32,16 +33,16 @@ object ShareImage {
         canvas.drawRoundRect(RectF(72f, 72f, SIZE - 72f, SIZE - 72f), 64f, 64f, panel)
 
         val small = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = accent; textSize = 44f; typeface = Typeface.DEFAULT_BOLD }
-        canvas.drawText("LOGRO DESBLOQUEADO", 140f, 230f, small)
+        canvas.drawText(tr("LOGRO DESBLOQUEADO"), 140f, 230f, small)
         // Medalla: un círculo del color del nivel del trofeo.
         canvas.drawCircle(SIZE - 210f, 210f, 70f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = accent })
 
         val title = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFFFFFFF.toInt(); textSize = 88f; typeface = Typeface.DEFAULT_BOLD }
         val body = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFF1F5F9.toInt(); textSize = 48f }
         var y = 340f
-        y += drawWrapped(canvas, card.title, title, 140f, y)
+        y += drawWrapped(canvas, tr(card.title), title, 140f, y)
         y += 40f
-        drawWrapped(canvas, card.description, body, 140f, y)
+        drawWrapped(canvas, tr(card.description), body, 140f, y)
 
         val footer = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = accent; textSize = 40f }
         canvas.drawText(card.date, 140f, SIZE - 190f, footer)

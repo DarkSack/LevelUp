@@ -63,6 +63,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import app.levelup.i18n.tr
 
 data class SaveResult(val errors: Map<DraftField, String>, val unlocked: List<Achievement> = emptyList())
 
@@ -224,7 +225,7 @@ class LevelUpRepository(
     /** Nota del día sobre un reto (también en los ya hechos). Vacía la borra. */
     suspend fun setNote(id: String, note: String): Result<Unit> = tx {
         val clean = note.trim()
-        if (clean.length > NOTE_MAX) return@tx Result.failure(IllegalArgumentException("La nota puede tener hasta $NOTE_MAX caracteres."))
+        if (clean.length > NOTE_MAX) return@tx Result.failure(IllegalArgumentException(tr("La nota puede tener hasta {0} caracteres.", NOTE_MAX)))
         val inst = dao.instance(id) ?: return@tx Result.failure(IllegalStateException("Ese reto ya no existe."))
         dao.updateInstance(inst.copy(note = clean.ifEmpty { null }))
         Result.success(Unit)
@@ -267,7 +268,7 @@ class LevelUpRepository(
         val simpler = challenge(current.challengeId)?.simplerId?.let { challenge(it) }
             ?: return@tx Result.failure(IllegalStateException("Este reto no tiene una versión más sencilla."))
         if (dao.instancesOnNow(current.date).any { it.challengeId == simpler.id }) {
-            return@tx Result.failure(IllegalStateException("Ya tienes «${simpler.title}» hoy."))
+            return@tx Result.failure(IllegalStateException(tr("Ya tienes «{0}» hoy.", simpler.title)))
         }
         val updated = current.copy(
             challengeId = simpler.id, title = simpler.title, difficulty = simpler.difficulty, minutes = simpler.minutes,

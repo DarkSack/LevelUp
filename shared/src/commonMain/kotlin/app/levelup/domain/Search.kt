@@ -1,6 +1,7 @@
 package app.levelup.domain
 
 import kotlinx.datetime.LocalDate
+import app.levelup.i18n.tr
 
 enum class HitKind { CHALLENGE, HABIT, ACHIEVEMENT, GOAL, NOTE }
 
@@ -37,7 +38,8 @@ object Search {
     ): List<SearchHit> {
         val q = normalize(query.trim())
         if (q.length < MIN_QUERY) return emptyList()
-        fun matches(vararg fields: String) = fields.any { normalize(it).contains(q) }
+        // También en el idioma de la app: quien la usa en inglés busca "walk", no "caminar".
+        fun matches(vararg fields: String) = fields.any { normalize(it).contains(q) || normalize(tr(it)).contains(q) }
 
         val (habits, others) = challenges.filter { matches(it.title, it.description, it.goal) }.partition { it.isHabit }
         return buildList {

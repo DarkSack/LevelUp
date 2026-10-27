@@ -25,7 +25,7 @@ import java.time.LocalDate
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], application = Application::class, qualifiers = "w227dp-h227dp-round-xhdpi")
+@Config(sdk = [35], application = Application::class, qualifiers = "es-w227dp-h227dp-round-xhdpi")
 class WatchScreenshots {
     @get:Rule val compose = createComposeRule()
 
@@ -55,7 +55,7 @@ class WatchScreenshots {
     }
 
     @Test fun sinTelefono() {
-        compose.setContent { MaterialTheme { WatchScreen(null, "Sin conexión con el teléfono") {} } }
+        compose.setContent { MaterialTheme { WatchScreen(null, R.string.no_connection) {} } }
         compose.onNodeWithText("Abre LevelUp en el teléfono para ver tus retos de hoy.").assertExists()
         save("reloj-2-sin-datos")
     }

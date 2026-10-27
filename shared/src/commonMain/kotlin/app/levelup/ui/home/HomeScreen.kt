@@ -15,7 +15,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +60,7 @@ import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
 import app.levelup.ui.theme.gameOn
 import kotlinx.coroutines.launch
+import app.levelup.i18n.tr
 
 @Composable
 fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}, tabBar: @Composable () -> Unit) {
@@ -82,7 +83,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
 
     ScreenScaffold(
         "Inicio", bottomBar = tabBar,
-        actions = { IconButton(onClick = nav::search) { Icon(Icons.Filled.Search, contentDescription = "Buscar") } },
+        actions = { IconButton(onClick = nav::search) { Icon(Icons.Filled.Search, contentDescription = tr("Buscar")) } },
     ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(start = Space.l, end = Space.l, top = padding.calculateTopPadding() + Space.s,
@@ -147,8 +148,8 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
                     InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.secondaryContainer) {
                         val name = Categories.name(s.category, custom)
                         Text(
-                            if (s.isUp) "Los retos de $name te están saliendo bien. ¿Subimos a dificultad ${s.to} (${Fmt.difficulty(s.to).lowercase()})?"
-                            else "Los retos de $name están costando. ¿Bajamos a dificultad ${s.to} (${Fmt.difficulty(s.to).lowercase()})?",
+                            if (s.isUp) tr("Los retos de {0} te están saliendo bien. ¿Subimos a dificultad {1} ({2})?", name, s.to, Fmt.difficulty(s.to).lowercase())
+                            else tr("Los retos de {0} están costando. ¿Bajamos a dificultad {1} ({2})?", name, s.to, Fmt.difficulty(s.to).lowercase()),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
@@ -188,11 +189,11 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
                 item {
                     val done = visible.count { it.isDone }
                     SectionTitle("Hoy")
-                    LabeledProgress(done / visible.size.toFloat(), "$done de ${Fmt.plural(visible.size, "reto", "retos")} hechos")
+                    LabeledProgress(done / visible.size.toFloat(), tr("{0} de {1} hechos", done, Fmt.plural(visible.size, "reto", "retos")))
                     val week = progress.weeks.lastOrNull()
                     if (week != null) {
                         Text(
-                            "Esta semana: ${week.activeDays} de ${Fmt.plural(week.goal, "día", "días")}" + if (week.met) " · objetivo cumplido" else "",
+                            tr("Esta semana: {0} de {1}", week.activeDays, Fmt.plural(week.goal, "día", "días")) + if (week.met) tr(" · objetivo cumplido") else "",
                             style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Space.xs),
                         )
                     }
@@ -265,7 +266,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
                         Spacer(Modifier.size(Space.s))
                         LabeledProgress(
                             progress.missionProgress / mission.first.goal.target.toFloat(),
-                            "${progress.missionProgress} de ${mission.first.goal.target} · hasta el ${Fmt.day(mission.second.endsOn)}",
+                            tr("{0} de {1} · hasta el {2}", progress.missionProgress, mission.first.goal.target, Fmt.day(mission.second.endsOn)),
                             color = MaterialTheme.colorScheme.tertiary,
                         )
                     }
@@ -276,7 +277,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
                 item {
                     SectionTitle("Tus categorías")
                     progress.categoryLevels.entries.sortedByDescending { it.value.totalXp }.take(4).forEach { (key, lp) ->
-                        LabeledProgress(lp.fraction, "${Categories.name(key, custom)} · nivel ${lp.level}",
+                        LabeledProgress(lp.fraction, tr("{0} · nivel {1}", Categories.name(key, custom), lp.level),
                             Modifier.padding(vertical = Space.xs))
                     }
                     TextButton(onClick = nav::achievements) { Text("Ver logros y trofeos") }
@@ -307,14 +308,14 @@ private fun LevelCard(progress: ProgressState, frameId: String, name: String, em
             Avatar(name, frame, progress.level.level, emoji = emoji)
             Spacer(Modifier.size(Space.l))
             Column(Modifier.weight(1f)) {
-                Text("Nivel ${progress.level.level} · ${XpRules.titleFor(progress.level.level)}", style = MaterialTheme.typography.titleMedium)
+                Text(tr("Nivel {0} · {1}", progress.level.level, XpRules.titleFor(progress.level.level)), style = MaterialTheme.typography.titleMedium)
                 LabeledProgress(
                     progress.level.fraction,
-                    "${progress.level.xpInLevel} de ${progress.level.xpForNext} XP para el nivel ${progress.level.level + 1}",
+                    tr("{0} de {1} XP para el nivel {2}", progress.level.xpInLevel, progress.level.xpForNext, progress.level.level + 1),
                     color = MaterialTheme.colorScheme.secondary,
                 )
                 if (style == GamificationStyle.FULL && progress.stats.currentStreak > 0) {
-                    Text("Racha: ${Fmt.plural(progress.stats.currentStreak, "día", "días")}", style = MaterialTheme.typography.bodySmall)
+                    Text(tr("Racha: {0}", Fmt.plural(progress.stats.currentStreak, "día", "días")), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

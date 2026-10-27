@@ -1,6 +1,7 @@
 package app.levelup
 
 import android.app.Application
+import android.content.res.Configuration
 import android.os.Build
 import app.levelup.cloud.AccountState
 import app.levelup.cloud.CloudConfig
@@ -8,6 +9,7 @@ import app.levelup.cloud.CloudService
 import app.levelup.cloud.androidCloudService
 import app.levelup.data.LevelUpRepository
 import app.levelup.data.buildDatabase
+import app.levelup.i18n.I18n
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +35,7 @@ class LevelUpApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        I18n.language = resources.configuration.locales[0].language
         ReminderWork.createChannel(this)
         SyncWork.createChannel(this)
         AchievementNotice.createChannel(this)
@@ -50,5 +53,11 @@ class LevelUpApplication : Application() {
                 .distinctUntilChanged()
                 .collect { SyncWork.periodic(this@LevelUpApplication, it) }
         }
+    }
+
+    // También llega cuando se cambia el idioma solo de la app (Android 13+).
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        I18n.language = newConfig.locales[0].language
     }
 }

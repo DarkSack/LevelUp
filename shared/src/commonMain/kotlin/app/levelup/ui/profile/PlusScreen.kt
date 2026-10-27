@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import app.levelup.ui.components.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -26,6 +26,7 @@ import app.levelup.ui.components.SectionTitle
 import app.levelup.ui.theme.Accents
 import app.levelup.ui.theme.LocalPrefs
 import app.levelup.ui.theme.Space
+import app.levelup.i18n.tr
 
 @Composable
 fun PlusScreen(vm: LevelUpViewModel, nav: Nav) {
@@ -53,7 +54,7 @@ fun PlusScreen(vm: LevelUpViewModel, nav: Nav) {
             } else {
                 val price = plus.price
                 if (price != null) {
-                    PrimaryButton("Comprar por $price", vm::buyPlus, Modifier.padding(top = Space.s))
+                    PrimaryButton(tr("Comprar por {0}", price), vm::buyPlus, Modifier.padding(top = Space.s))
                 } else {
                     Text(
                         "La tienda no responde ahora mismo. Revisa tu conexión e inténtalo más tarde.",
@@ -89,12 +90,12 @@ private fun ExtendedStatsSection(vm: LevelUpViewModel) {
         Text("Completa tu primer reto para ver tus estadísticas.")
         return
     }
-    Text("Retos completados: ${s.completed}")
-    Text("Tiempo dedicado: ${Fmt.minutes(s.minutes)}")
-    Text("Días con actividad: ${s.activeDays}")
-    Text("Media por día activo: ${s.perActiveDayTenths / 10},${s.perActiveDayTenths % 10} retos")
-    s.bestWeekday?.let { Text("Tu mejor día: ${Fmt.weekday(it)}") }
-    if (s.simplified > 0) Text("En versión sencilla: ${s.simplified} (también cuentan)")
+    Text(tr("Retos completados: {0}", s.completed))
+    Text(tr("Tiempo dedicado: {0}", Fmt.minutes(s.minutes)))
+    Text(tr("Días con actividad: {0}", s.activeDays))
+    Text(tr("Media por día activo: {0},{1} retos", s.perActiveDayTenths / 10, s.perActiveDayTenths % 10))
+    s.bestWeekday?.let { Text(tr("Tu mejor día: {0}", Fmt.weekday(it))) }
+    if (s.simplified > 0) Text(tr("En versión sencilla: {0} (también cuentan)", s.simplified))
 
     SectionTitle("Por categoría")
     val top = s.byCategory.firstOrNull()?.second ?: 1
@@ -105,6 +106,6 @@ private fun ExtendedStatsSection(vm: LevelUpViewModel) {
     SectionTitle("XP de los últimos 12 meses")
     val maxXp = s.xpByMonth.maxOf { it.second }.coerceAtLeast(1)
     s.xpByMonth.forEach { (month, xp) ->
-        LabeledProgress(xp.toFloat() / maxXp, "${Fmt.monthName(month.month)} ${month.year}: $xp XP")
+        LabeledProgress(xp.toFloat() / maxXp, tr("{0} {1}: {2} XP", Fmt.monthName(month.month), month.year, xp))
     }
 }
