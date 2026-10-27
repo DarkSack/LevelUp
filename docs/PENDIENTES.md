@@ -32,11 +32,16 @@ a él, así que las compilaciones salen conectadas a producción.
   llamar con sesión (es a propósito: son la API de la app y cada una valida a quién afecta) y de que `reports`
   no tiene políticas (a propósito: solo se lee desde el panel).
 
-**Bloqueante: correo propio (SMTP).** En el plan gratis, con el remitente de serie, Supabase **no deja cambiar
-las plantillas** (lo rechazó al intentarlo) y solo envía 2 correos por hora. Las plantillas de serie mandan un
-enlace en inglés, no el código de 6 cifras que pide la app, así que hoy en producción **no se puede crear cuenta
-ni cambiar la contraseña desde la app**. Mientras tanto la 0.1.0 sale sin cuenta (`cuenta=no` en
-`supabase.properties`, ver [PLAY_STORE.md](play/PLAY_STORE.md) §9 para volver a activarla). Para arreglarlo:
+**Cuenta sin correo (decisión de Sack, 2026-10-26).** La 1.0.0 no envía ningún correo: se entra con correo o
+nombre de usuario y contraseña, sin verificación y sin recuperar contraseñas olvidadas (se avisa al registrarse;
+con la sesión iniciada se cambia en Cuenta y sincronización). Las cuentas con nombre de usuario se guardan en
+Supabase como `levelup-<usuario>@sackito.online` (ver `Login` en `Cloud.kt`), una dirección que nunca recibe nada.
+**Tú: en Supabase → Authentication → Sign In / Providers → Email, apagar «Confirm email»**; sin eso el registro
+falla en producción. En local ya está apagado (`enable_confirmations = false`).
+
+**Más adelante: recuperar contraseñas (correo propio, SMTP).** En el plan gratis, con el remitente de serie,
+Supabase no deja cambiar las plantillas y solo envía 2 correos por hora. Si algún día se quiere recuperar
+contraseñas (ver [PLAY_STORE.md](play/PLAY_STORE.md) §9):
 
 1. Crear una cuenta en un proveedor de correo (Resend, Brevo, Amazon SES…) y verificar un remitente. Con un
    dominio propio (por ejemplo `no-reply@tu-dominio`) los correos llegan mejor que con una dirección de Gmail o

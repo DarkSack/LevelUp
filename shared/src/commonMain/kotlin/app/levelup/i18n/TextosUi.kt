@@ -924,4 +924,10 @@ internal fun MutableMap<String, Array<String>>.ui() {
     t("V", "F", "S")
     t("S", "S", "S")
     t("D", "S", "D")
+    t("Correo o nombre de usuario", "Email or username", "E-mail ou nome de usuário")
+    t("Nombre de usuario: de 3 a 20 letras sin acentos, números o _.", "Username: 3 to 20 unaccented letters, numbers or _.", "Nome de usuário: de 3 a 20 letras sem acento, números ou _.")
+    t("Correo, usuario o contraseña incorrectos.", "Wrong email, username or password.", "E-mail, usuário ou senha incorretos.")
+    t("Ese correo o nombre de usuario ya tiene cuenta.", "That email or username already has an account.", "Esse e-mail ou nome de usuário já tem conta.")
+    t("Apunta tu contraseña en un lugar seguro: por ahora no se puede recuperar si la olvidas. Al crear la cuenta aceptas las condiciones de uso (shop.sackito.online/condiciones/levelup) y la política de privacidad (Perfil → Privacidad).", "Write your password down somewhere safe: for now it can't be recovered if you forget it. By creating the account you accept the terms of use (shop.sackito.online/condiciones/levelup) and the privacy policy (Profile → Privacy).", "Anote sua senha num lugar seguro: por enquanto ela não pode ser recuperada se você esquecer. Ao criar a conta, você aceita os termos de uso (shop.sackito.online/condiciones/levelup) e a política de privacidade (Perfil → Privacidade).")
+    t("Se guardan tu correo o tu nombre de usuario y una copia de tu progreso en Supabase, el proveedor de base de datos de LevelUp, para recuperarlo o usarlo en otro teléfono. La conexión va cifrada y solo tu cuenta puede leer tus datos.", "Your email or username and a copy of your progress are saved in Supabase, LevelUp's database provider, so you can recover it or use it on another phone. The connection is encrypted and only your account can read your data.", "Seu e-mail ou nome de usuário e uma cópia do seu progresso ficam salvos no Supabase, o provedor de banco de dados do LevelUp, para recuperá-lo ou usá-lo em outro celular. A conexão é criptografada e só a sua conta pode ler seus dados.")
 }

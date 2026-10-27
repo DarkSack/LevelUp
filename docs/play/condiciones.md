@@ -17,8 +17,9 @@ los demás con respeto. Lo que creas (retos, notas, metas) es tuyo; puedes expor
 ## La cuenta (opcional)
 
 - Para crear una cuenta necesitas tener al menos 13 años.
-- Eres responsable de tu contraseña. Si crees que alguien entró en tu cuenta, cambia la contraseña y cierra la
-  sesión en tus otros dispositivos (Cuenta y sincronización).
+- Eres responsable de tu contraseña. Por ahora no se puede recuperar si la olvidas: guárdala en un lugar seguro.
+  Si crees que alguien entró en tu cuenta, cambia la contraseña y cierra la sesión en tus otros dispositivos
+  (Cuenta y sincronización).
 - Puedes borrar la cuenta cuando quieras desde la app; lo que hay en el teléfono se queda como invitado.
 
 ## Lo social

@@ -142,18 +142,16 @@ class AccountUiTest {
         compose.setContent { App(vm, platform, cloudVm) }
         waitFor("Reto principal")
 
-        // Registro: correo, contraseña y el código que llega por correo.
-        val mail = "ana-ui-$run@levelup.test"
+        // Registro con nombre de usuario y contraseña: sin correo ni código, la sesión queda iniciada.
+        val login = "ana_ui_$run".take(20)
         profileEntry("Cuenta y sincronización")
         press("Crear una cuenta")
-        type("Correo", mail)
+        type("Correo o nombre de usuario", login)
         type("Contraseña", "nivel2026")
         type("Repite la contraseña", "nivel2026")
         press("Crear cuenta")
-        waitFor("Código de 6 cifras")
-        type("Código de 6 cifras", runBlocking { codeFor(mail) })
-        press("Confirmar")
         waitFor("Sesión iniciada como")
+        waitFor(login) // se ve el nombre, no el correo interno
         waitFor("Todo sincronizado.")
         waitFor("Robolectric · Android 15") // la lista de dispositivos
 
@@ -182,7 +180,6 @@ class AccountUiTest {
         val beto = Cloud(CloudConfig(API, key), MemorySessionManager())
         runBlocking {
             beto.signUp(betoMail, "nivel2026")
-            beto.confirmSignUp(betoMail, codeFor(betoMail))
             beto.saveProfile(MyProfile(beto.currentUserId()!!, betoUser, "Beto"))
         }
         profileEntry("Amigos y grupos")

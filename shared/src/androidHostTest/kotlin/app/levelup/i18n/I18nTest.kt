@@ -45,7 +45,7 @@ class I18nTest {
         val notText = setOf("KotlinNoActualForExpect")
         val dataFiles = setOf("CsvExport.kt", "Sync.kt") // SQL y columnas del CSV: no son interfaz
         val tagWords = setOf("casa", "exterior", "trabajo", "libre", "sin") // etiquetas del catálogo, no se muestran
-        val skipLine = Regex("""^\s*(import|package|//|\*|/\*)|@SerialName|Regex\(|@Query|println\(|error\("|require\(|check\(""")
+        val skipLine = Regex("""^\s*(import|package|//|\*|/\*)|@SerialName|Regex\(|@Query|println\(|error\("|require\(|check(NotNull)?\(""")
         val literal = Regex(""""((?:[^"\\\n]|\\.)*)"""")
         val roots = listOf(File("src/commonMain/kotlin"), File("../androidApp/src/main/kotlin"))
         val missing = roots.flatMap { it.walk().filter { f -> f.extension == "kt" && "i18n" !in f.path && f.name !in dataFiles } }.flatMap { f ->

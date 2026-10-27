@@ -59,26 +59,20 @@ class CloudService(
         syncNow()
     }
 
-    suspend fun signIn(email: String, password: String) = runCatching {
-        cloud.signIn(email.trim(), password)
+    /** [login]: correo o nombre de usuario (ver [Login]). */
+    suspend fun signIn(login: String, password: String) = runCatching {
+        cloud.signIn(Login.email(login), password)
         afterSignIn()
     }
 
-    suspend fun signUp(email: String, password: String) = runCatching { cloud.signUp(email.trim(), password) }
-
-    suspend fun confirmSignUp(email: String, code: String) = runCatching {
-        cloud.confirmSignUp(email.trim(), code.trim())
+    suspend fun signUp(login: String, password: String) = runCatching {
+        cloud.signUp(Login.email(login), password)
+        // Si el servidor aún pidiera confirmar el correo no habría sesión: mejor un error que quedarse como invitado sin aviso.
+        checkNotNull(cloud.currentUserId()) { "El servidor pide confirmar el correo" }
         afterSignIn()
     }
 
-    suspend fun resendCode(email: String) = runCatching { cloud.resendSignUpCode(email.trim()) }
-
-    suspend fun requestPasswordReset(email: String) = runCatching { cloud.requestPasswordReset(email.trim()) }
-
-    suspend fun resetPassword(email: String, code: String, newPassword: String) = runCatching {
-        cloud.resetPassword(email.trim(), code.trim(), newPassword)
-        afterSignIn()
-    }
+    suspend fun changePassword(password: String) = runCatching { cloud.changePassword(password) }
 
     suspend fun syncNow(): Result<Unit> {
         if (engine.userId() == null) return Result.failure(IllegalStateException("Sin cuenta"))

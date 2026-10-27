@@ -7,24 +7,16 @@ import app.levelup.data.LevelUpRepository
 import app.levelup.data.SyncEngine
 import app.levelup.data.buildDatabase
 import io.github.jan.supabase.auth.MemorySessionManager
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.net.HttpURLConnection
-import java.net.URI
-import java.net.URLEncoder
 import java.time.OffsetDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -50,16 +42,30 @@ class CloudIntegrationTest {
         val service = CloudService(cloud, SyncEngine(db, cloud), repo, kotlinx.coroutines.GlobalScope) {}
     }
 
+    @Test fun usernameAccountsNeedNoEmail() = runBlocking {
+        assumeTrue("Sin -PsupabaseLocalKey: prueba contra el Supabase local omitida", key != null)
+        val user = "u_$run"
+        val p1 = Phone()
+        assertTrue(p1.service.signUp(user, "nivel2026").isSuccess)
+        val id = p1.cloud.currentUserId()!!
+        val p2 = Phone(cloud("Tableta"))
+        assertTrue(p2.service.signIn(" ${user.uppercase()} ", "nivel2026").isSuccess, "con mayúsculas y espacios es el mismo usuario")
+        assertEquals(id, p2.cloud.currentUserId())
+        assertTrue(Phone().service.signUp(user, "otra2026").isFailure, "el nombre ya tiene cuenta")
+        assertTrue(Phone().service.signIn(user, "otra2026").isFailure, "contraseña equivocada")
+        assertTrue(p1.service.changePassword("otra2026").isSuccess)
+        assertTrue(Phone().service.signIn(user, "otra2026").isSuccess, "entra con la contraseña nueva")
+    }
+
     @Test fun signUpSyncAndFriends() = runBlocking {
         assumeTrue("Sin -PsupabaseLocalKey: prueba contra el Supabase local omitida", key != null)
         val anaMail = "ana-$run@levelup.test"
         val betoMail = "beto-$run@levelup.test"
 
-        // Registro: el código de 6 dígitos llega por correo (Mailpit) y confirma la cuenta.
+        // Registro sin verificación de correo: la sesión queda iniciada al momento.
         val a1 = Phone()
         a1.repo.updatePreferences { it.copy(onboardingDone = true, categories = listOf("fisico", "mental"), minutesPerDay = 30) }
         assertTrue(a1.service.signUp(anaMail, "nivel2026").isSuccess)
-        assertTrue(a1.service.confirmSignUp(anaMail, codeFor(anaMail)).isSuccess, "confirmar con el código")
         val ana = a1.cloud.currentUserId()!!
 
         // Lo hecho en un teléfono llega al otro de la misma cuenta.
@@ -80,7 +86,6 @@ class CloudIntegrationTest {
         // Otra persona no ve nada de Ana (RLS).
         val beto = cloud()
         beto.signUp(betoMail, "nivel2026")
-        beto.confirmSignUp(betoMail, codeFor(betoMail))
         val betoId = beto.currentUserId()!!
         assertTrue(beto.pull(0, 100).isEmpty(), "los datos de Ana no se ven desde otra cuenta")
 
@@ -150,24 +155,3 @@ class CloudIntegrationTest {
 
 /** El Supabase local de `supabase start`. */
 internal const val API = "http://127.0.0.1:54321"
-private const val MAILPIT = "http://127.0.0.1:54324"
-
-/** Lee el código de 6 dígitos del correo que recibió [email] en Mailpit. */
-internal suspend fun codeFor(email: String): String {
-    val query = URLEncoder.encode("to:\"$email\"", "UTF-8")
-    repeat(50) {
-        val messages = Json.parseToJsonElement(get("$MAILPIT/api/v1/search?query=$query")).jsonObject["messages"]!!.jsonArray
-        val id = messages.firstOrNull()?.jsonObject?.get("ID")?.jsonPrimitive?.content
-        if (id != null) {
-            val text = Json.parseToJsonElement(get("$MAILPIT/api/v1/message/$id")).jsonObject["HTML"]!!.jsonPrimitive.content
-            return Regex("""\b(\d{6})\b""").find(text)!!.groupValues[1]
-        }
-        delay(200)
-    }
-    error("No llegó el correo a $email")
-}
-
-private fun get(url: String): String {
-    val c = URI(url).toURL().openConnection() as HttpURLConnection
-    return c.inputStream.use { it.readBytes().decodeToString() }
-}

@@ -7,7 +7,6 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.MemoryCodeVerifierCache
-import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.SessionManager
 import io.github.jan.supabase.auth.SignOutScope
 import io.github.jan.supabase.auth.auth
@@ -152,6 +151,21 @@ val ReportReasons = listOf(
     "otro" to "Otro motivo",
 )
 
+/**
+ * Se entra con correo o con nombre de usuario. Supabase solo admite correo, así que el nombre se guarda como un
+ * correo interno de un dominio propio (con MX, o el servidor lo rechaza) al que nunca se envía nada.
+ */
+object Login {
+    private const val PREFIX = "levelup-"
+    private const val DOMAIN = "@sackito.online"
+
+    fun email(login: String): String = login.trim().lowercase().let { if ('@' in it) it else PREFIX + it + DOMAIN }
+
+    /** Lo que ve la persona: su nombre de usuario o su correo. */
+    fun shown(email: String): String =
+        if (email.startsWith(PREFIX) && email.endsWith(DOMAIN)) email.removePrefix(PREFIX).removeSuffix(DOMAIN) else email
+}
+
 /** Errores del servidor y de la red, en palabras para la persona. Nunca muestra datos internos. */
 object CloudErrors {
     fun message(e: Throwable): String {
@@ -162,11 +176,9 @@ object CloudErrors {
             else -> null
         }
         return when (code) {
-            "invalid_credentials" -> "Correo o contraseña incorrectos."
-            "email_not_confirmed" -> "Falta confirmar el correo. Escribe el código que te enviamos."
-            "user_already_exists", "email_exists" -> "Ya hay una cuenta con ese correo."
+            "invalid_credentials" -> "Correo, usuario o contraseña incorrectos."
+            "user_already_exists", "email_exists" -> "Ese correo o nombre de usuario ya tiene cuenta."
             "weak_password" -> "La contraseña necesita al menos 8 caracteres, con letras y números."
-            "otp_expired" -> "El código no es correcto o ya caducó. Pide otro."
             "over_email_send_rate_limit", "over_request_rate_limit" -> "Demasiados intentos. Espera un minuto."
             "email_address_invalid", "validation_failed" -> "Revisa el correo: no parece válido."
             "same_password" -> "La contraseña nueva tiene que ser distinta de la anterior."
@@ -232,25 +244,18 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
 
     // ── Cuenta ────────────────────────────────────────────────────────────────
 
+    /** Sin verificación de correo («Confirm email» apagado en Supabase): el registro ya deja la sesión iniciada. */
     suspend fun signUp(email: String, password: String) {
         auth.signUpWith(Email) { this.email = email; this.password = password }
     }
-
-    suspend fun confirmSignUp(email: String, code: String) {
-        auth.verifyEmailOtp(OtpType.Email.SIGNUP, email, code)
-    }
-
-    suspend fun resendSignUpCode(email: String) = auth.resendEmail(OtpType.Email.SIGNUP, email)
 
     suspend fun signIn(email: String, password: String) {
         auth.signInWith(Email) { this.email = email; this.password = password }
     }
 
-    suspend fun requestPasswordReset(email: String) = auth.resetPasswordForEmail(email)
-
-    suspend fun resetPassword(email: String, code: String, newPassword: String) {
-        auth.verifyEmailOtp(OtpType.Email.RECOVERY, email, code)
-        auth.updateUser { password = newPassword }
+    /** Con la sesión iniciada; sin correo es la única forma de cambiarla. */
+    suspend fun changePassword(password: String) {
+        auth.updateUser { this.password = password }
     }
 
     suspend fun signOut() = auth.signOut(SignOutScope.LOCAL)

@@ -67,13 +67,9 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
         if (account.value is AccountState.SignedIn) service.syncNow()
     }
 
-    fun signIn(email: String, password: String) = run("Sesión iniciada. Tus datos se están sincronizando.", { service.signIn(email, password) })
-    fun signUp(email: String, password: String, onCodeSent: () -> Unit) = run(null, { service.signUp(email, password) }) { onCodeSent() }
-    fun confirm(email: String, code: String) = run("Cuenta creada. Tus datos ya se guardan en la nube.", { service.confirmSignUp(email, code) })
-    fun resendCode(email: String) = run("Te enviamos un código nuevo.", { service.resendCode(email) })
-    fun requestReset(email: String, onSent: () -> Unit) = run(null, { service.requestPasswordReset(email) }) { onSent() }
-    fun resetPassword(email: String, code: String, password: String) =
-        run("Contraseña cambiada.", { service.resetPassword(email, code, password) })
+    fun signIn(login: String, password: String) = run("Sesión iniciada. Tus datos se están sincronizando.", { service.signIn(login, password) })
+    fun signUp(login: String, password: String) = run("Cuenta creada. Tus datos ya se guardan en la nube.", { service.signUp(login, password) })
+    fun changePassword(password: String, onDone: () -> Unit) = run("Contraseña cambiada.", { service.changePassword(password) }) { onDone() }
 
     fun syncNow() = run("Sincronizado.", { service.syncNow() })
     fun signOutOthers() = run("Se cerró la sesión en tus otros dispositivos.", { service.signOutOtherDevices() }) { loadSessions() }

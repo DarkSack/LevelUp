@@ -20,11 +20,12 @@ Todo se guarda en el almacenamiento privado de la app, al que otras apps no pued
 
 ## Si creas una cuenta
 
-Para crearla usamos tu correo y una contraseña. El servicio que guarda las cuentas y los datos es
+Para crearla usamos tu correo o un nombre de usuario, y una contraseña. El servicio que guarda las cuentas y los datos es
 Supabase, que actúa como proveedor por cuenta nuestra.
 
-- **Cuenta**: tu correo y tu contraseña (Supabase guarda solo una versión cifrada, nunca la contraseña).
-  El correo se usa para enviarte los códigos de confirmación y de cambio de contraseña. No te enviamos publicidad.
+- **Cuenta**: tu correo o tu nombre de usuario, y tu contraseña (Supabase guarda solo una versión cifrada, nunca
+  la contraseña). No te enviamos ningún correo: ni confirmaciones ni publicidad. Por eso, por ahora, una contraseña
+  olvidada no se puede recuperar.
 - **Sincronización**: una copia de lo que guarda la app (ajustes y actividad, lista de arriba) para tenerla
   en todos tus teléfonos.
 - **Perfil social** (solo si lo creas): nombre de usuario, nombre visible, avatar (un dibujo predefinido) y

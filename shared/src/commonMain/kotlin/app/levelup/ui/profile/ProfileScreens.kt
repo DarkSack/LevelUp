@@ -352,8 +352,8 @@ private fun PrivacySection() {
     val hasAccount = LocalHasAccount.current
     listOfNotNull(
         "Sin cuenta" to "Todo se queda en este teléfono: ajustes, retos, experiencia, logros y misiones. Nada sale de él.",
-        ("Con cuenta (opcional)" to "Se guardan tu correo y una copia de tu progreso en Supabase, el proveedor de base de datos de " +
-            "LevelUp, para recuperarlo o usarlo en otro teléfono. La conexión va cifrada y solo tu cuenta puede leer tus datos.")
+        ("Con cuenta (opcional)" to "Se guardan tu correo o tu nombre de usuario y una copia de tu progreso en Supabase, el proveedor de " +
+            "base de datos de LevelUp, para recuperarlo o usarlo en otro teléfono. La conexión va cifrada y solo tu cuenta puede leer tus datos.")
             .takeIf { hasAccount },
         ("Amigos (opcional)" to "Si creas un perfil social, otras personas ven tu nombre de usuario y tu nombre visible. Tus amigos " +
             "ven tu nivel, tu racha y tu XP de la semana solo si lo permites. Tus retos, categorías e historial no se comparten nunca.")

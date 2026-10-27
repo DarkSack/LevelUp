@@ -22,6 +22,17 @@ class AccountRulesTest {
         assertNull(device(""))
     }
 
+    @Test fun loginIsAnEmailOrAUsername() {
+        val login = app.levelup.cloud.Login
+        assertEquals("levelup-ana_1@sackito.online", login.email(" Ana_1 "))
+        assertEquals("ana@correo.mx", login.email("Ana@Correo.mx"))
+        assertEquals("ana_1", login.shown("levelup-ana_1@sackito.online"))
+        assertEquals("ana@correo.mx", login.shown("ana@correo.mx"))
+        assertNull(loginProblem("Ana_1"))
+        assertNull(loginProblem("ana@correo.mx"))
+        listOf("an", "año", "ana luz", "levelup-ana@sackito.online", "ana@correo").forEach { assertTrue(loginProblem(it) != null, it) }
+    }
+
     @Test fun emailShape() {
         assertTrue(emailLooksValid(" ana@correo.mx "))
         assertFalse(emailLooksValid("ana@correo"))

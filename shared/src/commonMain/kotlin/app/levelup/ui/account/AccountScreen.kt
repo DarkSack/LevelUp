@@ -45,9 +45,10 @@ import app.levelup.ui.components.ToggleRow
 import app.levelup.ui.theme.Space
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
+import app.levelup.cloud.Login
 import app.levelup.i18n.tr
 
-private enum class Mode { SIGN_IN, SIGN_UP, CONFIRM, FORGOT, RESET }
+private enum class Mode { SIGN_IN, SIGN_UP }
 
 /** Mismas reglas que el servidor (config.toml): al menos 8 caracteres, con letras y números. */
 internal fun passwordProblem(password: String): String? = when {
@@ -60,6 +61,16 @@ internal fun emailLooksValid(email: String): Boolean {
     val e = email.trim()
     val at = e.indexOf('@')
     return at > 0 && e.indexOf('.', at) > at + 1 && !e.endsWith('.') && ' ' !in e
+}
+
+/** Correo o nombre de usuario (mismas reglas que el del perfil social). null si sirve. */
+internal fun loginProblem(login: String): String? {
+    val v = login.trim().lowercase()
+    return when {
+        '@' in v -> if (!emailLooksValid(v) || Login.shown(v) != v) "Revisa el correo." else null
+        !Regex("[a-z0-9_]{3,20}").matches(v) -> "Nombre de usuario: de 3 a 20 letras sin acentos, números o _."
+        else -> null
+    }
 }
 
 @Composable
@@ -88,10 +99,9 @@ fun AccountScreen(vm: CloudViewModel?, nav: Nav) {
 @Composable
 private fun GuestAccount(vm: CloudViewModel) {
     var mode by rememberSaveable { mutableStateOf(Mode.SIGN_IN) }
-    var email by rememberSaveable { mutableStateOf("") }
+    var login by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var repeat by remember { mutableStateOf("") }
-    var code by rememberSaveable { mutableStateOf("") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     val busy by vm.busy.collectAsStateWithLifecycle()
 
@@ -104,11 +114,11 @@ private fun GuestAccount(vm: CloudViewModel) {
         )
     }
 
-    val emailError = email.isNotEmpty() && !emailLooksValid(email)
-    val emailField: @Composable () -> Unit = {
+    val loginError = login.takeIf { it.isNotEmpty() }?.let(::loginProblem)
+    val loginField: @Composable () -> Unit = {
         OutlinedTextField(
-            email, { email = it.take(254) }, label = { Text("Correo") }, singleLine = true,
-            isError = emailError, supportingText = if (emailError) ({ Text("Revisa el correo.") }) else null,
+            login, { login = it.take(254) }, label = { Text("Correo o nombre de usuario") }, singleLine = true,
+            isError = loginError != null, supportingText = loginError?.let { { Text(it) } },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -122,77 +132,67 @@ private fun GuestAccount(vm: CloudViewModel) {
             modifier = Modifier.fillMaxWidth(),
         )
     }
-    val codeField: @Composable () -> Unit = {
-        OutlinedTextField(
-            code, { v -> code = v.filter(Char::isDigit).take(6) }, label = { Text("Código de 6 cifras") }, singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
 
     when (mode) {
         Mode.SIGN_IN -> {
             SectionTitle("Entrar")
-            emailField()
+            loginField()
             passwordField("Contraseña", password, { password = it }, null)
             ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
-            PrimaryButton("Entrar", { vm.signIn(email, password) }, enabled = !busy && emailLooksValid(email) && password.isNotEmpty())
-            TextButton(onClick = { mode = Mode.FORGOT }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Olvidé mi contraseña") }
+            PrimaryButton("Entrar", { vm.signIn(login, password) }, enabled = !busy && loginProblem(login) == null && password.isNotEmpty())
             SecondaryButton("Crear una cuenta", { mode = Mode.SIGN_UP })
         }
         Mode.SIGN_UP -> {
             SectionTitle("Crear cuenta")
-            emailField()
+            loginField()
             val problem = password.takeIf { it.isNotEmpty() }?.let(::passwordProblem)
             passwordField("Contraseña", password, { password = it }, problem)
             val mismatch = repeat.isNotEmpty() && repeat != password
             passwordField("Repite la contraseña", repeat, { repeat = it }, if (mismatch) "No coinciden." else null)
             ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
             Text(
-                "Te enviaremos un código para confirmar el correo. Al crear la cuenta aceptas las condiciones de uso " +
-                    "(shop.sackito.online/condiciones/levelup) y la política de privacidad (Perfil → Privacidad).",
+                "Apunta tu contraseña en un lugar seguro: por ahora no se puede recuperar si la olvidas. Al crear la cuenta " +
+                    "aceptas las condiciones de uso (shop.sackito.online/condiciones/levelup) y la política de privacidad (Perfil → Privacidad).",
                 style = MaterialTheme.typography.bodySmall,
             )
             PrimaryButton(
                 "Crear cuenta",
-                { vm.signUp(email, password) { mode = Mode.CONFIRM } },
-                enabled = !busy && emailLooksValid(email) && passwordProblem(password) == null && repeat == password,
+                { vm.signUp(login, password) },
+                enabled = !busy && loginProblem(login) == null && passwordProblem(password) == null && repeat == password,
             )
             SecondaryButton("Ya tengo cuenta", { mode = Mode.SIGN_IN })
         }
-        Mode.CONFIRM -> {
-            SectionTitle("Confirma tu correo")
-            Text(tr("Escribe el código que enviamos a {0}. Puede tardar un par de minutos; mira también en spam.", email))
-            codeField()
-            PrimaryButton("Confirmar", { vm.confirm(email, code) }, enabled = !busy && code.length == 6)
-            TextButton(onClick = { vm.resendCode(email) }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text("Enviar otro código")
-            }
-            TextButton(onClick = { mode = Mode.SIGN_UP }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Cambiar el correo") }
-        }
-        Mode.FORGOT -> {
-            SectionTitle("Recuperar la contraseña")
-            Text("Te enviaremos un código para elegir una contraseña nueva.")
-            emailField()
-            PrimaryButton("Enviar código", { vm.requestReset(email) { mode = Mode.RESET } }, enabled = !busy && emailLooksValid(email))
-            SecondaryButton("Volver", { mode = Mode.SIGN_IN })
-        }
-        Mode.RESET -> {
-            SectionTitle("Contraseña nueva")
-            Text(tr("Escribe el código que enviamos a {0} y tu contraseña nueva.", email))
-            codeField()
-            val problem = password.takeIf { it.isNotEmpty() }?.let(::passwordProblem)
-            passwordField("Contraseña nueva", password, { password = it }, problem)
-            ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
-            PrimaryButton(
-                "Cambiar contraseña",
-                { vm.resetPassword(email, code, password) },
-                enabled = !busy && code.length == 6 && passwordProblem(password) == null,
-            )
-            SecondaryButton("Volver", { mode = Mode.SIGN_IN })
-        }
     }
     if (busy) CircularProgressIndicator(Modifier.padding(Space.m))
+}
+
+/** Se escribe dos veces: sin correo de recuperación, una errata dejaría la cuenta fuera de alcance. */
+@Composable
+private fun ChangePassword(vm: CloudViewModel, busy: Boolean) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+    var repeat by remember { mutableStateOf("") }
+    if (!open) {
+        SecondaryButton("Cambiar contraseña", { open = true }, enabled = !busy)
+        return
+    }
+    val problem = password.takeIf { it.isNotEmpty() }?.let(::passwordProblem)
+    val mismatch = repeat.isNotEmpty() && repeat != password
+    listOf(Triple("Contraseña nueva", password, problem), Triple("Repite la contraseña", repeat, if (mismatch) "No coinciden." else null))
+        .forEachIndexed { i, (label, value, error) ->
+            OutlinedTextField(
+                value, { v -> if (i == 0) password = v.take(72) else repeat = v.take(72) }, label = { Text(label) }, singleLine = true,
+                isError = error != null, supportingText = error?.let { { Text(it) } },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    PrimaryButton(
+        "Cambiar contraseña",
+        { vm.changePassword(password) { open = false; password = ""; repeat = "" } },
+        enabled = !busy && passwordProblem(password) == null && repeat == password,
+    )
 }
 
 /** Estado de la sincronización en una línea, para Inicio. Nada mientras no se haya sincronizado nunca. */
@@ -224,7 +224,7 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
     val scope = rememberCoroutineScope()
 
     Text("Sesión iniciada como", style = MaterialTheme.typography.labelLarge)
-    Text(account.email, style = MaterialTheme.typography.titleMedium)
+    Text(Login.shown(account.email), style = MaterialTheme.typography.titleMedium)
 
     SectionTitle("Sincronización")
     InfoCard {
@@ -258,6 +258,7 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
         }
     }
     SecondaryButton("Cerrar sesión en mis otros dispositivos", vm::signOutOthers, enabled = !busy)
+    ChangePassword(vm, busy)
     SecondaryButton("Cerrar sesión", { scope.launch { confirmSignOut = vm.hasPending() } }, enabled = !busy)
 
     SectionTitle("Borrar la cuenta")

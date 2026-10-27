@@ -11,11 +11,12 @@ momento.
 
 ## Estado
 
-Versión `0.1.0` (`versionCode 1`), **sin publicar**. El código está completo para una primera versión y probado
+Versión `1.0.0` (`versionCode 1`), **sin publicar**. El código está completo para una primera versión y probado
 con pruebas automáticas. Nunca se ha instalado en un teléfono ni en un reloj reales.
 
-- **Backend en producción:** desplegado en Supabase. Crear una cuenta todavía no funciona porque falta
-  configurar un servidor de correo propio (SMTP). Detalles en [docs/PENDIENTES.md](docs/PENDIENTES.md).
+- **Backend en producción:** desplegado en Supabase. La cuenta es opcional, con correo o nombre de usuario y
+  contraseña, sin verificación por correo (falta apagar «Confirm email» en Supabase). Detalles en
+  [docs/PENDIENTES.md](docs/PENDIENTES.md).
 - **Qué falta respecto a la especificación:** [docs/COBERTURA.md](docs/COBERTURA.md).
 - **Fuera de esta versión:** iOS y el asistente de IA.
 
