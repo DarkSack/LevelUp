@@ -44,6 +44,7 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
     val groupHistory = MutableStateFlow<List<app.levelup.cloud.GroupHistoryItem>>(emptyList())
     val leaderboard = MutableStateFlow<List<LeaderboardRow>>(emptyList())
     val notices = MutableStateFlow<List<SocialNotice>>(emptyList())
+    val sessions = MutableStateFlow<List<app.levelup.cloud.DeviceSession>>(emptyList())
 
     private fun <T> run(done: String? = null, block: suspend () -> Result<T>, onOk: (T) -> Unit = {}) {
         viewModelScope.launch {
@@ -75,7 +76,11 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
         run("Contraseña cambiada.", { service.resetPassword(email, code, password) })
 
     fun syncNow() = run("Sincronizado.", { service.syncNow() })
-    fun signOutOthers() = run("Se cerró la sesión en tus otros dispositivos.", { service.signOutOtherDevices() })
+    fun signOutOthers() = run("Se cerró la sesión en tus otros dispositivos.", { service.signOutOtherDevices() }) { loadSessions() }
+
+    /** Vacía si falla (sin conexión o un servidor sin la migración de sesiones): la lista es solo informativa. */
+    fun loadSessions() = viewModelScope.launch { sessions.value = runCatching { service.cloud.sessions() }.getOrDefault(emptyList()) }
+    fun endSession(id: String) = run("Sesión cerrada en ese dispositivo.", { runCatching { service.cloud.endSession(id) } }) { loadSessions() }
     fun signOut() = run("Sesión cerrada.", { service.signOut() }) { clearSocial() }
     fun deleteAccount() = run("Cuenta borrada. Lo de este teléfono sigue aquí como invitado.", { service.deleteAccount() }) { clearSocial() }
 

@@ -4,6 +4,7 @@ import app.levelup.data.RemoteRecord
 import app.levelup.data.RemoteSync
 import app.levelup.data.SyncRecord
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.MemoryCodeVerifierCache
 import io.github.jan.supabase.auth.OtpType
@@ -22,6 +23,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.serializer.KotlinXSerializer
+import io.ktor.client.plugins.UserAgent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -34,8 +36,18 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
-/** URL y clave pública del proyecto. Vienen de `supabase.properties` (fuera de git); sin ellas no hay nube. */
-data class CloudConfig(val url: String, val publishableKey: String)
+/**
+ * URL y clave pública del proyecto. Vienen de `supabase.properties` (fuera de git); sin ellas no hay nube.
+ * [userAgent]: «LevelUp 0.1.0 (Pixel 7; Android 14)». Supabase lo guarda con cada sesión y es el nombre en la lista de dispositivos.
+ */
+data class CloudConfig(val url: String, val publishableKey: String, val userAgent: String = "")
+
+/** Un dispositivo con la sesión iniciada. */
+@Serializable
+data class DeviceSession(val id: String, val userAgent: String, val createdAt: String, val lastUsedAt: String, val current: Boolean) {
+    /** «Pixel 7 · Android 14» a partir de [userAgent]; null si no viene de LevelUp. */
+    val device: String? get() = Regex("^LevelUp \\S+ \\(([^;]+); ([^)]+)\\)$").find(userAgent)?.destructured?.let { (model, os) -> "$model · $os" }
+}
 
 sealed interface AccountState {
     data object Loading : AccountState
@@ -193,6 +205,9 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
             autoLoadFromStorage = true
         }
         install(Postgrest)
+        // httpConfig es «interna» en supabase-kt, pero es la única forma de poner el User-Agent desde código común.
+        @OptIn(SupabaseInternal::class)
+        if (config.userAgent.isNotBlank()) httpConfig { install(UserAgent) { agent = config.userAgent } }
     }
 
     private val auth get() = client.auth
@@ -241,6 +256,12 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
     suspend fun signOut() = auth.signOut(SignOutScope.LOCAL)
 
     suspend fun signOutOtherDevices() = auth.signOut(SignOutScope.OTHERS)
+
+    suspend fun sessions(): List<DeviceSession> = db.rpc("my_sessions").decodeList()
+
+    suspend fun endSession(id: String) {
+        db.rpc("end_session", buildJsonObject { put("session", id) })
+    }
 
     /** Borra la cuenta y todo lo guardado en el servidor (en cascada). Después cierra la sesión local. */
     suspend fun deleteAccount() {

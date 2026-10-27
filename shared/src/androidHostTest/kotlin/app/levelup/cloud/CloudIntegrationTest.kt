@@ -41,7 +41,7 @@ class CloudIntegrationTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val run = System.currentTimeMillis().toString(36)
 
-    private fun cloud() = Cloud(CloudConfig(API, key!!), MemorySessionManager())
+    private fun cloud(device: String = "Robolectric") = Cloud(CloudConfig(API, key!!, "LevelUp test ($device; Android 15)"), MemorySessionManager())
 
     /** Un teléfono con la base de datos real de la app y la nube de verdad. */
     private inner class Phone(val cloud: Cloud = cloud()) {
@@ -69,7 +69,7 @@ class CloudIntegrationTest {
         a1.repo.saveGoal(null, "Correr 5 km", "", null).getOrThrow()
         a1.repo.updatePreferences { it.copy(avatar = "zorro") }
         assertTrue(a1.service.syncNow().isSuccess)
-        val a2 = Phone()
+        val a2 = Phone(cloud("Tableta"))
         assertTrue(a2.service.signIn(anaMail, "nivel2026").isSuccess)
         assertTrue(a2.service.syncNow().isSuccess)
         assertEquals(a1.repo.totalXp.first(), a2.repo.totalXp.first())
@@ -130,6 +130,13 @@ class CloudIntegrationTest {
         val board = a1.cloud.leaderboard()
         assertEquals(setOf(anaUser, betoUser), board.map { it.username }.toSet())
         assertTrue(board.first { it.isMe }.weeklyXp > 0)
+
+        // Dispositivos: Ana ve sus dos sesiones con su nombre y cierra la de la tableta desde el teléfono.
+        val sessions = a1.cloud.sessions()
+        assertEquals(setOf("Robolectric · Android 15", "Tableta · Android 15"), sessions.map { it.device }.toSet())
+        assertEquals("Robolectric · Android 15", sessions.single { it.current }.device)
+        a1.cloud.endSession(sessions.single { !it.current }.id)
+        assertEquals(1, a1.cloud.sessions().size)
 
         // Borrar la cuenta borra lo del servidor; el teléfono se queda como invitado.
         beto.deleteAccount()

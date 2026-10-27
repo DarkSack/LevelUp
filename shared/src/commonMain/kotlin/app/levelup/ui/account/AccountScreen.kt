@@ -3,6 +3,7 @@ package app.levelup.ui.account
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -17,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +44,7 @@ import app.levelup.ui.components.SectionTitle
 import app.levelup.ui.components.ToggleRow
 import app.levelup.ui.theme.Space
 import kotlinx.coroutines.launch
+import kotlin.time.Instant
 
 private enum class Mode { SIGN_IN, SIGN_UP, CONFIRM, FORGOT, RESET }
 
@@ -191,6 +194,24 @@ private fun GuestAccount(vm: CloudViewModel) {
     if (busy) CircularProgressIndicator(Modifier.padding(Space.m))
 }
 
+/** Estado de la sincronización en una línea, para Inicio. Nada mientras no se haya sincronizado nunca. */
+@Composable
+fun SyncStatusLine(vm: CloudViewModel, onClick: () -> Unit) {
+    val pending by vm.pending.collectAsStateWithLifecycle()
+    val state by vm.syncState.collectAsStateWithLifecycle()
+    val syncing by vm.syncing.collectAsStateWithLifecycle()
+    val text = when {
+        syncing -> "Sincronizando…"
+        pending > 0 -> "${Fmt.plural(pending, "cambio", "cambios")} por subir"
+        state?.lastError != null -> "Sin sincronizar: se volverá a intentar"
+        state?.lastSyncedAt != null -> "Todo sincronizado"
+        else -> return
+    }
+    TextButton(onClick = onClick, modifier = Modifier.heightIn(min = 48.dp).padding(bottom = Space.s)) {
+        Text(text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
 @Composable
 private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) {
     val pending by vm.pending.collectAsStateWithLifecycle()
@@ -219,6 +240,22 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
     SecondaryButton("Sincronizar ahora", vm::syncNow, enabled = !syncing && !busy)
 
     SectionTitle("Seguridad")
+    val sessions by vm.sessions.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.loadSessions() }
+    if (sessions.isNotEmpty()) {
+        Text("Dispositivos con tu sesión iniciada", style = MaterialTheme.typography.labelLarge)
+        sessions.forEach { s ->
+            Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(s.device ?: "Otro dispositivo", style = MaterialTheme.typography.bodyLarge)
+                    val used = runCatching { Fmt.dateTime(Instant.parse(s.lastUsedAt).toEpochMilliseconds()) }.getOrNull()
+                    Text(if (s.current) "Este dispositivo" else used?.let { "Último uso: $it" }.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (!s.current) TextButton(onClick = { vm.endSession(s.id) }, enabled = !busy) { Text("Cerrar") }
+            }
+        }
+    }
     SecondaryButton("Cerrar sesión en mis otros dispositivos", vm::signOutOthers, enabled = !busy)
     SecondaryButton("Cerrar sesión", { scope.launch { confirmSignOut = vm.hasPending() } }, enabled = !busy)
 

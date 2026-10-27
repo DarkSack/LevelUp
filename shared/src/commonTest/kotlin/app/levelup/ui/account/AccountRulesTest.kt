@@ -15,6 +15,13 @@ class AccountRulesTest {
         assertNull(passwordProblem("nivel2026"))
     }
 
+    @Test fun deviceNameComesFromTheUserAgent() {
+        fun device(agent: String) = app.levelup.cloud.DeviceSession("s", agent, "", "", false).device
+        assertEquals("Pixel 7 · Android 14", device("LevelUp 0.1.0 (Pixel 7; Android 14)"))
+        assertNull(device("okhttp/4.12.0"))
+        assertNull(device(""))
+    }
+
     @Test fun emailShape() {
         assertTrue(emailLooksValid(" ana@correo.mx "))
         assertFalse(emailLooksValid("ana@correo"))

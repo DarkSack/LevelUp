@@ -19,7 +19,7 @@ Nada se ha probado en un teléfono real ni contra el Supabase de producción con
 | 10 | Social | Hecho | Amigos, solicitudes, bloqueos, reacciones predefinidas, retos en grupo, clasificación voluntaria, privacidad, denuncias. La moderación no tiene panel: se hace en Supabase. |
 | 11 | Accesibilidad | Parcial | Tamaño de texto, alto contraste, menos movimiento, modo sencillo, vibración y áreas de 48 dp en el código. Falta probarlo con TalkBack y texto al 200 % en un teléfono. |
 | 12 | Identidad visual | Hecho | Tema propio, claro y oscuro; colores y marcos de Plus. |
-| 13 | Pantallas | Parcial | Están las seis secciones. **Falta en Inicio el estado de sincronización** (solo se ve en Perfil → Cuenta). «Cuenta y sesiones» permite cerrar la sesión en los demás dispositivos, pero no lista los dispositivos. |
+| 13 | Pantallas | Hecho | Están las seis secciones. Inicio muestra el estado de la sincronización con cuenta. «Cuenta y sesiones» lista los dispositivos con la sesión iniciada (modelo y versión de Android) y cierra uno o todos los demás. |
 | 14 | Datos | Parcial | Base local v4 (favoritos, metas, notas, momentos del día, versión mínima, etiquetas, aviso por hábito) con migraciones 1→2→3→4 probadas, ids deterministas. No hay tablas de dispositivos ni de compras en el servidor (la compra se comprueba en el teléfono: decisión «opción b»). |
 | 15 | Backend y cuentas | Parcial | Desplegado el 2026-10-25 con RLS y 40 pruebas pgTAP. **La segunda migración (extras, 14 pruebas pgTAP más) solo está aplicada en local.** **Registro bloqueado en producción hasta poner SMTP propio.** No hay configuración separada de desarrollo y producción: las compilaciones usan siempre `supabase.properties`; el desarrollo usa el Supabase local. |
 | 16 | Sincronización | Hecho | Probada con dos teléfonos simulados y de punta a punta contra el Supabase local. |
@@ -106,7 +106,6 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 4. Recursos de la tienda: notas para revisores, lista de verificación y capturas del reloj (icono 512, gráfico
    1024 × 500, capturas del teléfono y notas de versión ya están).
 6. Condiciones de servicio (lo social las justifica) con los datos del propietario.
-7. Estado de sincronización en Inicio.
 8. CI: lint, pgTAP, auditoría de dependencias y AAB de release.
 9. Inglés: textos de la app (hoy están en el código) y ficha.
 10. Splash propia y pruebas de interfaz que faltan.

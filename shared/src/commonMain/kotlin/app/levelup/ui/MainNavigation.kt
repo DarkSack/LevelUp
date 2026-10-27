@@ -77,6 +77,7 @@ import app.levelup.ui.extra.WeeklyReviewScreen
 import app.levelup.cloud.AccountState
 import app.levelup.ui.account.AccountScreen
 import app.levelup.ui.account.CloudViewModel
+import app.levelup.ui.account.SyncStatusLine
 import app.levelup.ui.social.CreateGroupScreen
 import app.levelup.ui.social.SocialProfileScreen
 import app.levelup.ui.social.SocialScreen
@@ -218,7 +219,9 @@ fun MainNavigation(vm: LevelUpViewModel, cloud: CloudViewModel?, platform: Platf
             popEnterTransition = { if (reduce) EnterTransition.None else fadeIn() },
             popExitTransition = { if (reduce) ExitTransition.None else fadeOut() },
         ) {
-            composable<HomeRoute> { HomeScreen(vm, nav) { TabBar(HomeRoute, nav) } }
+            composable<HomeRoute> {
+                HomeScreen(vm, nav, sync = { if (signedIn && cloud != null) SyncStatusLine(cloud, nav::account) }) { TabBar(HomeRoute, nav) }
+            }
             composable<ChallengesRoute> { ChallengesScreen(vm, nav) { TabBar(ChallengesRoute, nav) } }
             composable<ProgressRoute> { ProgressScreen(vm, nav) { TabBar(ProgressRoute, nav) } }
             composable<ProfileRoute> { ProfileScreen(vm, nav) { TabBar(ProfileRoute, nav) } }

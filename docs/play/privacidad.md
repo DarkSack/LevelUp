@@ -34,6 +34,9 @@ Supabase, que actúa como proveedor por cuenta nuestra.
 - **Lo social**: tus solicitudes de amistad, amistades, bloqueos, reacciones y mensajes de ánimo (predefinidos:
   no hay mensajes de texto libre), retos en grupo y avisos. Los avisos se borran a los 90 días.
 - **Denuncias**: si denuncias a alguien, guardamos quién denunció a quién, el motivo y la fecha, para revisarlo.
+- **Sesiones**: con cada inicio de sesión se guardan el modelo del teléfono y la versión de Android (por ejemplo
+  «Pixel 7 · Android 14»), para que en Cuenta y sincronización veas en qué dispositivos está abierta tu cuenta y
+  puedas cerrar uno. Se borran al cerrar esa sesión o la cuenta.
 - Como cualquier servicio en internet, el servidor registra datos técnicos de las conexiones (como la
   dirección IP) para su funcionamiento y seguridad.
 

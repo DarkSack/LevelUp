@@ -62,7 +62,7 @@ import app.levelup.ui.theme.gameOn
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
+fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}, tabBar: @Composable () -> Unit) {
     val prefs = LocalPrefs.current
     val today by vm.todayInstances.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
@@ -95,6 +95,7 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, tabBar: @Composable () -> Unit) {
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.semantics { heading() }.padding(bottom = Space.m),
                 )
+                sync()
             }
             if (!simple && gameOn) {
                 item { LevelCard(progress, prefs.equippedFrame, prefs.displayName, Avatars.emoji(prefs.avatar), prefs.gamification) }

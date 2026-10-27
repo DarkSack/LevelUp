@@ -1,6 +1,7 @@
 package app.levelup
 
 import android.app.Application
+import android.os.Build
 import app.levelup.cloud.AccountState
 import app.levelup.cloud.CloudConfig
 import app.levelup.cloud.CloudService
@@ -25,7 +26,7 @@ class LevelUpApplication : Application() {
     /** null si esta compilación no tiene Supabase (sin supabase.properties): la app funciona igual, sin cuenta. */
     val cloud: CloudService? by lazy {
         if (BuildConfig.SUPABASE_URL.isBlank() || BuildConfig.SUPABASE_KEY.isBlank()) return@lazy null
-        androidCloudService(this, db, repo, CloudConfig(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY), scope) {
+        androidCloudService(this, db, repo, CloudConfig(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY, "LevelUp ${BuildConfig.VERSION_NAME} (${Build.MODEL}; Android ${Build.VERSION.RELEASE})"), scope) {
             SyncWork.soon(this)
         }
     }
