@@ -16,8 +16,9 @@ Lo que el código no puede resolver solo: cuentas, datos legales, despliegue y p
 
 ## Backend (Supabase)
 
-El proyecto real `prcfmlvrzygpipifzmju` está en la cuenta de Supabase que también tiene **RPGRoll-Shop** (la CLI
-de este equipo tiene sesión en otra cuenta; Composio tiene las dos). `supabase.properties` (fuera de git) apunta
+El proyecto real `prcfmlvrzygpipifzmju` está en la cuenta de Supabase que también tiene **RPGRoll-Shop**. Desde el
+2026-10-26 la CLI de este equipo tiene sesión en esa cuenta y el repo está enlazado (`supabase db push` sube las
+migraciones nuevas sin pedir contraseña). `supabase.properties` (fuera de git) apunta
 a él, así que las compilaciones salen conectadas a producción.
 
 **Desplegado el 2026-10-25 por Composio:**
@@ -51,12 +52,17 @@ nuevas, las columnas del perfil, `touch_profile` de 3 argumentos y `my_group_his
 `profile_card` sin acceso directo. Avisos de seguridad: los mismos de siempre (funciones `security definer` que
 validan a quien llama).
 
+**Migración `sesiones` aplicada en producción el 2026-10-26 con la CLI** (`supabase db push`): `my_sessions` y
+`end_session` para la lista de dispositivos. Comprobado desde fuera: existen y el rol anónimo recibe «permiso
+denegado». Las tres migraciones locales coinciden con las de producción (`supabase migration list --linked`).
+
 Otros:
 
 - Plan gratis: esa organización ya tiene 2 proyectos activos (RPGRoll-Shop y LevelUp), el máximo gratis, y un
   proyecto gratis se pausa tras 7 días sin uso.
-- Para usar la CLI con este proyecto: `supabase login` en la cuenta de RPGRoll-Shop y
-  `supabase link --project-ref prcfmlvrzygpipifzmju` (pide la contraseña de la base de datos).
+- CLI: `supabase migration list --linked` para comparar y `supabase db push --dry-run` antes de `supabase db push`.
+  **No usar `supabase config push`**: subiría la configuración local de `config.toml` (URL del sitio en localhost,
+  etc.) encima de la de producción.
 
 ## Google Play Console
 
