@@ -14,7 +14,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       # gradle.properties usa el almacén de certificados de Windows (proxy del equipo de desarrollo); en Linux no existe.
       - name: Ajustes de JVM para Linux
         run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
@@ -66,4 +66,4 @@ jobs:
           java-version: 21
       - name: Ajustes de JVM para Linux
         run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
-      - uses: gradle/actions/dependency-submission@v4
+      - uses: gradle/actions/dependency-submission@v6
