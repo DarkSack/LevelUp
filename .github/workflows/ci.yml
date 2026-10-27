@@ -27,11 +27,11 @@ jobs:
       # Sin keystore.properties sale sin firmar: la llave de subida no sale del equipo del propietario.
       - name: AAB de release (sin firmar)
         run: ./gradlew :androidApp:bundleRelease :wearApp:bundleRelease
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: aab-sin-firmar
           path: '*/build/outputs/bundle/release/*.aab'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: informes
