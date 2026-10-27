@@ -43,7 +43,9 @@ ni cambiar la contraseña desde la app**. Mientras tanto la 0.1.0 sale sin cuent
    Proton, que suelen acabar en spam o rechazados cuando los envía otro servidor.
 2. En Supabase → Authentication → Emails → SMTP Settings: poner los datos del proveedor (la contraseña SMTP no
    debe pasar por el chat) y subir el límite de correos por hora (Authentication → Rate Limits).
-3. Subir las plantillas de `supabase/templates/` (con la CLI: `supabase config push`; o pedírmelo por Composio).
+3. Subir solo las plantillas de `supabase/templates/` y sus asuntos (pedírmelo: van por la API de gestión de
+   Supabase, campo a campo). **Nunca `supabase config push`**: sube todo `config.toml`, que es la configuración
+   local, y pisaría el auth de producción (URLs, límites, proveedores).
 
 **Migración `extras` aplicada en producción el 2026-10-25 por Composio** (`supabase/migrations/20261025161831_extras.sql`,
 renombrada a la versión que registró Supabase): favoritos y metas en la sincronización, XP de regreso, mensajes de
