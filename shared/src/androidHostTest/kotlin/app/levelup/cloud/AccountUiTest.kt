@@ -138,7 +138,8 @@ class AccountUiTest {
         val cloudVm = CloudViewModel(service)
         val notices = mutableListOf<String>()
         GlobalScope.launch { cloudVm.messages.collect { notices += it } } // pasan rápido por la pantalla
-        compose.setContent { App(LevelUpViewModel(repo, platform), platform, cloudVm) }
+        val vm = LevelUpViewModel(repo, platform)
+        compose.setContent { App(vm, platform, cloudVm) }
         waitFor("Reto principal")
 
         // Registro: correo, contraseña y el código que llega por correo.

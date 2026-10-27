@@ -20,5 +20,50 @@ jobs:
         run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
       - name: Pruebas
         run: ./gradlew :shared:testAndroidHostTest
+      - name: Lint (teléfono y reloj)
+        run: ./gradlew :androidApp:lintDebug :wearApp:lintDebug
       - name: APK de depuración (teléfono y reloj)
         run: ./gradlew :androidApp:assembleDebug :wearApp:assembleDebug
+      # Sin keystore.properties sale sin firmar: la llave de subida no sale del equipo del propietario.
+      - name: AAB de release (sin firmar)
+        run: ./gradlew :androidApp:bundleRelease :wearApp:bundleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aab-sin-firmar
+          path: '*/build/outputs/bundle/release/*.aab'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: informes
+          path: |
+            */build/reports/lint-results-debug.html
+            shared/build/reports/tests/
+
+  # Las migraciones y sus pruebas pgTAP en un Supabase local (sin los servicios que no usan).
+  servidor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Supabase local con las migraciones
+        run: supabase start -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Pruebas pgTAP
+        run: supabase test db
+
+  # Grafo de dependencias de Gradle para las alertas de Dependabot (auditoría de dependencias).
+  dependencias:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Ajustes de JVM para Linux
+        run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
+      - uses: gradle/actions/dependency-submission@v4

@@ -29,7 +29,7 @@ Nada se ha probado en un teléfono real ni contra el Supabase de producción con
 | 20 | Google Play | Parcial | Paquete, versión, icono, AAB firmado, llave fuera de git, ficha en español, contenido y seguridad de datos. Icono 512 × 512, gráfico 1024 × 500, capturas reales del teléfono y notas de versión en `docs/play/`. La 0.1.0 sale sin cuenta (`cuenta=no`). Splash propia en Android 12+ (fondo de la marca y el logo). **Faltan**: inglés (app y ficha), capturas del reloj, datos de acceso para revisores, guía de pruebas internas y cerradas (y el requisito de prueba cerrada si la cuenta de Play es personal). EAS no aplica: firma Gradle. |
 | 21 | App Store | Decisión | Fuera de esta versión; solo [IOS.md](IOS.md). |
 | 22 | Recursos comerciales y legales | Parcial | Hay descripciones corta y larga y política de privacidad. **Faltan** condiciones de servicio, textos de capturas, plan de localización, notas de revisión y de versión, y lista de verificación de publicación. |
-| 23 | CI | Parcial | GitHub Actions corre las pruebas y compila los APK de depuración del teléfono y del reloj. **Faltan** lint, pruebas pgTAP, auditoría de dependencias, compilar el AAB de release y la subida a Play con aprobación manual. |
+| 23 | CI | Parcial | GitHub Actions corre las pruebas, lint, los APK de depuración y los AAB de release sin firmar (como artefacto), las pruebas pgTAP en un Supabase local, y envía el grafo de dependencias para las alertas de Dependabot (más `dependabot.yml` semanal). **Falta** la subida a Play con aprobación manual: necesita la app creada en Play Console y una cuenta de servicio. |
 | 24 | Pruebas | Parcial | Unitarias: todas las reglas pedidas. Integración: Room, migración, sincronización, conflictos, RLS, amistades, bloqueos, borrado de cuenta. Interfaz (Robolectric): bienvenida, omitirla, onboarding interrumpido, completar un reto y su trofeo, logros secretos, accesibilidad, Plus y, contra el Supabase local (`AccountUiTest`), registro con código, cambios sin conexión que suben al reconectar, amistad y borrar la cuenta. **Faltan** las de accesibilidad y rendimiento en un teléfono. |
 | 25 | Criterios de aceptación | Parcial | Se cumplen 1–8, 10–14, 17–20. El 9 (registro con backend) funciona en local, no en producción hasta el SMTP. El 15 solo cubre Android. El 16 está a medias (faltan inglés y capturas del reloj). |
 | 26 | Forma de trabajo | Hecho | Fases con pruebas; pendientes en [PENDIENTES.md](PENDIENTES.md). |
@@ -106,6 +106,6 @@ Lista del propietario, revisada contra el código el mismo día. Todo tiene prue
 4. Recursos de la tienda: notas para revisores, lista de verificación y capturas del reloj (icono 512, gráfico
    1024 × 500, capturas del teléfono y notas de versión ya están).
 6. Condiciones de servicio (lo social las justifica) con los datos del propietario.
-8. CI: lint, pgTAP, auditoría de dependencias y AAB de release.
+8. CI: subida a Play con aprobación manual (tras crear la app en Play Console y una cuenta de servicio).
 9. Inglés: textos de la app (hoy están en el código) y ficha.
 11. Probar en un dispositivo lo nuevo de Android: widget, atajos, compartir, capturas protegidas, Health Connect y el reloj.

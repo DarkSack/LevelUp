@@ -111,7 +111,8 @@ class StoreScreenshots {
 
     private fun launch() {
         val platform = FakePlatform()
-        compose.setContent { App(LevelUpViewModel(repo, platform), platform) }
+        val vm = LevelUpViewModel(repo, platform)
+        compose.setContent { App(vm, platform) }
         waitFor("Nivel ") // Room ya entregó el progreso
     }
 
