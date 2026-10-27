@@ -146,29 +146,28 @@ class CloudIntegrationTest {
         assertTrue(a1.repo.totalXp.first() > 0, "lo local sigue en el teléfono")
         listOf(a1, a2).forEach { it.db.close() }
     }
+}
 
-    /** Lee el código de 6 dígitos del correo que recibió [email] en Mailpit. */
-    private suspend fun codeFor(email: String): String {
-        val query = URLEncoder.encode("to:\"$email\"", "UTF-8")
-        repeat(50) {
-            val messages = Json.parseToJsonElement(get("$MAILPIT/api/v1/search?query=$query")).jsonObject["messages"]!!.jsonArray
-            val id = messages.firstOrNull()?.jsonObject?.get("ID")?.jsonPrimitive?.content
-            if (id != null) {
-                val text = Json.parseToJsonElement(get("$MAILPIT/api/v1/message/$id")).jsonObject["HTML"]!!.jsonPrimitive.content
-                return Regex("""\b(\d{6})\b""").find(text)!!.groupValues[1]
-            }
-            delay(200)
+/** El Supabase local de `supabase start`. */
+internal const val API = "http://127.0.0.1:54321"
+private const val MAILPIT = "http://127.0.0.1:54324"
+
+/** Lee el código de 6 dígitos del correo que recibió [email] en Mailpit. */
+internal suspend fun codeFor(email: String): String {
+    val query = URLEncoder.encode("to:\"$email\"", "UTF-8")
+    repeat(50) {
+        val messages = Json.parseToJsonElement(get("$MAILPIT/api/v1/search?query=$query")).jsonObject["messages"]!!.jsonArray
+        val id = messages.firstOrNull()?.jsonObject?.get("ID")?.jsonPrimitive?.content
+        if (id != null) {
+            val text = Json.parseToJsonElement(get("$MAILPIT/api/v1/message/$id")).jsonObject["HTML"]!!.jsonPrimitive.content
+            return Regex("""\b(\d{6})\b""").find(text)!!.groupValues[1]
         }
-        error("No llegó el correo a $email")
+        delay(200)
     }
+    error("No llegó el correo a $email")
+}
 
-    private fun get(url: String): String {
-        val c = URI(url).toURL().openConnection() as HttpURLConnection
-        return c.inputStream.use { it.readBytes().decodeToString() }
-    }
-
-    private companion object {
-        const val API = "http://127.0.0.1:54321"
-        const val MAILPIT = "http://127.0.0.1:54324"
-    }
+private fun get(url: String): String {
+    val c = URI(url).toURL().openConnection() as HttpURLConnection
+    return c.inputStream.use { it.readBytes().decodeToString() }
 }
