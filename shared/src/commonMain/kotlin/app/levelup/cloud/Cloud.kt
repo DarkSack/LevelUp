@@ -106,9 +106,8 @@ data class GroupHistoryItem(
     val groupCompleted: Int,
 )
 
-/** [verified]: de esos, los respaldados por Health Connect. */
 @Serializable
-data class GroupMember(val userId: String, val username: String, val displayName: String, val status: String, val completed: Int, val verified: Int = 0)
+data class GroupMember(val userId: String, val username: String, val displayName: String, val status: String, val completed: Int)
 
 @Serializable
 data class GroupChallenge(
@@ -123,12 +122,8 @@ data class GroupChallenge(
     val members: List<GroupMember>,
 )
 
-/** [weeklyVerified]: retos físicos de esta semana respaldados por Health Connect. */
 @Serializable
-data class LeaderboardRow(
-    val userId: String, val username: String, val displayName: String, val frame: String, val weeklyXp: Long, val isMe: Boolean,
-    val weeklyVerified: Int = 0,
-)
+data class LeaderboardRow(val userId: String, val username: String, val displayName: String, val frame: String, val weeklyXp: Long, val isMe: Boolean)
 
 @Serializable
 data class NoticeActor(val userId: String, val username: String, val displayName: String)

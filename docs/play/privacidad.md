@@ -1,6 +1,6 @@
 # Política de privacidad de LevelUp
 
-Última actualización: 26 de octubre de 2026. Responsable: Johan Jafet Del Valle Santiago,
+Última actualización: 28 de octubre de 2026. Responsable: Johan Jafet Del Valle Santiago,
 contacto: donsackito@protonmail.com.
 
 ## Lo corto
@@ -68,9 +68,10 @@ compra y no ve tus datos de pago. Plus no es necesario para progresar.
 - **Notificaciones**: recordatorios (un aviso al día como máximo, solo los días que elijas, nunca en tus horas
   de silencio ni en días de descanso o pausa) y, si tienes cuenta y lo permites, avisos de tus amigos.
 - **Health Connect: pasos y ejercicio** (solo si activas «Actividad de Health Connect» en Perfil → Laboratorio):
-  la app lee tus pasos y minutos de ejercicio **de hoy** para mostrarlos en los retos físicos. Se leen en el
-  teléfono cada vez que abres un reto: no se guardan, no se sincronizan y no salen del teléfono. Puedes quitar el
-  permiso cuando quieras en Health Connect.
+  la app lee tus pasos y minutos de ejercicio **de hoy** para mostrarlos en los retos físicos y, al completar uno,
+  para marcarlo como «verificado» si tu ejercicio de hoy lo cubre. Los pasos y los minutos no se guardan; de cada
+  reto físico solo se guarda en el teléfono esa marca (sí o no). Nada de esto se sincroniza ni sale del teléfono, ni
+  lo ven tus amigos. Puedes quitar el permiso cuando quieras en Health Connect.
 
 ## Tus derechos y cómo borrar tus datos
 
@@ -83,7 +84,8 @@ compra y no ve tus datos de pago. Plus no es necesario para progresar.
 ## Salud
 
 LevelUp propone retos de hábitos generales. No es un servicio médico, no hace diagnósticos y no guarda
-datos de salud (lo que lee de Health Connect solo se muestra; ver Permisos).
+datos de salud: de lo que lee de Health Connect solo queda, en el teléfono, la marca de «verificado» de cada reto
+físico (ver Permisos).
 
 ## Capturas de pantalla
 

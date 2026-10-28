@@ -210,7 +210,7 @@ data class ChallengeInstance(
     val block: DayBlock? = null,
     /** Se completó en su versión mínima (da la XP de dificultad 1). */
     @ColumnInfo(defaultValue = "0") val minimal: Boolean = false,
-    /** Reto físico respaldado por Health Connect: ese día había minutos de ejercicio de sobra para él. */
+    /** Reto físico respaldado por Health Connect: ese día había minutos de ejercicio de sobra para él. Solo en este teléfono: no se sincroniza. */
     @ColumnInfo(defaultValue = "0") val verified: Boolean = false,
 ) {
     val isDone: Boolean get() = status == InstanceStatus.COMPLETED

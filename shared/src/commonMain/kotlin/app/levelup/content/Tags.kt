@@ -28,7 +28,7 @@ object Lab {
         Experiment(SURPRISE, "Retos sorpresa", "En Inicio, un botón para descubrir un reto que nunca has hecho. No cambia tu plan del día."),
         Experiment(
             HEALTH, "Actividad de Health Connect",
-            "En los retos físicos, ver tus pasos y minutos de ejercicio de hoy. Solo se leen en el teléfono y nunca se suben.",
+            "En los retos físicos, ver tus pasos y minutos de ejercicio de hoy y marcar como verificados los que cubra tu ejercicio. Todo se queda en el teléfono: nunca se sube.",
         ),
     )
 }

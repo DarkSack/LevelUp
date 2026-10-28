@@ -221,7 +221,7 @@ Las capturas (sección 6) están en español: sirven para las tres fichas mientr
 | Clasificación de contenido | Cuestionario IARC: sin violencia ni ubicación. **Sí** a compras digitales. **Sí** a interacción entre usuarios, limitada: solo reacciones y ánimos predefinidos, sin chat ni texto libre (lo único que escribe cada persona es su nombre de usuario y su nombre visible), con bloqueo y denuncia |
 | Público objetivo | 13 años o más. No dirigida a menores de 13 |
 | Borrado de cuenta | En la app (Perfil → Cuenta y sincronización → Borrar mi cuenta) y, sin la app, por correo a donsackito@protonmail.com: URL https://shop.sackito.online/privacidad/levelup (sección «Tus derechos y cómo borrar tus datos») |
-| Apps de salud | Retos de bienestar general, sin funciones médicas. **Declaración de Health Connect obligatoria**: la app pide `READ_STEPS` y `READ_EXERCISE` (opcional, en Laboratorio) para mostrar los pasos y minutos de ejercicio de hoy en los retos físicos; solo lectura, procesado en el teléfono, sin guardar ni subir nada. Play revisa este formulario aparte |
+| Apps de salud | Retos de bienestar general, sin funciones médicas. **Declaración de Health Connect obligatoria**: la app pide `READ_STEPS` y `READ_EXERCISE` (opcional, en Laboratorio) para mostrar los pasos y minutos de ejercicio de hoy en los retos físicos y marcar como «verificado» el reto físico que ese ejercicio cubre; solo lectura y procesado en el teléfono: los pasos y minutos no se guardan, la marca (sí o no) se guarda solo en el teléfono, y nada se sube ni se comparte con otros usuarios. Play revisa este formulario aparte |
 
 ## 4. Seguridad de los datos
 
@@ -244,9 +244,9 @@ por cuenta del desarrollador, lo que Play no cuenta como «compartir»).
 | Actividad en la app → Otro contenido generado por el usuario (retos propios, notas, metas, favoritos, nombre de usuario) | Funciones de la app |
 
 No se recopilan ubicación, contactos, datos financieros (el pago lo gestiona Google Play), identificadores del
-dispositivo ni datos de diagnóstico. Los pasos y el ejercicio de Health Connect se leen y se muestran solo en el
-teléfono (no se guardan ni se envían): según la ayuda de Play, lo que se procesa solo en el dispositivo no cuenta
-como recopilado, pero **Tú** confírmalo al rellenarlo.
+dispositivo ni datos de diagnóstico. Los pasos y el ejercicio de Health Connect se procesan solo en el teléfono: se
+muestran, y de cada reto físico queda en el teléfono una marca de «verificado» que nunca se envía. Según la ayuda de
+Play, lo que se procesa solo en el dispositivo no cuenta como recopilado, pero **Tú** confírmalo al rellenarlo.
 
 **Tú**: repasa la lista con la ayuda vigente de Play Console al rellenarla; las categorías cambian a veces.
 
@@ -283,7 +283,7 @@ the daily challenges appear on Home. The account is optional and needs no email 
 Create an account, with any username and password, unlocks Friends and groups (only predefined reactions, no chat).
 LevelUp Plus (one-time in-app purchase, product id levelup_plus) only unlocks decorative frames, app colors and
 extended stats: Profile > LevelUp Plus. Health Connect (steps and exercise minutes, read-only, processed on the
-device) is optional and lives in Profile > Lab. The Wear OS app shows today's challenges sent by the phone.
+device; a completed physical challenge covered by today's exercise is marked "verified" on the phone only) is optional and lives in Profile > Lab. The Wear OS app shows today's challenges sent by the phone.
 The app follows the phone language (Spanish, English or Brazilian Portuguese); with the phone in English the
 menu names above appear exactly as written.
 ```
@@ -292,9 +292,9 @@ menu names above appear exactly as written.
 
 - [x] `supabase.properties` sin `cuenta=no`, y en Supabase «Confirm email» apagado (Authentication → Sign In / Providers → Email).
 - [ ] `play.properties` con la clave de licencia de Play y bundles regenerados después de copiarla.
-- [ ] Pruebas en verde: `./gradlew :shared:testAndroidHostTest` (y con `-PsupabaseLocalKey` si cambió la nube).
-- [ ] Bundles: `./gradlew :androidApp:bundleRelease :wearApp:bundleRelease`; `versionCode` subido en los dos.
-- [ ] Notas de la versión (sección 1) y capturas al día (sección 6).
+- [x] Pruebas en verde: `./gradlew :shared:testAndroidHostTest` (y con `-PsupabaseLocalKey` si cambió la nube). 156 en verde el 2026-10-28.
+- [x] Bundles: `./gradlew :androidApp:bundleRelease :wearApp:bundleRelease`; `versionCode` subido en los dos (la primera subida va con 1 y 100001). Generados y firmados el 2026-10-28; **regenerarlos** después de copiar la clave de licencia.
+- [x] Notas de la versión (sección 1) y capturas al día (sección 6): capturas regeneradas con el diseño nuevo el 2026-10-28.
 - [ ] Contenido de la app: privacidad, anuncios, acceso, IARC, público, Health Connect (sección 3).
 - [ ] Seguridad de los datos (sección 4).
 - [ ] Producto `levelup_plus` activo y probado con una cuenta de prueba de licencias.

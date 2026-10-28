@@ -20,6 +20,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /** Servidor en memoria con las mismas reglas que `push_records`: gana el cambio más reciente (en empate, lo guardado). */
@@ -122,6 +123,18 @@ class SyncTest {
         val expected = inst.xp + 10 // el reto y el logro "Primer paso", una sola vez
         assertEquals(expected, a.repo.totalXp.first())
         assertEquals(expected, b.repo.totalXp.first())
+    }
+
+    @Test fun theHealthConnectMarkNeverLeavesThePhone() = runTest {
+        val a = device()
+        a.repo.updatePreferences { it.copy(onboardingDone = true, categories = listOf("fisico")) }
+        a.sync.attach("u1")
+        val inst = a.repo.ensureToday().first { it.category == "fisico" }
+        a.repo.complete(inst.id, exerciseMinutesToday = 999)
+        assertTrue(a.db.dao().instance(inst.id)!!.verified)
+        a.sync.sync(); a.sync.sync() // sube y vuelve a bajar su propio registro
+        assertFalse("verified" in server.rows.getValue("instance" to inst.id).data, "no se sube")
+        assertTrue(a.db.dao().instance(inst.id)!!.verified, "bajar no se lo quita a este teléfono")
     }
 
     @Test fun undoReachesTheOtherPhone() = runTest {

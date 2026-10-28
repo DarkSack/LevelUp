@@ -214,8 +214,10 @@ private val kinds: Map<String, Kind<*>> = mapOf(
     "preferences" to Kind(Preferences.serializer(), { preferences(it.toInt()) }, { putPreferences(it) }, { deletePreferences(it.toInt()) }),
     "custom_category" to Kind(CustomCategory.serializer(), { customCategory(it) }, { putCustomCategory(it) }, { deleteCustomCategory(it) }),
     "custom_challenge" to Kind(CustomChallenge.serializer(), { customChallenge(it) }, { putCustomChallenge(it) }, { deleteCustomChallenge(it) }),
+    // `verified` sale de Health Connect y no se sube (ver `record`): al bajar, se conserva el de este teléfono.
     "instance" to Kind(ChallengeInstance.serializer(), { instance(it) },
-        { dropInstanceTwin(it.challengeId, it.date, it.id); putInstance(it) }, { deleteInstance(it) }),
+        { dropInstanceTwin(it.challengeId, it.date, it.id); putInstance(it.copy(verified = it.isDone && instance(it.id)?.verified == true)) },
+        { deleteInstance(it) }),
     "xp" to Kind(XpEntry.serializer(), { xp(it) }, { dropXpTwin(it.sourceType, it.sourceId, it.id); putXp(it) }, { deleteXp(it) }),
     "achievement" to Kind(UnlockedAchievement.serializer(), { achievement(it) }, { putAchievement(it) }, { deleteAchievement(it) }),
     "mission_run" to Kind(MissionRun.serializer(), { missionRun(it) }, { putMissionRun(it) }, { deleteMissionRun(it) }),
@@ -307,7 +309,9 @@ class SyncEngine(
         return if (kind == null || row == null) {
             SyncRecord(e.entity, e.entityId, JsonObject(emptyMap()), e.changedAt, deleted = true)
         } else {
-            SyncRecord(e.entity, e.entityId, json.encodeToJsonElement(kind.serializer, row).jsonObject, e.changedAt, deleted = false)
+            val data = json.encodeToJsonElement(kind.serializer, row).jsonObject
+            // Lo derivado de Health Connect no sale del teléfono (política de privacidad y declaración de Play).
+            SyncRecord(e.entity, e.entityId, if (e.entity == "instance") JsonObject(data - "verified") else data, e.changedAt, deleted = false)
         }
     }
 
