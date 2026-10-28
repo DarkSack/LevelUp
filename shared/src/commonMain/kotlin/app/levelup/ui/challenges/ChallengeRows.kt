@@ -44,7 +44,7 @@ fun statusText(i: ChallengeInstance): String = when (i.status) {
     InstanceStatus.PENDING -> "Pendiente"
     InstanceStatus.STARTED -> "En curso"
     InstanceStatus.PAUSED -> "En pausa"
-    InstanceStatus.COMPLETED -> "Hecho"
+    InstanceStatus.COMPLETED -> if (i.verified) "Hecho y verificado con Health Connect" else "Hecho"
     InstanceStatus.SKIPPED -> "Para otro día"
     InstanceStatus.REPLACED -> "Cambiado"
 }

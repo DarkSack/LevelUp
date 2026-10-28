@@ -282,7 +282,12 @@ class LevelUpRepository(
      * Completa un reto: marca la instancia, suma su XP una sola vez, cierra misiones y desbloquea logros,
      * todo en una transacción. Completar algo ya completado no hace nada (devuelve null).
      */
-    suspend fun complete(id: String, minimal: Boolean = false): CompletionResult? = tx {
+    /**
+     * [exerciseMinutesToday]: minutos de ejercicio de hoy según Health Connect (null si no se leen). Un reto físico
+     * de hoy queda verificado si sobran minutos para él después de los ya verificados ese día: una misma sesión
+     * no respalda dos retos.
+     */
+    suspend fun complete(id: String, minimal: Boolean = false, exerciseMinutesToday: Long? = null): CompletionResult? = tx {
         val inst = dao.instance(id) ?: return@tx null
         if (inst.isDone || inst.status == InstanceStatus.REPLACED) return@tx null
         val before = dao.totalXpNow()
@@ -290,7 +295,9 @@ class LevelUpRepository(
         val firstThatDay = dao.completedOn(inst.date) == 0
         val comeback = firstThatDay && dao.lastActiveBefore(inst.date)?.let { it.daysUntil(inst.date) >= XpRules.COMEBACK_XP_GAP_DAYS } == true
         val xp = if (minimal) XpRules.xpFor(1) else inst.xp
-        dao.updateInstance(inst.copy(status = InstanceStatus.COMPLETED, completedAt = now(), minimal = minimal, xp = xp))
+        val verified = exerciseMinutesToday != null && inst.category == Categories.FISICO && inst.date == today() &&
+            exerciseMinutesToday >= inst.minutes + dao.instancesOnNow(inst.date).filter { it.verified }.sumOf { it.minutes }
+        dao.updateInstance(inst.copy(status = InstanceStatus.COMPLETED, completedAt = now(), minimal = minimal, xp = xp, verified = verified))
         dao.insertXp(xpEntry(XpSource.CHALLENGE, inst.id, xp, inst.category))
         if (comeback) dao.insertXp(xpEntry(XpSource.COMEBACK, inst.date.toString(), XpRules.COMEBACK_XP, null))
         val missions = completeMissions(today())
@@ -306,7 +313,7 @@ class LevelUpRepository(
     suspend fun undoComplete(id: String) = tx {
         val inst = dao.instance(id)?.takeIf { it.isDone } ?: return@tx
         dao.updateInstance(
-            inst.copy(status = InstanceStatus.PENDING, completedAt = null, rating = null, minimal = false, xp = XpRules.xpFor(inst.difficulty)),
+            inst.copy(status = InstanceStatus.PENDING, completedAt = null, rating = null, minimal = false, verified = false, xp = XpRules.xpFor(inst.difficulty)),
         )
         dao.deleteChallengeXp(inst.id)
         if (dao.completedOn(inst.date) == 0) dao.deleteXp(XpSource.COMEBACK.name, inst.date.toString())

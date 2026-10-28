@@ -437,7 +437,8 @@ private fun GroupCard(g: GroupChallenge, me: String, vm: CloudViewModel, busy: B
         }
         joined.sortedByDescending { it.completed }.forEach { m ->
             Text(
-                "${m.displayName}${if (m.userId == me) " (tú)" else ""}: ${m.completed}",
+                "${m.displayName}${if (m.userId == me) " (tú)" else ""}: ${m.completed}" +
+                    if (m.verified > 0) tr(" ({0} verificados)", m.verified) else "",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (m.userId == me) FontWeight.Bold else null,
             )
@@ -550,7 +551,7 @@ private fun LeaderboardTab(vm: CloudViewModel) {
                     Avatar(r.displayName, frameOf(r.frame), null, 32.dp)
                     Spacer(Modifier.size(Space.s))
                     Text(r.displayName + if (r.isMe) tr(" (tú)") else "", Modifier.weight(1f), fontWeight = if (r.isMe) FontWeight.Bold else null)
-                    Text(tr("{0} XP", r.weeklyXp))
+                    Text(if (r.weeklyVerified > 0) tr("{0} XP · {1} verificados", r.weeklyXp, r.weeklyVerified) else tr("{0} XP", r.weeklyXp))
                 }
             }
         }

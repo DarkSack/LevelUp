@@ -296,6 +296,18 @@ class RepositoryTest {
         assertEquals(XpRules.xpFor(inst.difficulty), undone.xp)
     }
 
+    @Test fun healthConnectMinutesVerifyOnlyAsManyPhysicalChallengesAsTheyCover() = runTest {
+        onboarded { it.copy(categories = listOf("fisico"), dailyCount = 2) }
+        val (a, b) = repo.ensureToday().filter { it.category == "fisico" }.take(2)
+        // Justo los minutos del primero: lo respaldan a él, no al segundo.
+        repo.complete(a.id, exerciseMinutesToday = a.minutes.toLong())
+        repo.complete(b.id, exerciseMinutesToday = a.minutes.toLong())
+        assertTrue(db.dao().instance(a.id)!!.verified)
+        assertFalse(db.dao().instance(b.id)!!.verified)
+        repo.undoComplete(a.id)
+        assertFalse(db.dao().instance(a.id)!!.verified)
+    }
+
     @Test fun notesAreLimitedAndSearchable() = runTest {
         onboarded()
         val inst = repo.ensureToday().first()

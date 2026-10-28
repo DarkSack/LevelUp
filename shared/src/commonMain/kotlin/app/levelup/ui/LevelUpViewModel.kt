@@ -171,8 +171,17 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
 
     // ── Retos ─────────────────────────────────────────────────────────────────
 
-    fun complete(id: String) = act { repo.complete(id)?.let { _events.emit(UiEvent.Completed(id, it)) } }
-    fun completeMinimal(id: String) = act { repo.complete(id, minimal = true)?.let { _events.emit(UiEvent.Completed(id, it)) } }
+    fun complete(id: String) = act { repo.complete(id, exerciseMinutesToday = exerciseToday())?.let { _events.emit(UiEvent.Completed(id, it)) } }
+    fun completeMinimal(id: String) = act {
+        repo.complete(id, minimal = true, exerciseMinutesToday = exerciseToday())?.let { _events.emit(UiEvent.Completed(id, it)) }
+    }
+
+    /** Minutos de ejercicio de hoy si Health Connect está activado en el laboratorio y con permiso; si no, null. */
+    private suspend fun exerciseToday(): Long? {
+        val health = platform.health ?: return null
+        if (Lab.HEALTH !in repo.prefs().labFlags) return null
+        return runCatching { if (health.hasPermission()) health.today()?.exerciseMinutes else null }.getOrNull()
+    }
     fun setBlock(id: String, block: DayBlock?) = act { repo.setBlock(id, block) }
     fun setNote(id: String, note: String) = act {
         repo.setNote(id, note).fold(

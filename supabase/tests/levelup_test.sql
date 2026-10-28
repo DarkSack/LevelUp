@@ -1,7 +1,7 @@
 -- Pruebas del esquema: RLS, sincronización y reglas sociales. Se ejecutan con `supabase test db`.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(40);
+select plan(41);
 
 -- Tres personas de prueba.
 insert into auth.users (id, email, aud, role) values
@@ -116,6 +116,10 @@ select public.push_records(format('[{"entity":"instance","id":"%s|fis.caminar-10
   "data":{"challengeId":"fis.caminar-10","status":"COMPLETED","date":"%s"}}]', current_date, current_date)::jsonb);
 select is((select (m ->> 'completed')::int from public.my_groups() g, jsonb_array_elements(g -> 'members') m
   where m ->> 'username' = 'ana'), 1, 'el avance del grupo lo cuenta el servidor con lo sincronizado');
+select public.push_records(format('[{"entity":"instance","id":"%s|fis.caminar-10","updatedAt":400,
+  "data":{"challengeId":"fis.caminar-10","status":"COMPLETED","date":"%s","verified":true}}]', current_date, current_date)::jsonb);
+select is((select (m ->> 'verified')::int from public.my_groups() g, jsonb_array_elements(g -> 'members') m
+  where m ->> 'username' = 'ana'), 1, 'los retos verificados con Health Connect se cuentan aparte');
 
 -- ── Bloqueos ────────────────────────────────────────────────────────────────────────────────────
 

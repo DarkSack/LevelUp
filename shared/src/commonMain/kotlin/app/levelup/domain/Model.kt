@@ -210,6 +210,8 @@ data class ChallengeInstance(
     val block: DayBlock? = null,
     /** Se completó en su versión mínima (da la XP de dificultad 1). */
     @ColumnInfo(defaultValue = "0") val minimal: Boolean = false,
+    /** Reto físico respaldado por Health Connect: ese día había minutos de ejercicio de sobra para él. */
+    @ColumnInfo(defaultValue = "0") val verified: Boolean = false,
 ) {
     val isDone: Boolean get() = status == InstanceStatus.COMPLETED
     val isOpen: Boolean get() = status == InstanceStatus.PENDING || status == InstanceStatus.STARTED || status == InstanceStatus.PAUSED
