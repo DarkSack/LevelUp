@@ -275,7 +275,7 @@ fun AchievementsScreen(vm: LevelUpViewModel, nav: Nav) {
                     TextButton(onClick = { vm.share(ShareCard(a.name, a.description, a.tier, Fmt.dayWithYear(on))) }) { Text("Compartir") }
                 }
             },
-            icon = { TrophyBadge(a.tier, v.state, 56.dp) },
+            icon = { TrophyBadge(a, v.state, 56.dp) },
             title = { Text(v.name) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
@@ -310,7 +310,7 @@ private fun AchievementRow(v: AchievementView, onClick: () -> Unit) {
             .padding(vertical = Space.xs).semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TrophyBadge(v.achievement.tier, v.state)
+        TrophyBadge(v.achievement, v.state)
         Spacer(Modifier.size(Space.m))
         Column(Modifier.weight(1f)) {
             Text(v.name, style = MaterialTheme.typography.titleSmall)

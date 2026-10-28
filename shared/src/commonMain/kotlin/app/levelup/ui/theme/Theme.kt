@@ -1,10 +1,8 @@
 package app.levelup.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -15,6 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import app.levelup.content.Categories
+import app.levelup.domain.AppStyle
 import app.levelup.domain.MotionPref
 import app.levelup.domain.Preferences
 import app.levelup.domain.DEFAULT_ACCENT
@@ -22,7 +21,7 @@ import app.levelup.domain.GamificationStyle
 import app.levelup.domain.ThemePref
 
 /**
- * Identidad de LevelUp: verde azulado de crecimiento, ámbar para la XP y violeta para los logros.
+ * Identidad de LevelUp: verde azulado de crecimiento, coral para la XP y violeta para los logros.
  * Todos los pares texto/fondo cumplen contraste AA (4.5:1); el modo de alto contraste sube a AAA.
  */
 object Brand {
@@ -34,33 +33,36 @@ object Brand {
     val VioletLight = Color(0xFFC4B5FD)
 }
 
+// Estilo pop: fondo crema, tinta casi negra en bordes y sombras, coral para la XP, amarillo y rosa en tarjetas.
+private val Ink = Color(0xFF1A1A1A)
+
 private val Light = lightColorScheme(
     primary = Brand.Teal, onPrimary = Color.White,
-    primaryContainer = Color(0xFFCCFBF1), onPrimaryContainer = Color(0xFF042F2E),
-    secondary = Brand.Amber, onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFEF3C7), onSecondaryContainer = Color(0xFF451A03),
+    primaryContainer = Color(0xFFB8F2E6), onPrimaryContainer = Color(0xFF042F2E),
+    secondary = Color(0xFFC92A2A), onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFD23F), onSecondaryContainer = Ink,
     tertiary = Brand.Violet, onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFEDE9FE), onTertiaryContainer = Color(0xFF2E1065),
-    background = Color(0xFFF7F7F4), onBackground = Color(0xFF1C1B19),
-    surface = Color(0xFFFFFFFF), onSurface = Color(0xFF1C1B19),
-    surfaceVariant = Color(0xFFEDEDE8), onSurfaceVariant = Color(0xFF4E4B45),
-    surfaceContainer = Color(0xFFF1F1EC), surfaceContainerHigh = Color(0xFFEAEAE4),
-    outline = Color(0xFF79756D), outlineVariant = Color(0xFFD0CEC6),
+    tertiaryContainer = Color(0xFFFFC2D9), onTertiaryContainer = Ink,
+    background = Color(0xFFFFF6E5), onBackground = Ink,
+    surface = Color(0xFFFFFDF8), onSurface = Ink,
+    surfaceVariant = Color(0xFFF5EBD6), onSurfaceVariant = Color(0xFF4A4338),
+    surfaceContainer = Color(0xFFFFFDF8), surfaceContainerHigh = Color(0xFFF5EBD6),
+    outline = Ink, outlineVariant = Color(0xFFD9CDB4),
     error = Color(0xFFB3261E), onError = Color.White,
 )
 
 private val Dark = darkColorScheme(
     primary = Brand.TealLight, onPrimary = Color(0xFF003733),
     primaryContainer = Color(0xFF115E59), onPrimaryContainer = Color(0xFFCCFBF1),
-    secondary = Brand.AmberLight, onSecondary = Color(0xFF3F2300),
-    secondaryContainer = Color(0xFF78350F), onSecondaryContainer = Color(0xFFFEF3C7),
+    secondary = Color(0xFFFF8A80), onSecondary = Color(0xFF3B0A07),
+    secondaryContainer = Color(0xFFFFD23F), onSecondaryContainer = Ink,
     tertiary = Brand.VioletLight, onTertiary = Color(0xFF2E1065),
-    tertiaryContainer = Color(0xFF4C1D95), onTertiaryContainer = Color(0xFFEDE9FE),
-    background = Color(0xFF121413), onBackground = Color(0xFFE8E9E6),
-    surface = Color(0xFF1A1D1C), onSurface = Color(0xFFE8E9E6),
-    surfaceVariant = Color(0xFF2A2E2C), onSurfaceVariant = Color(0xFFC3C7C3),
-    surfaceContainer = Color(0xFF202322), surfaceContainerHigh = Color(0xFF2A2D2C),
-    outline = Color(0xFF8D918D), outlineVariant = Color(0xFF424744),
+    tertiaryContainer = Color(0xFFF49AC1), onTertiaryContainer = Ink,
+    background = Color(0xFF1A1712), onBackground = Color(0xFFF5EEDC),
+    surface = Color(0xFF24201A), onSurface = Color(0xFFF5EEDC),
+    surfaceVariant = Color(0xFF332D24), onSurfaceVariant = Color(0xFFD6CCB8),
+    surfaceContainer = Color(0xFF24201A), surfaceContainerHigh = Color(0xFF2E2920),
+    outline = Color(0xFFF5EEDC), outlineVariant = Color(0xFF4A4336),
     error = Color(0xFFFFB4AB), onError = Color(0xFF690005),
 )
 
@@ -96,7 +98,7 @@ data class Accent(
 )
 
 val Accents = listOf(
-    Accent("teal", "Verde azulado", 0xFF0F766E, 0xFFCCFBF1, 0xFF042F2E, 0xFF5EEAD4, 0xFF003733, 0xFF115E59),
+    Accent("teal", "Verde azulado", 0xFF0F766E, 0xFFB8F2E6,0xFF042F2E, 0xFF5EEAD4, 0xFF003733, 0xFF115E59),
     Accent("azul", "Azul", 0xFF1D4ED8, 0xFFDBEAFE, 0xFF172554, 0xFF93C5FD, 0xFF0C1E4A, 0xFF1E3A8A),
     Accent("violeta", "Violeta", 0xFF6D28D9, 0xFFEDE9FE, 0xFF2E1065, 0xFFC4B5FD, 0xFF2E1065, 0xFF4C1D95),
     Accent("rosa", "Rosa", 0xFFBE185D, 0xFFFCE7F3, 0xFF500724, 0xFFF9A8D4, 0xFF4A0420, 0xFF831843),
@@ -142,12 +144,6 @@ object Space {
     val xxl = 32.dp
 }
 
-val LevelUpShapes = Shapes(
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-)
-
 /** true = sin animaciones decorativas (preferencia de la app o del sistema). */
 val LocalReduceMotion = staticCompositionLocalOf { false }
 
@@ -158,7 +154,7 @@ val LocalPrefs = staticCompositionLocalOf { Preferences() }
 val LocalHasAccount = staticCompositionLocalOf { false }
 
 @Composable
-fun isDarkTheme(prefs: Preferences): Boolean = when (prefs.theme) {
+fun isDarkTheme(prefs: Preferences): Boolean = prefs.style != AppStyle.POP || when (prefs.theme) {
     ThemePref.SYSTEM -> isSystemInDarkTheme()
     ThemePref.LIGHT -> false
     ThemePref.DARK -> true
@@ -169,7 +165,14 @@ fun LevelUpTheme(prefs: Preferences, systemReducedMotion: Boolean, plus: Boolean
     val dark = isDarkTheme(prefs)
     // Sin Plus (p. ej. tras un reembolso) se vuelve al color de siempre, sin tocar la preferencia guardada.
     val accent = Accents.firstOrNull { it.key == prefs.accent && (plus || it.key == DEFAULT_ACCENT) } ?: Accents.first()
-    val base = (if (dark) Dark else Light).withAccent(accent, dark)
+    val scheme = when (prefs.style) {
+        AppStyle.POP -> if (dark) Dark else Light
+        AppStyle.AVENTURA -> Aventura
+        AppStyle.NEON -> Neon
+    }
+    // Aventura y Neón traen su propio color principal; solo un acento elegido con Plus lo reemplaza.
+    val base = if (prefs.style == AppStyle.POP || accent.key != DEFAULT_ACCENT) scheme.withAccent(accent, dark) else scheme
+    val style = tokensFor(prefs.style)
     val contrasted = if (prefs.highContrast) base.highContrast(dark) else base
     val colors = if (prefs.lowStimulation) contrasted.muted() else contrasted
     val reduce = prefs.lowStimulation || !prefs.gameOn || when (prefs.motion) {
@@ -177,13 +180,15 @@ fun LevelUpTheme(prefs: Preferences, systemReducedMotion: Boolean, plus: Boolean
         MotionPref.REDUCED -> true
         MotionPref.FULL -> false
     }
+    SystemBarsEffect(dark)
     val density = LocalDensity.current
     // El tamaño de texto de la app se suma al del sistema (los dos multiplican el sp).
     CompositionLocalProvider(
         LocalDensity provides Density(density.density, density.fontScale * prefs.textScale),
         LocalReduceMotion provides reduce,
         LocalPrefs provides prefs,
+        LocalStyleTokens provides style,
     ) {
-        MaterialTheme(colorScheme = colors, shapes = LevelUpShapes, content = content)
+        MaterialTheme(colorScheme = colors, shapes = style.shapes, typography = style.typography, content = content)
     }
 }

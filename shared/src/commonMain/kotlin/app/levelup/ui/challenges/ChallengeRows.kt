@@ -34,7 +34,9 @@ import app.levelup.domain.CustomCategory
 import app.levelup.domain.InstanceStatus
 import app.levelup.ui.Fmt
 import app.levelup.ui.theme.LocalPrefs
+import app.levelup.ui.theme.StyleBorder
 import app.levelup.ui.theme.Space
+import app.levelup.ui.theme.styleShadow
 import app.levelup.ui.theme.gameOn
 import app.levelup.i18n.tr
 
@@ -62,9 +64,9 @@ fun metaLine(i: ChallengeInstance, custom: List<CustomCategory>, xp: Boolean = t
 @Composable
 fun InstanceRow(i: ChallengeInstance, custom: List<CustomCategory>, onComplete: () -> Unit, onOpen: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth().padding(vertical = Space.xs),
+        Modifier.fillMaxWidth().padding(vertical = Space.xs).styleShadow(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = androidx.compose.foundation.BorderStroke(StyleBorder, MaterialTheme.colorScheme.outline),
     ) {
         Row(Modifier.heightIn(min = 72.dp).padding(start = Space.s, end = Space.s), verticalAlignment = Alignment.CenterVertically) {
             if (i.isDone) {
@@ -102,9 +104,9 @@ fun InstanceRow(i: ChallengeInstance, custom: List<CustomCategory>, onComplete: 
 fun ChallengeRow(c: Challenge, custom: List<CustomCategory>, extra: String? = null, favorite: Boolean = false, onOpen: () -> Unit) {
     val gameOn = LocalPrefs.current.gameOn
     Card(
-        Modifier.fillMaxWidth().padding(vertical = Space.xs).clickable(onClickLabel = tr("Ver detalles"), onClick = onOpen),
+        Modifier.fillMaxWidth().padding(vertical = Space.xs).styleShadow().clickable(onClickLabel = tr("Ver detalles"), onClick = onOpen),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = androidx.compose.foundation.BorderStroke(StyleBorder, MaterialTheme.colorScheme.outline),
     ) {
         Row(Modifier.heightIn(min = 64.dp).padding(Space.m), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {

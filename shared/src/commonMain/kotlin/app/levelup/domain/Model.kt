@@ -23,6 +23,9 @@ enum class NotificationLevel { OFF, LOW, NORMAL }
 enum class MotionPref { SYSTEM, REDUCED, FULL }
 enum class ThemePref { SYSTEM, LIGHT, DARK }
 
+/** Estilo visual de toda la app. Aventura y Neón son siempre oscuros. */
+enum class AppStyle { POP, AVENTURA, NEON }
+
 /** FULL: XP, rachas y celebraciones. CALM: sin rachas ni celebraciones. OFF: ni XP ni niveles a la vista, solo hábitos. */
 enum class GamificationStyle { FULL, CALM, OFF }
 
@@ -130,6 +133,7 @@ data class Preferences(
     val lastPauseReviewed: String? = null,
     /** Avatar elegido (clave de content/Avatars.kt). Vacío = la inicial del nombre. */
     @ColumnInfo(defaultValue = "") val avatar: String = "",
+    @ColumnInfo(defaultValue = "POP") val style: AppStyle = AppStyle.POP,
 ) {
     fun difficultyFor(category: String): Int = categoryDifficulty[category] ?: difficulty
 }

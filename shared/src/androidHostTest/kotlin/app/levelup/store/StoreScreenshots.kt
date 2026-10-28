@@ -1,23 +1,35 @@
 package app.levelup.store
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.unit.dp
+import app.levelup.domain.AchievementState
+import app.levelup.domain.AppStyle
+import app.levelup.domain.Preferences
+import app.levelup.content.AchievementCatalog
+import app.levelup.ui.components.TrophyBadge
+import app.levelup.ui.theme.LevelUpTheme
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.ViewRootForTest
@@ -43,10 +55,8 @@ import app.levelup.ui.FakePlatform
 import app.levelup.ui.LevelUpViewModel
 import app.levelup.ui.components.LevelUpLogo
 import app.levelup.ui.theme.Brand
-import app.levelup.ui.theme.LevelUpTheme
 import app.levelup.ui.welcome.WELCOME_ANIMATION_MS
 import app.levelup.ui.welcome.WelcomeScreen
-import app.levelup.domain.Preferences
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -150,6 +160,49 @@ class StoreScreenshots {
         // Un poco hacia arriba, para que el gráfico semanal no quede bajo la barra de pestañas (sin inercia).
         compose.onNode(hasScrollToNodeAction()).performTouchInput { swipeUp(startY = centerY, endY = centerY - 450f, durationMillis = 1_000) }
         save("3-progreso")
+    }
+
+    /** Inicio y trofeos en cada estilo, para revisar el aspecto (no van a la ficha). */
+    @Test fun estilos() {
+        launch()
+        AppStyle.entries.forEach { style ->
+            runBlocking { repo.updatePreferences { it.copy(style = style) } }
+            tab("Inicio")
+            save("estilo-${style.name.lowercase()}-inicio")
+            tab("Progreso")
+            compose.onNodeWithText("Logros y trofeos").performClick()
+            waitFor(" trofeos")
+            compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Desbloqueado", substring = true))
+            save("estilo-${style.name.lowercase()}-logros")
+            compose.onNodeWithContentDescription("Volver").performClick()
+        }
+    }
+
+    /** Trofeos de varias colecciones y categorías, en sus tres estados, en cada estilo. */
+    @Test fun trofeos() {
+        var style by mutableStateOf(AppStyle.POP)
+        val byId = AchievementCatalog.all.associateBy { it.id }
+        compose.setContent {
+            LevelUpTheme(Preferences(style = style), systemReducedMotion = false) {
+                Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    listOf(
+                        listOf("first_step", "streak_7", "streak_30", "steps_250") to AchievementState.UNLOCKED,
+                        listOf("affinity_fisico", "mastery_creatividad", "explore_9", "mastery_all") to AchievementState.UNLOCKED,
+                        listOf("affinity_finanzas", "level_10", "week_12", "level_30") to AchievementState.AVAILABLE,
+                        listOf("affinity_hogar", "mastery_digital", "mission_15", "secret_year") to AchievementState.LOCKED,
+                    ).forEach { (ids, state) ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            ids.forEach { TrophyBadge(byId.getValue(it), state, 72.dp) }
+                        }
+                    }
+                }
+            }
+        }
+        AppStyle.entries.forEach {
+            style = it
+            save("estilo-trofeos-${it.name.lowercase()}")
+        }
     }
 
     @Test fun logros() {

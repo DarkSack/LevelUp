@@ -18,6 +18,8 @@ kotlin {
         compileSdk = 37
         minSdk = 26
         withHostTest { isIncludeAndroidResources = true }
+        // La fuente Fredoka va en res/font.
+        androidResources { enable = true }
         compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
     }
     // iOS: todo lo de commonMain usa librerías multiplataforma. Para añadirlo, ver docs/IOS.md.

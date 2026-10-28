@@ -16,6 +16,7 @@ import app.levelup.domain.MotionPref
 import app.levelup.domain.NotificationLevel
 import app.levelup.domain.Preferences
 import app.levelup.domain.Reminders
+import app.levelup.domain.AppStyle
 import app.levelup.domain.ThemePref
 import app.levelup.ui.Fmt
 import app.levelup.ui.components.ChoiceRow
@@ -117,6 +118,11 @@ fun AccessibilitySection(prefs: Preferences, onChange: PrefsChange) {
         "Movimiento", listOf(MotionPref.SYSTEM to "Como el teléfono", MotionPref.REDUCED to "Reducido", MotionPref.FULL to "Completo"),
         prefs.motion, { m -> onChange { it.copy(motion = m) } },
         description = "Reducido quita las animaciones decorativas.",
+    )
+    ChoiceRow(
+        "Estilo", listOf(AppStyle.POP to "Pop", AppStyle.AVENTURA to "Aventura", AppStyle.NEON to "Neón"),
+        prefs.style, { v -> onChange { it.copy(style = v) } },
+        description = "Aventura y Neón son siempre oscuros; el tema claro u oscuro se aplica a Pop.",
     )
     ChoiceRow(
         "Tema", listOf(ThemePref.SYSTEM to "Como el teléfono", ThemePref.LIGHT to "Claro", ThemePref.DARK to "Oscuro"),

@@ -1,6 +1,13 @@
 package app.levelup.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
+import app.levelup.ui.theme.StyleBorder
+import app.levelup.ui.theme.styleShadow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +29,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -57,10 +62,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.levelup.content.Categories
-import app.levelup.domain.AchievementState
 import app.levelup.domain.Cosmetic
 import app.levelup.domain.CustomCategory
-import app.levelup.domain.TrophyTier
 import app.levelup.ui.Fmt
 import app.levelup.ui.theme.Brand
 import app.levelup.ui.theme.Space
@@ -148,7 +151,12 @@ fun LabeledProgress(fraction: Float, label: String, modifier: Modifier = Modifie
         LinearProgressIndicator(
             progress = { fraction.coerceIn(0f, 1f) },
             color = color,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 8.dp),
+            trackColor = MaterialTheme.colorScheme.surface,
+            strokeCap = StrokeCap.Butt,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
+            modifier = Modifier.fillMaxWidth().height(14.dp).clip(CircleShape)
+                .border(StyleBorder, MaterialTheme.colorScheme.outline, CircleShape),
         )
         Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Space.xs))
     }
@@ -176,20 +184,23 @@ fun DifficultyLabel(difficulty: Int, modifier: Modifier = Modifier) {
 
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    Button(onClick, modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = enabled) { Text(text) }
+    Button(onClick, modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = enabled, shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(StyleBorder, MaterialTheme.colorScheme.outline)) { Text(text) }
 }
 
 @Composable
 fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    OutlinedButton(onClick, modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = enabled) { Text(text) }
+    OutlinedButton(onClick, modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = enabled, shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(StyleBorder, MaterialTheme.colorScheme.outline)) { Text(text) }
 }
 
+/** Tarjeta del estilo pop: borde de tinta y sombra sólida. */
 @Composable
 fun InfoCard(modifier: Modifier = Modifier, container: Color = MaterialTheme.colorScheme.surface, content: @Composable () -> Unit) {
     Card(
-        modifier.fillMaxWidth(),
+        modifier.fillMaxWidth().styleShadow(),
         colors = CardDefaults.cardColors(containerColor = container),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(StyleBorder, MaterialTheme.colorScheme.outline),
     ) {
         Column(Modifier.padding(Space.l)) { content() }
     }
@@ -288,34 +299,6 @@ fun EmptyState(title: String, body: String, modifier: Modifier = Modifier, actio
     }
 }
 
-/** Trofeo: medalla del color de su nivel; bloqueado lleva candado y disponible solo contorno. El texto va aparte. */
-@Composable
-fun TrophyBadge(tier: TrophyTier, state: AchievementState, size: Dp = 48.dp) {
-    val tierColor = when (tier) {
-        TrophyTier.BRONZE -> Color(0xFFB07A3B)
-        TrophyTier.SILVER -> Color(0xFF8A939B)
-        TrophyTier.GOLD -> Color(0xFFC99A0E)
-        TrophyTier.PLATINUM -> Color(0xFF5B7FA6)
-    }
-    val muted = MaterialTheme.colorScheme.outline
-    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(size)) {
-            when (state) {
-                AchievementState.UNLOCKED -> drawCircle(tierColor)
-                AchievementState.AVAILABLE -> drawCircle(tierColor, style = androidx.compose.ui.graphics.drawscope.Stroke(this.size.minDimension * 0.08f))
-                AchievementState.LOCKED -> drawCircle(muted.copy(alpha = 0.25f))
-            }
-        }
-        val icon = if (state == AchievementState.LOCKED) Icons.Filled.Lock else Icons.Filled.Star
-        val tint = when (state) {
-            AchievementState.UNLOCKED -> Color.White
-            AchievementState.AVAILABLE -> tierColor
-            AchievementState.LOCKED -> muted
-        }
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenScaffold(
@@ -330,6 +313,7 @@ fun ScreenScaffold(
         bottomBar = bottomBar,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 title = { Text(title, modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
                     if (onBack != null) {

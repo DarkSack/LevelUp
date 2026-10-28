@@ -42,7 +42,7 @@ class I18nTest {
 
     /** Busca en el código los textos para personas ("a" + "b" cuenta como uno) y exige su traducción. */
     @Test fun everyTextInTheCodeIsTranslated() {
-        val notText = setOf("KotlinNoActualForExpect")
+        val notText = setOf("KotlinNoActualForExpect", "POP") // POP: valor por defecto de la columna style
         val dataFiles = setOf("CsvExport.kt", "Sync.kt") // SQL y columnas del CSV: no son interfaz
         val tagWords = setOf("casa", "exterior", "trabajo", "libre", "sin") // etiquetas del catálogo, no se muestran
         val skipLine = Regex("""^\s*(import|package|//|\*|/\*)|@SerialName|Regex\(|@Query|println\(|error\("|require\(|check(NotNull)?\(""")

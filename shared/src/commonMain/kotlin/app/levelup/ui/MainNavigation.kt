@@ -68,6 +68,8 @@ import app.levelup.ui.progress.AchievementsScreen
 import app.levelup.ui.progress.ProgressScreen
 import androidx.compose.ui.unit.dp
 import app.levelup.ui.theme.LocalReduceMotion
+import app.levelup.ui.theme.StyleBorder
+import androidx.compose.material3.HorizontalDivider
 import app.levelup.ui.theme.Space
 import app.levelup.ui.welcome.WelcomeScreen
 import app.levelup.ui.extra.FocusScreen
@@ -257,15 +259,18 @@ private val tabs = listOf(
 
 @Composable
 private fun TabBar(current: Any, nav: Nav) {
-    NavigationBar {
-        tabs.forEach { tab ->
-            NavigationBarItem(
-                selected = tab.route == current,
-                onClick = { if (tab.route != current) nav.tab(tab.route) },
-                icon = { Icon(tab.icon, contentDescription = null) },
-                label = { Text(tab.label) },
-                alwaysShowLabel = true,
-            )
+    Column {
+        HorizontalDivider(thickness = StyleBorder, color = MaterialTheme.colorScheme.outline)
+        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+            tabs.forEach { tab ->
+                NavigationBarItem(
+                    selected = tab.route == current,
+                    onClick = { if (tab.route != current) nav.tab(tab.route) },
+                    icon = { Icon(tab.icon, contentDescription = null) },
+                    label = { Text(tab.label) },
+                    alwaysShowLabel = true,
+                )
+            }
         }
     }
 }
@@ -301,7 +306,7 @@ private fun CelebrationDialog(c: Celebration, onDismiss: () -> Unit) {
                 c.achievements.forEach { a ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.graphicsLayer { scaleX = scale; scaleY = scale }) {
-                            TrophyBadge(a.tier, AchievementState.UNLOCKED, size = 40.dp)
+                            TrophyBadge(a, AchievementState.UNLOCKED, size = 40.dp)
                         }
                         Spacer(Modifier.size(Space.m))
                         Column {
