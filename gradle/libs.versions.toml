@@ -23,7 +23,7 @@ androidx-test-core = "1.7.0"
 sqlite = "2.6.2"
 supabase = "3.8.0"
 # La que usa supabase-kt 3.8.0.
-ktor = "3.5.1"
+ktor = "3.6.0"
 play-billing = "9.1.0"
 health-connect = "1.1.0"
 play-services-wearable = "20.0.1"
