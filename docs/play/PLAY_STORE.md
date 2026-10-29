@@ -20,39 +20,42 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 
 Se pegan tal cual en «Notas de la versión» al crear cada versión. `es-419` es español (Latinoamérica), el idioma
 predeterminado de la ficha, y van también en inglés (`en-US`) y portugués (`pt-BR`), los otros idiomas de la app;
-Play admite 500 caracteres por idioma (teléfono: 479, 486 y 499; reloj: 166, 200 y 180).
+Play admite 500 caracteres por idioma (teléfono: 481, 498 y 496; reloj: 166, 200 y 180).
 
 Teléfono:
 
 ```
 <es-419>
 Primera versión de LevelUp.
-• Más de 130 retos diarios en nueve áreas, según tus objetivos y tu tiempo.
-• Experiencia, niveles, títulos, 53 logros (4 secretos) y misiones.
-• Sin castigos: simplifica, cambia o pospón un reto; los descansos no rompen tu racha.
-• Metas, favoritos, revisión semanal, widget de hoy y atajos.
-• Pasos y ejercicio de Health Connect en los retos físicos (opcional).
+• Más de 130 retos diarios en nueve áreas, a tu medida.
+• Experiencia, niveles, misiones y 53 trofeos de bronce a platino.
+• Tres estilos para la app: Pop, Aventura y Neón.
+• Sin castigos: simplifica, cambia o pospón un reto; descansar no rompe tu racha.
+• Metas, favoritos, revisión semanal, widget y atajos.
+• Health Connect verifica tus retos físicos (opcional).
 • Cuenta opcional para sincronizar y retarte con amigos.
 • También en tu reloj Wear OS.
 </es-419>
 <en-US>
 First release of LevelUp.
-• Over 130 daily challenges in nine areas, matched to your goals and your time.
-• Experience, levels, titles, 53 achievements (4 secret) and missions.
-• No penalties: simplify, swap or postpone a challenge; rest days don't break your streak.
-• Goals, favorites, weekly review, today widget and shortcuts.
-• Health Connect steps and exercise in physical challenges (optional).
+• Over 130 daily challenges in nine areas, tailored to you.
+• Experience, levels, missions and 53 trophies from bronze to platinum.
+• Three app styles: Pop, Adventure and Neon.
+• No penalties: simplify, swap or postpone a challenge; resting doesn't break your streak.
+• Goals, favorites, weekly review, widget and shortcuts.
+• Health Connect verifies your physical challenges (optional).
 • Optional account to sync and challenge your friends.
 • Also on your Wear OS watch.
 </en-US>
 <pt-BR>
 Primeira versão do LevelUp.
-• Mais de 130 desafios diários em nove áreas, conforme seus objetivos e seu tempo.
-• Experiência, níveis, títulos, 53 conquistas (4 secretas) e missões.
-• Sem castigos: simplifique, troque ou adie um desafio; o descanso não quebra sua sequência.
-• Metas, favoritos, revisão semanal, widget de hoje e atalhos.
-• Passos e exercício do Health Connect nos desafios físicos (opcional).
-• Conta opcional para sincronizar e desafiar seus amigos.
+• Mais de 130 desafios diários em nove áreas, do seu jeito.
+• Experiência, níveis, missões e 53 troféus de bronze a platina.
+• Três estilos para o app: Pop, Aventura e Neon.
+• Sem castigos: simplifique, troque ou adie um desafio; descansar não quebra sua sequência.
+• Metas, favoritos, revisão semanal, widget e atalhos.
+• O Health Connect verifica seus desafios físicos (opcional).
+• Conta opcional para sincronizar e desafiar amigos.
 • Também no seu relógio Wear OS.
 </pt-BR>
 ```
