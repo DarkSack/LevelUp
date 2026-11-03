@@ -371,7 +371,7 @@ fun WeeklyReviewScreen(vm: LevelUpViewModel, nav: Nav) {
             SectionTitle("Prioridades")
             GoalsSection(prefs, custom) { change -> vm.updatePrefs(change) }
 
-            PrimaryButton("Listo", { vm.markWeeklyReviewed(); nav.back() }, Modifier.padding(top = Space.m))
+            PrimaryButton("Listo", { vm.finishWeeklyReview(); nav.back() }, Modifier.padding(top = Space.m))
         }
     }
 }

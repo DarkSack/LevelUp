@@ -1,5 +1,8 @@
 package app.levelup.content
 
+import app.levelup.pets.PetStage
+import app.levelup.pets.PetMood
+import kotlinx.datetime.LocalDate
 import app.levelup.domain.Preferences
 import app.levelup.pets.Accessory
 import app.levelup.pets.FlameTier
@@ -62,6 +65,9 @@ object Pets {
 
     fun name(species: Species): String = names.getValue(species)
 
+    /** Lo que se ve de la mascota fuera de la app (widget y reloj). */
+    data class Snapshot(val species: Species, val mood: PetMood, val accessories: Set<Accessory>, val stage: PetStage, val name: String)
+
     /** Para elegir la primera, gratis, al empezar. */
     val STARTERS = listOf(Species.GATO, Species.PERRO)
 
@@ -93,16 +99,36 @@ object Pets {
         return all.entries.joinToString("|") { "${it.key.key}=${it.value}" }
     }
 
-    /** [price] en gemas (0 = viene incluido). [unlockedBy]: logro que hace falta antes de poder comprarlo. */
-    class Extra(val accessory: Accessory, val name: String, val price: Int, val unlockedBy: String? = null)
+    /** Temporada del año, de [from] a [to] (mes, día) inclusive; puede cruzar el año nuevo. */
+    enum class Season(val label: String, val from: Pair<Int, Int>, val to: Pair<Int, Int>) {
+        SAN_VALENTIN("San Valentín", 2 to 1, 2 to 15),
+        HALLOWEEN("Halloween", 10 to 15, 10 to 31),
+        MUERTOS("Día de Muertos", 10 to 25, 11 to 5),
+        NAVIDAD("Navidad", 12 to 1, 1 to 6);
+
+        fun has(date: LocalDate): Boolean {
+            val d = date.month.ordinal + 1 to date.day
+            fun le(a: Pair<Int, Int>, b: Pair<Int, Int>) = a.first < b.first || (a.first == b.first && a.second <= b.second)
+            return if (le(from, to)) le(from, d) && le(d, to) else le(from, d) || le(d, to)
+        }
+    }
+
+    /**
+     * [price] en gemas (0 = viene incluido). [unlockedBy]: logro que hace falta antes de poder comprarlo.
+     * [season]: solo se compra en esa temporada; lo comprado se queda para siempre.
+     */
+    class Extra(val accessory: Accessory, val name: String, val price: Int, val unlockedBy: String? = null, val season: Season? = null)
 
     val accessories = listOf(
         Extra(Accessory.MONO, "Moño", 0),
-        Extra(Accessory.FLOR, "Cempasúchil", 30),
+        Extra(Accessory.FLOR, "Cempasúchil", 30, season = Season.MUERTOS),
+        Extra(Accessory.CATRINA, "Sombrero de Catrina", 120, season = Season.MUERTOS),
+        Extra(Accessory.CALABAZA, "Calabaza", 60, season = Season.HALLOWEEN),
+        Extra(Accessory.RENO, "Cuernos de reno", 60, season = Season.NAVIDAD),
         Extra(Accessory.BOINA, "Boina", 30),
         Extra(Accessory.GORRA, "Gorra", 30),
         Extra(Accessory.AUDIFONOS, "Audífonos", 60),
-        Extra(Accessory.NAVIDAD, "Gorro navideño", 60),
+        Extra(Accessory.NAVIDAD, "Gorro navideño", 60, season = Season.NAVIDAD),
         Extra(Accessory.GORRO, "Gorro de fiesta", 120),
         Extra(Accessory.MAGO, "Sombrero de mago", 120),
         Extra(Accessory.VIKINGO, "Casco vikingo", 120),
@@ -114,7 +140,7 @@ object Pets {
         Extra(Accessory.BIGOTE, "Bigote", 30),
         Extra(Accessory.REDONDOS, "Lentes redondos", 30),
         Extra(Accessory.LENTES, "Lentes de sol", 60),
-        Extra(Accessory.CORAZONES, "Lentes de corazón", 60),
+        Extra(Accessory.CORAZONES, "Lentes de corazón", 60, season = Season.SAN_VALENTIN),
         Extra(Accessory.MONOCULO, "Monóculo", 60),
         Extra(Accessory.ANTIFAZ, "Máscara de luchador", 120),
         Extra(Accessory.PALIACATE, "Paliacate", 0),
@@ -139,9 +165,10 @@ object Pets {
 
     fun withAccessory(prefs: Preferences, a: Accessory): String = Accessory.format(Accessory.parse(prefs.ownedAccessories) + a)
 
-    /** Los que ya se pueden comprar: sin logro pendiente. */
-    fun gatesOpen(achievements: Set<String>): Set<Accessory> =
-        accessories.filter { it.unlockedBy == null || it.unlockedBy in achievements }.map { it.accessory }.toSet()
+    /** Los que ya se pueden comprar: sin logro pendiente y, si son de temporada, en su temporada. */
+    fun gatesOpen(achievements: Set<String>, today: LocalDate): Set<Accessory> = accessories.filter {
+        (it.unlockedBy == null || it.unlockedBy in achievements) && (it.season == null || it.season.has(today))
+    }.map { it.accessory }.toSet()
 
     fun slotName(slot: Slot): String = when (slot) {
         Slot.HEAD -> "Cabeza"

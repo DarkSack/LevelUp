@@ -13,6 +13,11 @@ class GemsTest {
         assertEquals(3 + 2, Gems.earned(list))
     }
 
+    @Test fun achievementsAndReviewsAddGems() {
+        val trophies = listOf(TrophyTier.BRONZE, TrophyTier.GOLD, TrophyTier.PLATINUM)
+        assertEquals(2 + 5 + 20 + 40 + 2 * Gems.PER_REVIEW, Gems.earned(done(LocalDate(2026, 11, 1), 2), trophies, reviews = 2))
+    }
+
     @Test fun eachPetCostsMoreThanTheLast() {
         assertEquals(listOf(100, 175, 275, 400, 550, 725, 925), (0..6).map(Gems::price))
         assertEquals(0, Gems.spent(0))

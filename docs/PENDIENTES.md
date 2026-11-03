@@ -40,6 +40,13 @@ En producción «Confirm email» está apagado (Authentication → Sign In / Pro
 el 2026-10-26 y `/auth/v1/settings` da `mailer_autoconfirm: true`); si se vuelve a encender, el registro falla. En
 local también está apagado (`enable_confirmations = false`).
 
+**Código de recuperación (2026-11-03, migración `20261103130000_codigo_recuperacion`).** Sin correo: con la sesión
+iniciada se crea en Cuenta un código de un solo uso (el servidor guarda solo su hash); con él, en «¿Olvidaste tu
+contraseña?», se pone una nueva (máx. 5 intentos por cuenta y hora; cierra las sesiones abiertas).
+
+**Supabase despierto (2026-11-03).** `.github/workflows/despierto.yml` llama a `public.ping` cada 3 días para que el
+proyecto gratis no se pause; usa los secretos del repo `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`.
+
 **Más adelante: recuperar contraseñas (correo propio, SMTP).** En el plan gratis, con el remitente de serie,
 Supabase no deja cambiar las plantillas y solo envía 2 correos por hora. Si algún día se quiere recuperar
 contraseñas (ver [PLAY_STORE.md](play/PLAY_STORE.md) §9):

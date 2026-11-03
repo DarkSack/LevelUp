@@ -100,13 +100,20 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
             ) {
                 item {
                     val greeting = when (hour) { in 5..11 -> "Buenos días"; in 12..19 -> "Buenas tardes"; else -> "Buenas noches" }
-                    Text(
-                        if (prefs.displayName.isBlank()) greeting else "$greeting, ${prefs.displayName}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        // Con mascota, el saludo deja sitio a su derecha y ocupa lo que ella mide.
-                        modifier = Modifier.semantics { heading() }.padding(bottom = Space.m)
-                            .then(if (showPet) Modifier.padding(end = 100.dp).heightIn(min = 88.dp) else Modifier),
-                    )
+                    // La mascota va junto al saludo y sube con la pantalla: fija tapaba las tarjetas al bajar.
+                    Box(Modifier.fillMaxWidth()) {
+                        Text(
+                            if (prefs.displayName.isBlank()) greeting else "$greeting, ${prefs.displayName}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            // Con mascota, el saludo deja sitio a su derecha y ocupa lo que ella mide.
+                            modifier = Modifier.semantics { heading() }.padding(bottom = Space.m)
+                                .then(if (showPet) Modifier.padding(end = 100.dp).heightIn(min = 88.dp) else Modifier),
+                        )
+                        if (showPet) {
+                            FloatingPet(species, progress, doneToday = visible.any { it.status == InstanceStatus.COMPLETED },
+                                onOpen = { nav.settings("pet") }, Modifier.align(Alignment.TopEnd))
+                        }
+                    }
                     sync()
                 }
                 if (!simple && gameOn) {
@@ -294,10 +301,6 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
                         TextButton(onClick = nav::achievements) { Text("Ver logros y trofeos") }
                     }
                 }
-            }
-            if (showPet) {
-                FloatingPet(species, progress, doneToday = visible.any { it.status == InstanceStatus.COMPLETED }, onOpen = { nav.settings("pet") },
-                    Modifier.align(Alignment.TopEnd).padding(top = padding.calculateTopPadding(), end = Space.s))
             }
         }
     }

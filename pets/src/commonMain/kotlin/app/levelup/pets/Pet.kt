@@ -1,5 +1,11 @@
 package app.levelup.pets
 
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Canvas as GraphicsCanvas
+import androidx.compose.ui.geometry.Size
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -23,6 +29,17 @@ import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.tanh
+
+/** Lo que ha crecido la mascota, por la mejor racha (así no se encoge si la racha se apaga). */
+enum class PetStage(val from: Int, val size: Float) {
+    BABY(0, 0.78f), YOUNG(7, 0.9f), ADULT(30, 1f);
+
+    val next: PetStage? get() = entries.getOrNull(ordinal + 1)
+
+    companion object {
+        fun of(bestStreak: Int): PetStage = entries.last { bestStreak >= it.from }
+    }
+}
 
 /** Cómo está la mascota. */
 enum class PetMood {
@@ -79,7 +96,7 @@ private const val LOOP_MS = 4800
 @Composable
 fun Pet(
     species: Species, mood: PetMood, modifier: Modifier = Modifier, accessories: Set<Accessory> = emptySet(),
-    animated: Boolean = true, onClick: (() -> Unit)? = null,
+    animated: Boolean = true, onClick: (() -> Unit)? = null, stage: PetStage = PetStage.ADULT,
 ) {
     val phase = if (animated) {
         rememberInfiniteTransition(label = "pet").animateFloat(
@@ -94,18 +111,21 @@ fun Pet(
             if (animated) scope.launch { poke.snapTo(0f); poke.animateTo(1f, tween(900, easing = LinearEasing)); poke.snapTo(0f) }
         }
     }
-    PetFrame(species, mood, phase, modifier.then(tap), accessories, poke.value)
+    PetFrame(species, mood, phase, modifier.then(tap), accessories, poke.value, stage)
 }
 
 /** Un fotograma fijo: [phase] va de 0 a 1 en el bucle y [poke] de 0 a 1 en la reacción al toque. */
 @Composable
 fun PetFrame(
     species: Species, mood: PetMood, phase: Float, modifier: Modifier = Modifier, accessories: Set<Accessory> = emptySet(), poke: Float = 0f,
+    stage: PetStage = PetStage.ADULT,
 ) {
     Canvas(modifier) {
         val s = size.minDimension / 100f
         translate((size.width - 100f * s) / 2, (size.height - 100f * s) / 2) {
-            scale(s, s, pivot = Offset.Zero) { drawPet(species, Pose(phase, mood, poke), accessories) }
+            scale(s, s, pivot = Offset.Zero) {
+                scale(stage.size, pivot = Offset(50f, 92f)) { drawPet(species, Pose(phase, mood, poke), accessories) }
+            }
         }
     }
 }
@@ -218,9 +238,9 @@ private fun DrawScope.drawPet(species: Species, p: Pose, extras: Set<Accessory>)
     }
 }
 
-/** Huevo que se mece: lo que se ve antes de elegir la primera mascota. */
+/** Huevo que se mece: lo que se ve antes de elegir la primera mascota. [crack] de 0 a 1: se agrieta y destella al abrirse. */
 @Composable
-fun PetEgg(modifier: Modifier = Modifier, animated: Boolean = true, alebrije: Boolean = false) {
+fun PetEgg(modifier: Modifier = Modifier, animated: Boolean = true, alebrije: Boolean = false, crack: Float = 0f) {
     val phase = if (animated) {
         rememberInfiniteTransition(label = "egg").animateFloat(
             0f, 1f, infiniteRepeatable(tween(2400, easing = LinearEasing), RepeatMode.Restart), label = "phase",
@@ -229,7 +249,18 @@ fun PetEgg(modifier: Modifier = Modifier, animated: Boolean = true, alebrije: Bo
     Canvas(modifier) {
         val s = size.minDimension / 100f
         translate((size.width - 100f * s) / 2, (size.height - 100f * s) / 2) {
-            scale(s, s, pivot = Offset.Zero) { egg(phase, alebrije) }
+            scale(s, s, pivot = Offset.Zero) { egg(phase, alebrije, crack) }
         }
     }
+}
+
+/** La mascota quieta en una imagen de [px] × [px], para lo que no es Compose (el widget de Inicio). */
+fun renderPet(species: Species, mood: PetMood, px: Int, accessories: Set<Accessory> = emptySet(), stage: PetStage = PetStage.ADULT): ImageBitmap {
+    val image = ImageBitmap(px, px)
+    CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, GraphicsCanvas(image), Size(px.toFloat(), px.toFloat())) {
+        scale(px / 100f, px / 100f, pivot = Offset.Zero) {
+            scale(stage.size, pivot = Offset(50f, 92f)) { drawPet(species, Pose(STILL, mood, 0f), accessories) }
+        }
+    }
+    return image
 }

@@ -1,5 +1,7 @@
 package app.levelup.ui.account
 
+import app.levelup.i18n.tr
+import app.levelup.cloud.Login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.levelup.cloud.AccountState
@@ -70,6 +72,42 @@ class CloudViewModel(private val service: CloudService) : ViewModel() {
     fun signIn(login: String, password: String) = run("Sesión iniciada. Tus datos se están sincronizando.", { service.signIn(login, password) })
     fun signUp(login: String, password: String) = run("Cuenta creada. Tus datos ya se guardan en la nube.", { service.signUp(login, password) })
     fun changePassword(password: String, onDone: () -> Unit) = run("Contraseña cambiada.", { service.changePassword(password) }) { onDone() }
+
+    val recoveryCodeDate = MutableStateFlow<String?>(null)
+
+    fun loadRecoveryCodeDate() = viewModelScope.launch {
+        recoveryCodeDate.value = runCatching { service.cloud.recoveryCodeDate() }.getOrNull()
+    }
+
+    fun createRecoveryCode(onCode: (String) -> Unit) = run(null, { runCatching { service.cloud.createRecoveryCode() } }) {
+        onCode(it)
+        loadRecoveryCodeDate()
+    }
+
+    /** Pone la contraseña nueva con el código y, si sale bien, entra con ella. */
+    fun recoverPassword(login: String, code: String, password: String) = viewModelScope.launch {
+        _busy.value = true
+        try {
+            val result = runCatching { service.cloud.recoverPassword(Login.email(login), code, password) }
+            val problem = when (result.getOrNull()) {
+                "ok" -> null
+                "invalid" -> "Ese código no es de esa cuenta o ya se usó."
+                "weak_password" -> "La contraseña necesita al menos 8 caracteres, con letras y números."
+                "rate_limited" -> "Demasiados intentos. Espera una hora."
+                else -> CloudErrors.message(result.exceptionOrNull() ?: IllegalStateException())
+            }
+            if (problem != null) {
+                _messages.emit(tr(problem))
+                return@launch
+            }
+            service.signIn(login, password).fold(
+                onSuccess = { _messages.emit(tr("Contraseña cambiada. Crea un código nuevo en Cuenta: el anterior ya no sirve.")) },
+                onFailure = { _messages.emit(CloudErrors.message(it)) },
+            )
+        } finally {
+            _busy.value = false
+        }
+    }
 
     fun syncNow() = run("Sincronizado.", { service.syncNow() })
     fun signOutOthers() = run("Se cerró la sesión en tus otros dispositivos.", { service.signOutOtherDevices() }) { loadSessions() }

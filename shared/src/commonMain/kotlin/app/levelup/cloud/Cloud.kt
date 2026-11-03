@@ -268,6 +268,18 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
 
     suspend fun sessions(): List<DeviceSession> = db.rpc("my_sessions").decodeList()
 
+    /** Código de recuperación nuevo (el anterior deja de servir). Solo se puede ver ahora: el servidor guarda su hash. */
+    suspend fun createRecoveryCode(): String = db.rpc("create_recovery_code").decodeAs<String>()
+
+    /** Cuándo se creó el código vigente (ISO), o null si no hay. */
+    suspend fun recoveryCodeDate(): String? = db.rpc("my_recovery_code_date").decodeAs<String?>()
+
+    /** Sin sesión: 'ok', 'invalid', 'weak_password' o 'rate_limited' (ver la migración codigo_recuperacion). */
+    suspend fun recoverPassword(email: String, code: String, password: String): String =
+        db.rpc("recover_password", buildJsonObject {
+            put("login_email", email); put("code", code); put("new_password", password)
+        }).decodeAs<String>()
+
     suspend fun endSession(id: String) {
         db.rpc("end_session", buildJsonObject { put("session", id) })
     }

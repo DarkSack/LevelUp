@@ -47,6 +47,12 @@ import app.levelup.pets.Accessory
 import app.levelup.pets.FlameTier
 import app.levelup.pets.Pet
 import app.levelup.pets.PetEgg
+import app.levelup.pets.PetStage
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import app.levelup.pets.PetFrame
 import app.levelup.pets.PetMood
 import app.levelup.pets.STILL
@@ -125,7 +131,7 @@ fun FloatingPet(species: Species?, p: ProgressState, doneToday: Boolean, onOpen:
         role = Role.Button
         onClick { onOpen(); true }
     }) {
-        Pet(species, mood, Modifier.fillMaxSize(), wornOf(prefs.petAccessories, p), animated, onClick = onOpen)
+        Pet(species, mood, Modifier.fillMaxSize(), wornOf(prefs.petAccessories, p), animated, onClick = onOpen, stage = PetStage.of(p.stats.bestStreak))
         if (streak > 0 || mood == PetMood.SAD) {
             Row(
                 Modifier.align(Alignment.BottomStart)
@@ -175,15 +181,26 @@ fun PetSection(vm: LevelUpViewModel) {
     var buying by remember { mutableStateOf<Species?>(null) }
     var buyingExtra by remember { mutableStateOf<Pets.Extra?>(null) }
     var naming by remember { mutableStateOf<Species?>(null) }
+    val crack = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    // Recién nacido: de fiesta mientras siga en esta pantalla.
+    var hatched by remember { mutableStateOf(false) }
+    val hatch: () -> Unit = {
+        if (!crack.isRunning) scope.launch {
+            if (animated) crack.animateTo(1f, tween(1600, easing = FastOutSlowInEasing))
+            hatched = true
+            vm.hatchEgg()
+        }
+    }
 
     if (Pets.eggPending(prefs)) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(200.dp).clearAndSetSemantics {
                 contentDescription = tr("Un huevo de mascota. Tócalo para abrirlo.")
                 role = Role.Button
-                onClick { vm.hatchEgg(); true }
+                onClick { hatch(); true }
             }) {
-                PetEgg(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { vm.hatchEgg() } }, animated, alebrije = true)
+                PetEgg(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { hatch() } }, animated, alebrije = true, crack = crack.value)
             }
             Text("Por ayudarnos a probar LevelUp, este huevo es solo tuyo. ¡Tócalo!", style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center)
@@ -201,7 +218,7 @@ fun PetSection(vm: LevelUpViewModel) {
         val name = petName(prefs, species)
         // Arriba queda aire: la nube de la mascota triste sale por encima de su cuadro.
         Column(Modifier.fillMaxWidth().padding(top = Space.l), horizontalAlignment = Alignment.CenterHorizontally) {
-            Pet(species, petMood(p, done), Modifier.size(200.dp), worn, animated)
+            Pet(species, if (hatched && species == Species.ALEBRIJE) PetMood.PARTY else petMood(p, done), Modifier.size(200.dp), worn, animated, stage = PetStage.of(p.stats.bestStreak))
             Text(name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             TextButton(onClick = { naming = species }) {
                 Text(if (Pets.customName(prefs, species) == null) "Ponerle nombre" else "Cambiar su nombre")
@@ -269,6 +286,12 @@ fun PetSection(vm: LevelUpViewModel) {
         SectionTitle("Juntos")
         StatRow("Retos completados", "${p.stats.totalCompleted}")
         StatRow("Días desde el primer reto", "${p.stats.daysSinceFirst}")
+        val stage = PetStage.of(best)
+        StatRow("Etapa", tr(stageName(stage)))
+        stage.next?.let { n ->
+            Text(tr("Crece cuando tu mejor racha llegue a {0}.", Fmt.plural(n.from, "día", "días")),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         StatRow("Mascotas", "${p.ownedPets.size} / ${Species.entries.size}")
         StatRow("Accesorios conseguidos", "${p.petAccessories.size} / ${Accessory.entries.size}")
     }
@@ -280,7 +303,7 @@ fun PetSection(vm: LevelUpViewModel) {
         Text(Fmt.plural(p.gems, "gema", "gemas"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
     }
     Text(
-        tr("Ganas una gema por cada reto que completas, hasta {0} al día. Con ellas adoptas mascotas y compras accesorios; cada mascota nueva cuesta más que la anterior.", Gems.DAILY_CAP),
+        tr("Ganas una gema por cada reto que completas (hasta {0} al día), de 5 a 40 por cada logro y {1} por cada revisión semanal. Con ellas adoptas mascotas y compras accesorios; cada mascota nueva cuesta más que la anterior.", Gems.DAILY_CAP, Gems.PER_REVIEW),
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     val price = Gems.price(Pets.boughtCount(prefs))
@@ -374,7 +397,9 @@ fun PetSection(vm: LevelUpViewModel) {
                         when {
                             on -> "Puesto"
                             owned -> "Tuyo"
+                            !open && extra.season != null && source == null -> tr("Solo en {0}", tr(extra.season.label))
                             !open -> tr("Se consigue con «{0}»", source)
+                            extra.season != null -> tr("💎 {0} · de temporada", extra.price)
                             else -> tr("💎 {0}", extra.price)
                         },
                         style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center,
@@ -393,6 +418,12 @@ fun PetSection(vm: LevelUpViewModel) {
             dismissButton = { TextButton(onClick = { buyingExtra = null }) { Text("Cancelar") } },
         )
     }
+}
+
+private fun stageName(stage: PetStage) = when (stage) {
+    PetStage.BABY -> "Bebé"
+    PetStage.YOUNG -> "Joven"
+    PetStage.ADULT -> "Adulta"
 }
 
 @Composable

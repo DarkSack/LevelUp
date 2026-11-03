@@ -1,5 +1,9 @@
 package app.levelup.ui.account
 
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +52,7 @@ import kotlin.time.Instant
 import app.levelup.cloud.Login
 import app.levelup.i18n.tr
 
-private enum class Mode { SIGN_IN, SIGN_UP }
+private enum class Mode { SIGN_IN, SIGN_UP, RECOVER }
 
 /** Mismas reglas que el servidor (config.toml): al menos 8 caracteres, con letras y números. */
 internal fun passwordProblem(password: String): String? = when {
@@ -141,6 +145,34 @@ private fun GuestAccount(vm: CloudViewModel) {
             ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
             PrimaryButton("Entrar", { vm.signIn(login, password) }, enabled = !busy && loginProblem(login) == null && password.isNotEmpty())
             SecondaryButton("Crear una cuenta", { mode = Mode.SIGN_UP })
+            TextButton(onClick = { mode = Mode.RECOVER; password = ""; repeat = "" }) { Text("¿Olvidaste tu contraseña?") }
+        }
+        Mode.RECOVER -> {
+            var code by rememberSaveable { mutableStateOf("") }
+            SectionTitle("Recuperar contraseña")
+            Text(
+                "Necesitas el código de recuperación que creaste en Cuenta. Sin él no se puede recuperar: LevelUp no usa correo.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            loginField()
+            OutlinedTextField(
+                code, { code = it.take(24) }, label = { Text("Código de recuperación") }, singleLine = true,
+                placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, keyboardType = KeyboardType.Ascii),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            val problem = password.takeIf { it.isNotEmpty() }?.let(::passwordProblem)
+            passwordField("Contraseña nueva", password, { password = it }, problem)
+            val mismatch = repeat.isNotEmpty() && repeat != password
+            passwordField("Repite la contraseña", repeat, { repeat = it }, if (mismatch) "No coinciden." else null)
+            ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
+            PrimaryButton(
+                "Cambiar contraseña y entrar",
+                { vm.recoverPassword(login, code, password) },
+                enabled = !busy && loginProblem(login) == null && code.count { it.isLetterOrDigit() } == 16 &&
+                    passwordProblem(password) == null && repeat == password,
+            )
+            SecondaryButton("Volver", { mode = Mode.SIGN_IN })
         }
         Mode.SIGN_UP -> {
             SectionTitle("Crear cuenta")
@@ -151,7 +183,8 @@ private fun GuestAccount(vm: CloudViewModel) {
             passwordField("Repite la contraseña", repeat, { repeat = it }, if (mismatch) "No coinciden." else null)
             ToggleRow("Mostrar contraseña", showPassword, { showPassword = it })
             Text(
-                "Apunta tu contraseña en un lugar seguro: por ahora no se puede recuperar si la olvidas. Al crear la cuenta " +
+                "Apunta tu contraseña en un lugar seguro. Después crea un código de recuperación en Cuenta: sin correo, es la única " +
+                    "forma de recuperarla si la olvidas. Al crear la cuenta " +
                     "aceptas las condiciones de uso (shop.sackito.online/condiciones/levelup) y la política de privacidad (Perfil → Privacidad).",
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -193,6 +226,39 @@ private fun ChangePassword(vm: CloudViewModel, busy: Boolean) {
         { vm.changePassword(password) { open = false; password = ""; repeat = "" } },
         enabled = !busy && passwordProblem(password) == null && repeat == password,
     )
+}
+
+/** El código para recuperar la contraseña sin correo: se crea aquí y se ve una sola vez. */
+@Composable
+private fun RecoveryCode(vm: CloudViewModel, busy: Boolean) {
+    val date by vm.recoveryCodeDate.collectAsStateWithLifecycle()
+    var shown by remember { mutableStateOf<String?>(null) }
+    val clipboard = LocalClipboardManager.current
+    LaunchedEffect(Unit) { vm.loadRecoveryCodeDate() }
+    SectionTitle("Código de recuperación")
+    val created = date?.let { runCatching { Fmt.dateTime(Instant.parse(it).toEpochMilliseconds()) }.getOrNull() }
+    Text(
+        if (created == null) "Aún no tienes. Créalo y guárdalo fuera del teléfono: sin correo, es la única forma de recuperar tu cuenta si olvidas la contraseña."
+        else tr("Tienes uno desde {0}. Si lo pierdes, crea otro: el anterior deja de servir.", created),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    SecondaryButton(if (created == null) "Crear código" else "Crear uno nuevo", { vm.createRecoveryCode { shown = it } }, enabled = !busy)
+    shown?.let { code ->
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Tu código de recuperación") },
+            text = {
+                Column {
+                    Text(code, style = MaterialTheme.typography.headlineSmall, fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(vertical = Space.m))
+                    Text("Guárdalo en un lugar seguro, fuera de este teléfono. No se vuelve a mostrar y sirve una sola vez.",
+                        style = MaterialTheme.typography.bodyMedium)
+                }
+            },
+            confirmButton = { TextButton(onClick = { shown = null }) { Text("Ya lo guardé") } },
+            dismissButton = { TextButton(onClick = { clipboard.setText(AnnotatedString(code)) }) { Text("Copiar") } },
+        )
+    }
 }
 
 /** Estado de la sincronización en una línea, para Inicio. Nada mientras no se haya sincronizado nunca. */
@@ -259,6 +325,7 @@ private fun SignedInAccount(vm: CloudViewModel, account: AccountState.SignedIn) 
     }
     SecondaryButton("Cerrar sesión en mis otros dispositivos", vm::signOutOthers, enabled = !busy)
     ChangePassword(vm, busy)
+    RecoveryCode(vm, busy)
     SecondaryButton("Cerrar sesión", { scope.launch { confirmSignOut = vm.hasPending() } }, enabled = !busy)
 
     SectionTitle("Borrar la cuenta")

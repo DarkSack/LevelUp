@@ -1,5 +1,8 @@
 package app.levelup.ui.social
 
+import app.levelup.ui.theme.LocalReduceMotion
+import androidx.compose.foundation.clickable
+import app.levelup.pets.Pet
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -217,7 +220,7 @@ private fun FriendsTab(vm: CloudViewModel, today: LocalDate) {
 }
 
 @Composable
-private fun PersonRow(p: ProfileCard, actions: @Composable () -> Unit) {
+private fun PersonRow(p: ProfileCard, onPet: (() -> Unit)? = null, actions: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
         Avatar(p.displayName, frameOf(p.frame), p.level, 40.dp, Avatars.emoji(p.avatar))
         Spacer(Modifier.size(Space.m))
@@ -225,7 +228,17 @@ private fun PersonRow(p: ProfileCard, actions: @Composable () -> Unit) {
             Text(p.displayName, style = MaterialTheme.typography.bodyLarge)
             Text("@${p.username}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Species.byKey(p.pet)?.let { PetFrame(it, PetMood.HAPPY, STILL, Modifier.size(52.dp), Accessory.parse(p.petAccessories)) }
+        Species.byKey(p.pet)?.let { species ->
+            val name = p.petName.ifBlank { tr(Pets.name(species)) }
+            PetFrame(
+                species, PetMood.HAPPY, STILL,
+                Modifier.size(52.dp).then(
+                    if (onPet == null) Modifier
+                    else Modifier.clickable(onClickLabel = tr("Visitar a {0}", name), onClick = onPet).semantics { contentDescription = name },
+                ),
+                Accessory.parse(p.petAccessories),
+            )
+        }
         actions()
     }
 }
@@ -236,8 +249,9 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
     var confirm by remember { mutableStateOf<String?>(null) }
     var reporting by remember { mutableStateOf(false) }
     var cheering by remember { mutableStateOf(false) }
+    var visiting by remember { mutableStateOf(false) }
     InfoCard {
-        PersonRow(p) {
+        PersonRow(p, onPet = { visiting = true }) {
             Box {
                 IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = tr("Más opciones para {0}", p.displayName)) }
                 DropdownMenu(menu, { menu = false }) {
@@ -294,7 +308,25 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
         )
     }
     if (reporting) ReportDialog(p, vm) { reporting = false }
+    Species.byKey(p.pet)?.takeIf { visiting }?.let { species ->
+        val name = p.petName.ifBlank { tr(Pets.name(species)) }
+        AlertDialog(
+            onDismissRequest = { visiting = false },
+            title = { Text(tr("{0}, de {1}", name, p.displayName)) },
+            text = {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Pet(species, PetMood.HAPPY, Modifier.size(160.dp), Accessory.parse(p.petAccessories), !LocalReduceMotion.current)
+                    Text("Tócala para jugar con ella.", style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                }
+            },
+            confirmButton = { TextButton(onClick = { visiting = false; vm.react(p.userId, PET_LOVE) }) { Text("Hacerle cariño ❤️") } },
+            dismissButton = { TextButton(onClick = { visiting = false }) { Text("Cerrar") } },
+        )
+    }
 }
+
+/** Reacción de «hacerle cariño a la mascota» (ver la migración carino_mascota). */
+private const val PET_LOVE = "mascota"
 
 @Composable
 private fun ReportDialog(p: ProfileCard, vm: CloudViewModel, onDone: () -> Unit) {
@@ -572,7 +604,7 @@ fun noticeText(n: SocialNotice): String {
     return when (n.kind) {
         "friend_request" -> tr("{0} quiere ser tu amigo.", who)
         "friend_accepted" -> tr("{0} aceptó tu solicitud.", who)
-        "reaction" -> Encouragements.firstOrNull { it.first == n.refId }?.let { tr("{0} te dice: «{1}»", who, it.second) }
+        "reaction" -> if (n.refId == PET_LOVE) tr("{0} le hizo cariño a tu mascota.", who) else Encouragements.firstOrNull { it.first == n.refId }?.let { tr("{0} te dice: «{1}»", who, it.second) }
             ?: tr("{0} te felicitó {1}", who, Reactions.firstOrNull { it.first == n.refId }?.second.orEmpty()).trim()
         "group_invite" -> tr("{0} te invitó a un reto en grupo.", who)
         "group_joined" -> tr("{0} se unió a tu reto en grupo.", who)

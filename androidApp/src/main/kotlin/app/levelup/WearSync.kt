@@ -1,5 +1,7 @@
 package app.levelup
 
+import app.levelup.pets.Accessory
+import app.levelup.content.Pets
 import android.content.Context
 import app.levelup.domain.TodaySummary
 import com.google.android.gms.wearable.MessageEvent
@@ -21,7 +23,7 @@ object WearSync {
     const val PATH_REFRESH = "/levelup/pedir"
 
     /** Sin reloj o sin servicios de Google, falla en silencio: el reloj es opcional. */
-    suspend fun publish(context: Context, s: TodaySummary) {
+    suspend fun publish(context: Context, s: TodaySummary, pet: Pets.Snapshot?) {
         val request = PutDataMapRequest.create(PATH_TODAY).apply {
             dataMap.putString("fecha", s.date.toString())
             dataMap.putString("principalId", s.mainId.orEmpty())
@@ -32,6 +34,12 @@ object WearSync {
             dataMap.putStringArrayList("titulos", ArrayList(s.items.map { tr(it.title) }))
             dataMap.putIntegerArrayList("hechos", ArrayList(s.items.map { if (it.done) 1 else 0 }))
             dataMap.putStringArrayList("metas", ArrayList(s.goals.map { tr(it) }))
+            // La mascota, con las claves de app.levelup.pets (vacío = sin mascota).
+            dataMap.putString("mascota", pet?.species?.key.orEmpty())
+            dataMap.putString("mascotaAnimo", pet?.mood?.name.orEmpty())
+            dataMap.putString("mascotaAccesorios", pet?.let { Accessory.format(it.accessories) }.orEmpty())
+            dataMap.putString("mascotaEtapa", pet?.stage?.name.orEmpty())
+            dataMap.putString("mascotaNombre", pet?.name.orEmpty())
         }.asPutDataRequest().setUrgent()
         runCatching { Wearable.getDataClient(context).putDataItem(request).await() }
     }
@@ -49,7 +57,7 @@ class WearListenerService : WearableListenerService() {
             }
             WearSync.PATH_REFRESH -> runBlocking {
                 app.repo.ensureToday()
-                WearSync.publish(this@WearListenerService, app.repo.todaySummary.first())
+                WearSync.publish(this@WearListenerService, app.repo.todaySummary.first(), app.repo.petSnapshot())
             }
         }
     }

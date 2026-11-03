@@ -14,6 +14,11 @@ class RemindersAndRulesTest {
     private val on = Preferences(remindersEnabled = true, notificationLevel = NotificationLevel.LOW)
     private val evening = LocalDateTime(MONDAY, LocalTime(19, 0))
 
+    @Test fun petNamesTheReminder() {
+        assertEquals("Chispa te acompaña: un reto para hoy", Reminders.decide(evening, on, DayKind.ACTIVE, listOf("Leer"), MONDAY, "Chispa")?.title)
+        assertEquals("Un reto para hoy", Reminders.decide(evening, on, DayKind.ACTIVE, listOf("Leer"), MONDAY)?.title)
+    }
+
     @Test fun offWhenDisabled() {
         assertNull(Reminders.decide(evening, on.copy(remindersEnabled = false), DayKind.ACTIVE, listOf("Leer"), MONDAY))
         assertNull(Reminders.decide(evening, on.copy(notificationLevel = NotificationLevel.OFF), DayKind.ACTIVE, listOf("Leer"), MONDAY))

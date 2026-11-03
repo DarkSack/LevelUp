@@ -1,5 +1,9 @@
 package app.levelup.wear
 
+import app.levelup.pets.Species
+import app.levelup.pets.PetStage
+import app.levelup.pets.PetMood
+import app.levelup.pets.Accessory
 import android.content.Context
 import android.net.Uri
 import com.google.android.gms.wearable.DataClient
@@ -22,8 +26,12 @@ data class Today(
     val total: Int,
     val items: List<Item>,
     val goals: List<String>,
+    /** La mascota de Inicio del teléfono, o null si no tiene. */
+    val pet: Pet? = null,
 ) {
     data class Item(val id: String, val title: String, val done: Boolean)
+
+    data class Pet(val species: Species, val mood: PetMood, val accessories: Set<Accessory>, val stage: PetStage, val name: String)
 
     /** Datos de otro día: el teléfono aún no generó los de hoy. */
     val stale: Boolean get() = date != LocalDate.now().toString()
@@ -46,6 +54,15 @@ object WatchData {
             total = map.getInt("total"),
             items = ids.indices.map { i -> Today.Item(ids[i], titles.getOrElse(i) { "" }, done.getOrElse(i) { 0 } == 1) },
             goals = map.getStringArrayList("metas").orEmpty(),
+            pet = Species.byKey(map.getString("mascota", ""))?.let { s ->
+                Today.Pet(
+                    s,
+                    PetMood.entries.firstOrNull { it.name == map.getString("mascotaAnimo", "") } ?: PetMood.CALM,
+                    Accessory.parse(map.getString("mascotaAccesorios", "")),
+                    PetStage.entries.firstOrNull { it.name == map.getString("mascotaEtapa", "") } ?: PetStage.ADULT,
+                    map.getString("mascotaNombre", ""),
+                )
+            },
         )
     }
 

@@ -37,6 +37,8 @@ object Reminders {
         dayKind: DayKind,
         pendingTitles: List<String>,
         lastActive: kotlinx.datetime.LocalDate?,
+        /** Nombre de la mascota que acompaña en Inicio: si hay, el aviso habla de ella (sin culpa, como siempre). */
+        petName: String? = null,
     ): ReminderMessage? {
         if (!prefs.remindersEnabled || prefs.notificationLevel == NotificationLevel.OFF) return null
         if (inQuietHours(now.hour * 60 + now.minute, prefs.quietStartMinute, prefs.quietEndMinute)) return null
@@ -48,13 +50,18 @@ object Reminders {
         val lastNotice = prefs.lastRecoveryNotice
         if (prefs.recoveryReminders && lastActive != null && lastActive <= limit && (lastNotice == null || lastNotice <= limit)) {
             return ReminderMessage(
-                title = "Aquí sigue tu progreso",
+                title = if (petName != null) tr("{0} te guarda tu progreso", petName) else "Aquí sigue tu progreso",
                 body = "Cuando te venga bien, hay un reto corto esperándote. Sin prisa.",
                 isRecovery = true,
             )
         }
         if (pendingTitles.isEmpty()) return null
-        val title = if (pendingTitles.size == 1) "Un reto para hoy" else tr("{0} retos para hoy", pendingTitles.size)
+        val title = when {
+            petName != null && pendingTitles.size == 1 -> tr("{0} te acompaña: un reto para hoy", petName)
+            petName != null -> tr("{0} te acompaña: {1} retos para hoy", petName, pendingTitles.size)
+            pendingTitles.size == 1 -> "Un reto para hoy"
+            else -> tr("{0} retos para hoy", pendingTitles.size)
+        }
         val body = if (prefs.notificationLevel == NotificationLevel.NORMAL) {
             pendingTitles.take(3).joinToString(" · ") { tr(it) }
         } else {

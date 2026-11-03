@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -24,6 +25,7 @@ enum class Accessory(val key: String, val slot: Slot) {
     AUDIFONOS("audifonos", Slot.HEAD), GORRO("gorro", Slot.HEAD), NAVIDAD("navidad", Slot.HEAD), MAGO("mago", Slot.HEAD),
     VIKINGO("vikingo", Slot.HEAD), COPA("copa", Slot.HEAD), SOMBRERO("sombrero", Slot.HEAD), CORONA("corona", Slot.HEAD),
     HALO("halo", Slot.HEAD), CORONA_FUEGO("corona_fuego", Slot.HEAD),
+    CALABAZA("calabaza", Slot.HEAD), CATRINA("catrina", Slot.HEAD), RENO("reno", Slot.HEAD),
     LENTES("lentes", Slot.FACE), CORAZONES("corazones", Slot.FACE), REDONDOS("redondos", Slot.FACE),
     MONOCULO("monoculo", Slot.FACE), BIGOTE("bigote", Slot.FACE), ANTIFAZ("antifaz", Slot.FACE),
     PALIACATE("paliacate", Slot.NECK), CASCABEL("cascabel", Slot.NECK), CORBATIN("corbatin", Slot.NECK),
@@ -120,6 +122,42 @@ internal fun DrawScope.accessory(a: Accessory, species: Species, beat: Float) {
             drawRect(Red, Offset(41.3f, 21.5f), Size(17.4f, 3.5f))
             part(black, 50f, 27f, 16f, 3.5f)
             drawLine(Color.White.copy(alpha = 0.35f), Offset(45f, 11f), Offset(45f, 19f), 1.4f, StrokeCap.Round)
+        }
+        Accessory.CALABAZA -> {
+            val orange = Color(0xFFF28C28)
+            drawLine(Color(0xFF3F7D3A), Offset(50f, 13f), Offset(52f, 7f), 3f, StrokeCap.Round)
+            for (dx in listOf(-7f, 7f)) part(orange, 50f + dx, 21f, 8f, 8.5f)
+            part(orange, 50f, 21f, 9f, 9.5f, shine = true)
+            // Carita de calabaza: ojos triangulares y sonrisa en zigzag.
+            for (x in listOf(46f, 54f)) drawPath(Path().apply { moveTo(x - 2.2f, 21f); lineTo(x, 17.5f); lineTo(x + 2.2f, 21f); close() }, Ink)
+            drawPath(Path().apply { moveTo(45f, 24f); lineTo(47f, 26f); lineTo(49f, 24f); lineTo(51f, 26f); lineTo(53f, 24f); lineTo(55f, 26f) },
+                Ink, style = Stroke(1.3f, cap = StrokeCap.Round))
+        }
+        Accessory.CATRINA -> {
+            val violet = Color(0xFF6B3FA0)
+            part(violet, 50f, 25f, 31f, 5.5f)
+            filledPath(Path().apply { moveTo(39f, 25f); cubicTo(39f, 11f, 61f, 11f, 61f, 25f); close() }, violet)
+            // Flores de cempasúchil y rosas en la copa, con plumas que se mecen.
+            rotate(4f * sin(TAU * beat), pivot = Offset(58f, 16f)) {
+                filledPath(Path().apply { moveTo(57f, 17f); quadraticTo(70f, 2f, 74f, 8f); quadraticTo(66f, 10f, 59f, 19f); close() }, Color(0xFFFF7EB6))
+            }
+            for ((x, c) in listOf(43f to Color(0xFFFFA62B), 50f to Color(0xFFE63946), 56f to Color(0xFFFFA62B))) {
+                part(c, x, 20f, 3.6f, 3.6f)
+                part(Color(0xFFFFE08A), x, 20f, 1.2f, 1.2f, outline = false)
+            }
+        }
+        Accessory.RENO -> {
+            val brown = Color(0xFF8B5A2B)
+            for (side in listOf(-1f, 1f)) {
+                val base = Offset(50f + side * 9f, 26f)
+                drawPath(Path().apply {
+                    moveTo(base.x, base.y); quadraticTo(base.x + side * 4f, 14f, base.x + side * 10f, 6f)
+                    moveTo(base.x + side * 3f, 16f); lineTo(base.x + side * 10f, 14f)
+                    moveTo(base.x + side * 6f, 11f); lineTo(base.x + side * 3f, 5f)
+                }, brown, style = Stroke(3.2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            }
+            drawRoundRect(Color(0xFFD62828), Offset(37f, 24f), Size(26f, 5f), CornerRadius(2.5f))
+            drawRoundRect(Ink, Offset(37f, 24f), Size(26f, 5f), CornerRadius(2.5f), style = Stroke(LINE))
         }
         Accessory.SOMBRERO -> {
             val straw = Color(0xFFF2C94C)

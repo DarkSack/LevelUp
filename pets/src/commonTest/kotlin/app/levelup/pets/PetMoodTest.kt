@@ -5,6 +5,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class PetMoodTest {
+    @Test fun growsWithBestStreak() {
+        assertEquals(listOf(PetStage.BABY, PetStage.BABY, PetStage.YOUNG, PetStage.YOUNG, PetStage.ADULT),
+            listOf(0, 6, 7, 29, 30).map(PetStage::of))
+    }
+
     @Test fun moodFollowsTheStreak() {
         assertEquals(PetMood.SLEEPY, PetMood.of(streak = 0, doneToday = false))
         assertEquals(PetMood.SAD, PetMood.of(streak = 0, doneToday = false, hadStreak = true), "la racha se apagó")

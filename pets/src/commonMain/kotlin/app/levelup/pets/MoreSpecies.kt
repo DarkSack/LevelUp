@@ -269,9 +269,9 @@ internal fun DrawScope.perro(p: Pose) {
  * Huevo que se mece y a ratos tiembla, como si algo quisiera salir.
  * Crema con manchas, o [alebrije]: turquesa con zigzag y manchas de colores (el de los betatesters).
  */
-internal fun DrawScope.egg(phase: Float, alebrije: Boolean = false) {
+internal fun DrawScope.egg(phase: Float, alebrije: Boolean = false, crack: Float = 0f) {
     val tau = 2 * PI.toFloat()
-    val shake = if (phase in 0.7f..0.85f) 6f * sin(tau * 6f * (phase - 0.7f) / 0.15f) else 0f
+    val shake = (if (phase in 0.7f..0.85f) 6f * sin(tau * 6f * (phase - 0.7f) / 0.15f) else 0f) + crack * 9f * sin(crack * 70f)
     drawOval(Color.Black.copy(alpha = 0.12f), Offset(30f, 88f), Size(40f, 7f))
     rotate(6f * sin(tau * phase) + shake, pivot = Offset(50f, 90f)) {
         val shell = Path().apply {
@@ -294,5 +294,23 @@ internal fun DrawScope.egg(phase: Float, alebrije: Boolean = false) {
                 AlMint, style = Stroke(1.8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
         drawOval(Color.White.copy(alpha = 0.5f), Offset(34f, 30f), Size(8f, 14f))
+        // La grieta avanza de izquierda a derecha mientras [crack] va de 0 a 0.7.
+        if (crack > 0f) {
+            val reach = (crack / 0.7f).coerceAtMost(1f)
+            val xs = listOf(27f, 33f, 39f, 45f, 51f, 57f, 63f, 69f, 73f)
+            drawPath(Path().apply {
+                moveTo(xs[0], 46f)
+                for (k in 1 until xs.size) {
+                    val t = k / (xs.size - 1f)
+                    if (t > reach) break
+                    lineTo(xs[k], if (k % 2 == 0) 46f else 40f)
+                }
+            }, Ink, style = Stroke(2.2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        }
+    }
+    // Al final, un destello que tapa el cambio de huevo a mascota.
+    if (crack > 0.7f) {
+        val t = (crack - 0.7f) / 0.3f
+        drawCircle(Color.White.copy(alpha = t), 20f + 60f * t, Offset(50f, 55f))
     }
 }

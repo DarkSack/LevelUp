@@ -1,5 +1,6 @@
 package app.levelup
 
+import kotlinx.coroutines.flow.combine
 import android.app.Application
 import android.content.res.Configuration
 import android.os.Build
@@ -41,9 +42,11 @@ class LevelUpApplication : Application() {
         AchievementNotice.createChannel(this)
         scope.launch { ReminderWork.scheduleHabits(this@LevelUpApplication) }
         scope.launch {
-            repo.todaySummary.collect {
-                TodayWidget.render(this@LevelUpApplication, it)
-                WearSync.publish(this@LevelUpApplication, it)
+            // Las preferencias también: cambiar de mascota o de accesorio se ve en el widget y el reloj.
+            repo.todaySummary.combine(repo.preferences) { summary, _ -> summary }.collect {
+                val pet = repo.petSnapshot()
+                TodayWidget.render(this@LevelUpApplication, it, pet)
+                WearSync.publish(this@LevelUpApplication, it, pet)
             }
         }
         val service = cloud ?: return

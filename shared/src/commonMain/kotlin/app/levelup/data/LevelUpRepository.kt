@@ -1,5 +1,11 @@
 package app.levelup.data
 
+import app.levelup.pets.Accessory
+import app.levelup.pets.PetStage
+import app.levelup.pets.PetMood
+import app.levelup.domain.GamificationStyle
+import app.levelup.pets.Species
+import app.levelup.content.Pets
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import app.levelup.content.AchievementCatalog
@@ -469,7 +475,11 @@ class LevelUpRepository(
         )
     }
 
-    suspend fun markWeeklyReviewed() = updatePreferences { it.copy(lastWeeklyReview = today()) }
+    /** [finished]: la persona la hizo hasta «Listo» (da gemas, una vez por día); si no, solo la pospone. */
+    suspend fun markWeeklyReviewed(finished: Boolean = false) = updatePreferences {
+        val counts = finished && it.lastWeeklyReview != today()
+        it.copy(lastWeeklyReview = today(), weeklyReviewsDone = it.weeklyReviewsDone + if (counts) 1 else 0)
+    }
 
     suspend fun applyReviewSuggestion(s: ReviewSuggestion) = updatePreferences {
         when (s) {
@@ -576,7 +586,9 @@ class LevelUpRepository(
         val pending = ensureToday().filter { it.isOpen }.map { it.title }
         val lastActive = dao.completedNow().maxOfOrNull { it.date }
         val kind = ChallengeEngine.dayKind(today, prefs, dao.pausesNow())
-        val message = Reminders.decide(nowLocal(), prefs, kind, pending, lastActive) ?: return null
+        val pet = Species.byKey(prefs.pet)?.takeIf { prefs.gamification == GamificationStyle.FULL && it in Pets.owned(prefs) && !Pets.eggPending(prefs) }
+        val petName = pet?.let { Pets.customName(prefs, it) ?: tr(Pets.name(it)) }
+        val message = Reminders.decide(nowLocal(), prefs, kind, pending, lastActive, petName) ?: return null
         if (message.isRecovery) tx { dao.upsertPreferences(prefs().copy(lastRecoveryNotice = today)) }
         return message
     }
@@ -597,6 +609,21 @@ class LevelUpRepository(
     }
 
     // ── Logros y estadísticas ─────────────────────────────────────────────────
+
+    /** La mascota de Inicio para el widget y el reloj, o null si no hay (sin mascota, huevo sin abrir o sin juego). */
+    suspend fun petSnapshot(): Pets.Snapshot? {
+        val prefs = prefs()
+        if (prefs.simpleMode || prefs.gamification != GamificationStyle.FULL || Pets.eggPending(prefs)) return null
+        val species = Species.byKey(prefs.pet)?.takeIf { it in Pets.owned(prefs) } ?: return null
+        val stats = stats()
+        val doneToday = dao.completedNow().any { it.isDone && it.date == today() }
+        val resting = !doneToday && ChallengeEngine.dayKind(today(), prefs, dao.pausesNow()) != DayKind.ACTIVE
+        val mood = if (resting) PetMood.SLEEPY else PetMood.of(stats.currentStreak, doneToday, hadStreak = stats.bestStreak > 0)
+        return Pets.Snapshot(
+            species, mood, Accessory.parse(prefs.petAccessories).intersect(Pets.ownedAccessories(prefs)), PetStage.of(stats.bestStreak),
+            Pets.customName(prefs, species) ?: tr(Pets.name(species)),
+        )
+    }
 
     suspend fun stats(): Stats = Stats.compute(
         today = today(),

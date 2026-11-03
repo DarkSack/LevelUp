@@ -168,8 +168,9 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
             },
             frames = Cosmetics.unlocked(unlockedIds.keys, doneMissions, plusOwned),
             petAccessories = Pets.ownedAccessories(prefs),
-            accessoryGates = Pets.gatesOpen(unlockedIds.keys),
-            gems = Gems.earned(completed) - Gems.spent(Pets.boughtCount(prefs)) - Pets.accessoriesSpent(prefs),
+            accessoryGates = Pets.gatesOpen(unlockedIds.keys, today),
+            gems = Gems.earned(completed, unlockedIds.keys.mapNotNull { AchievementCatalog.byId[it]?.tier }, prefs.weeklyReviewsDone) -
+                Gems.spent(Pets.boughtCount(prefs)) - Pets.accessoriesSpent(prefs),
             ownedPets = Pets.owned(prefs),
             streakMissed = missed,
             streakToRestore = if (missed.isEmpty()) 0 else Streaks.current(today, activeDays, prefs.restDays, pauses, repaired + missed),
@@ -335,6 +336,7 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
     suspend fun weeklySummary(): WeeklySummary = repo.weeklySummary()
 
     fun markWeeklyReviewed() = act { repo.markWeeklyReviewed() }
+    fun finishWeeklyReview() = act { repo.markWeeklyReviewed(finished = true) }
 
     fun applyReviewSuggestion(s: ReviewSuggestion) = act {
         repo.applyReviewSuggestion(s)

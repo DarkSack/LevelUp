@@ -1,5 +1,10 @@
 package app.levelup.wear
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
+import app.levelup.pets.Pet
 import android.os.Bundle
 import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
@@ -61,8 +66,18 @@ internal fun WatchScreen(today: Today?, @StringRes message: Int?, onComplete: (T
     AppScaffold {
         ScreenScaffold(scrollState = list) {
             ScalingLazyColumn(state = list, modifier = Modifier.fillMaxWidth()) {
-                item { ListHeader { Text("LevelUp") } }
                 val t = today
+                val pet = t?.pet?.takeIf { !t.stale }
+                if (pet != null) {
+                    // La mascota del teléfono, animada y con su nombre en lugar del título.
+                    item {
+                        Pet(pet.species, pet.mood, Modifier.size(72.dp).semantics { contentDescription = pet.name }, pet.accessories,
+                            stage = pet.stage)
+                    }
+                    item { ListHeader { Text(pet.name) } }
+                } else {
+                    item { ListHeader { Text("LevelUp") } }
+                }
                 when {
                     t == null || t.stale -> item {
                         Text(stringResource(R.string.open_phone), textAlign = TextAlign.Center)

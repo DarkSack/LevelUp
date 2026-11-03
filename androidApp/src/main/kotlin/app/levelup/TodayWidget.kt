@@ -1,5 +1,8 @@
 package app.levelup
 
+import androidx.compose.ui.graphics.asAndroidBitmap
+import app.levelup.pets.renderPet
+import app.levelup.content.Pets
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -23,7 +26,7 @@ import app.levelup.i18n.tr
 class TodayWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = async(context) { app ->
         app.repo.ensureToday()
-        render(context, app.repo.todaySummary.first())
+        render(context, app.repo.todaySummary.first(), app.repo.petSnapshot())
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -32,7 +35,7 @@ class TodayWidget : AppWidgetProvider() {
         val id = intent.getStringExtra(EXTRA_ID) ?: return
         async(context) { app ->
             AchievementNotice.show(app, app.repo.complete(id))
-            render(context, app.repo.todaySummary.first())
+            render(context, app.repo.todaySummary.first(), app.repo.petSnapshot())
         }
     }
 
@@ -52,11 +55,19 @@ class TodayWidget : AppWidgetProvider() {
         private const val ACTION_COMPLETE = "app.levelup.widget.COMPLETAR"
         private const val EXTRA_ID = "id"
 
-        fun render(context: Context, summary: TodaySummary) {
+        fun render(context: Context, summary: TodaySummary, pet: Pets.Snapshot?) {
             val manager = AppWidgetManager.getInstance(context)
             val component = ComponentName(context, TodayWidget::class.java)
             if (manager.getAppWidgetIds(component).isEmpty()) return
             val views = RemoteViews(context.packageName, R.layout.widget_today)
+            if (pet != null) {
+                val px = (56 * context.resources.displayMetrics.density).toInt()
+                views.setImageViewBitmap(R.id.widget_pet, renderPet(pet.species, pet.mood, px, pet.accessories, pet.stage).asAndroidBitmap())
+                views.setContentDescription(R.id.widget_pet, pet.name)
+                views.setViewVisibility(R.id.widget_pet, View.VISIBLE)
+            } else {
+                views.setViewVisibility(R.id.widget_pet, View.GONE)
+            }
             val main = summary.mainId
             views.setTextViewText(
                 R.id.widget_title,

@@ -129,6 +129,8 @@ data class Preferences(
     @ColumnInfo(defaultValue = "127") val reminderDays: Int = Days.ALL,
     /** Último día en que se hizo la revisión semanal. */
     val lastWeeklyReview: LocalDate? = null,
+    /** Revisiones semanales terminadas con «Listo» (no las pospuestas): dan gemas. */
+    @ColumnInfo(defaultValue = "0") val weeklyReviewsDone: Int = 0,
     /** Última pausa terminada cuya vuelta ya se repasó (qué hábitos retomar). */
     val lastPauseReviewed: String? = null,
     /** Avatar elegido (clave de content/Avatars.kt). Vacío = la inicial del nombre. */
