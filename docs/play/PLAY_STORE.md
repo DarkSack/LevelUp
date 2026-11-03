@@ -267,7 +267,7 @@ En `E:\Dev\levelup\docs\play\capturas\`, sacados de la interfaz real con Robolec
 |---|---|
 | Icono 512 × 512 | `icono-512.png` |
 | Gráfico destacado 1024 × 500 | `grafico-1024x500.png` |
-| Capturas del teléfono (1080 × 1920) | `0-bienvenida.png` … `5-metas.png`, en ese orden |
+| Capturas del teléfono (1080 × 1920) | `0-bienvenida.png` … `7-mascotas.png`, en ese orden |
 | Capturas del reloj (454 × 454, cuadradas) | `reloj-1-hoy.png`, `reloj-2-sin-datos.png` |
 
 Regenerarlos (tras cambiar la interfaz):
@@ -297,7 +297,7 @@ menu names above appear exactly as written.
 - [ ] `play.properties` con la clave de licencia de Play y bundles regenerados después de copiarla.
 - [x] Pruebas en verde: `./gradlew :shared:testAndroidHostTest` (y con `-PsupabaseLocalKey` si cambió la nube). 156 en verde el 2026-10-28.
 - [x] Bundles: `./gradlew :androidApp:bundleRelease :wearApp:bundleRelease`; `versionCode` subido en los dos (la primera subida va con 1 y 100001). Generados y firmados el 2026-10-28; **regenerarlos** después de copiar la clave de licencia.
-- [x] Notas de la versión (sección 1) y capturas al día (sección 6): capturas regeneradas con el diseño nuevo el 2026-10-28.
+- [x] Notas de la versión (sección 1) y capturas al día (sección 6): capturas regeneradas con el diseño nuevo el 2026-10-28 y con las mascotas (6 y 7) el 2026-11-03.
 - [ ] Contenido de la app: privacidad, anuncios, acceso, IARC, público, Health Connect (sección 3).
 - [ ] Seguridad de los datos (sección 4).
 - [ ] Producto `levelup_plus` activo y probado con una cuenta de prueba de licencias.

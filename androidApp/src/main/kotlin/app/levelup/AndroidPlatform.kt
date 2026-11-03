@@ -110,6 +110,8 @@ class AndroidPlatform(private val app: LevelUpApplication) : Platform {
     override val appVersion: String =
         app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: ""
 
+    override val betaBuild: Boolean = BuildConfig.BETA
+
     override val systemReducedMotion: Boolean
         get() = Settings.Global.getFloat(app.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 

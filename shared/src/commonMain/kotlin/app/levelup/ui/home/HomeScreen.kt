@@ -1,5 +1,6 @@
 package app.levelup.ui.home
 
+import app.levelup.content.Pets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -57,6 +58,11 @@ import app.levelup.ui.extra.PlaceDialog
 import app.levelup.ui.extra.ResumeDialog
 import app.levelup.ui.extra.resumableHabits
 import app.levelup.ui.theme.LocalPrefs
+import app.levelup.pets.Species
+import app.levelup.ui.pet.FloatingPet
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.unit.dp
 import app.levelup.ui.theme.Space
 import app.levelup.ui.theme.gameOn
 import kotlinx.coroutines.launch
@@ -85,203 +91,213 @@ fun HomeScreen(vm: LevelUpViewModel, nav: Nav, sync: @Composable () -> Unit = {}
         "Inicio", bottomBar = tabBar,
         actions = { IconButton(onClick = nav::search) { Icon(Icons.Filled.Search, contentDescription = tr("Buscar")) } },
     ) { padding ->
-        LazyColumn(
-            contentPadding = PaddingValues(start = Space.l, end = Space.l, top = padding.calculateTopPadding() + Space.s,
-                bottom = padding.calculateBottomPadding() + Space.xl),
-        ) {
-            item {
-                val greeting = when (hour) { in 5..11 -> "Buenos días"; in 12..19 -> "Buenas tardes"; else -> "Buenas noches" }
-                Text(
-                    if (prefs.displayName.isBlank()) greeting else "$greeting, ${prefs.displayName}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.semantics { heading() }.padding(bottom = Space.m),
-                )
-                sync()
-            }
-            if (!simple && gameOn) {
-                item { LevelCard(progress, prefs.equippedFrame, prefs.displayName, Avatars.emoji(prefs.avatar), prefs.gamification) }
-            }
-
-            if (progress.returning) {
+        val showPet = !simple && prefs.gamification == GamificationStyle.FULL && (prefs.pet.isNotEmpty() || prefs.starterPet.isEmpty() || Pets.eggPending(prefs))
+        val species = Species.byKey(prefs.pet)?.takeIf { it in progress.ownedPets && !Pets.eggPending(prefs) }
+        Box {
+            LazyColumn(
+                contentPadding = PaddingValues(start = Space.l, end = Space.l, top = padding.calculateTopPadding() + Space.s,
+                    bottom = padding.calculateBottomPadding() + Space.xl),
+            ) {
                 item {
-                    InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.secondaryContainer) {
-                        Text("Qué bien verte de nuevo", style = MaterialTheme.typography.titleMedium)
-                        Text("Hoy tienes retos cortos y sencillos para retomar sin presión. Lo que hiciste antes sigue contando.",
-                            style = MaterialTheme.typography.bodyMedium)
-                    }
+                    val greeting = when (hour) { in 5..11 -> "Buenos días"; in 12..19 -> "Buenas tardes"; else -> "Buenas noches" }
+                    Text(
+                        if (prefs.displayName.isBlank()) greeting else "$greeting, ${prefs.displayName}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        // Con mascota, el saludo deja sitio a su derecha y ocupa lo que ella mide.
+                        modifier = Modifier.semantics { heading() }.padding(bottom = Space.m)
+                            .then(if (showPet) Modifier.padding(end = 100.dp).heightIn(min = 88.dp) else Modifier),
+                    )
+                    sync()
                 }
-            }
+                if (!simple && gameOn) {
+                    item { LevelCard(progress, prefs.equippedFrame, prefs.displayName, Avatars.emoji(prefs.avatar), prefs.gamification) }
+                }
 
-            if (!simple && progress.weeklyReviewDue) {
-                item {
-                    InfoCard(Modifier.padding(top = Space.m)) {
-                        Text("Tu semana en un vistazo", style = MaterialTheme.typography.titleMedium)
-                        Text("Mira cómo fue, ajusta lo que no encaje y repasa tus metas. Son dos minutos.", style = MaterialTheme.typography.bodyMedium)
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = vm::markWeeklyReviewed) { Text("Ahora no") }
-                            TextButton(onClick = nav::weeklyReview) { Text("Revisar") }
+                if (progress.returning) {
+                    item {
+                        InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.secondaryContainer) {
+                            Text("Qué bien verte de nuevo", style = MaterialTheme.typography.titleMedium)
+                            Text("Hoy tienes retos cortos y sencillos para retomar sin presión. Lo que hiciste antes sigue contando.",
+                                style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
-            }
 
-            if (visible.isEmpty() && progress.dayKind != DayKind.ACTIVE) {
-                item {
-                    InfoCard(Modifier.padding(top = Space.m)) {
-                        Text(
-                            when (progress.dayKind) {
-                                DayKind.PAUSED -> "Tus objetivos están en pausa"
-                                DayKind.REST -> "Hoy es día de descanso"
-                                else -> "Hoy no tienes retos programados"
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Text("Descansar también es parte del camino. Tu progreso sigue aquí.", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.size(Space.m))
-                        SecondaryButton("Quiero un reto igualmente", { askPlace = true })
-                    }
-                }
-            }
-
-            suggestions.forEach { s ->
-                item(key = "sug-${s.category}") {
-                    InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.secondaryContainer) {
-                        val name = Categories.name(s.category, custom)
-                        Text(
-                            if (s.isUp) tr("Los retos de {0} te están saliendo bien. ¿Subimos a dificultad {1} ({2})?", name, s.to, Fmt.difficulty(s.to).lowercase())
-                            else tr("Los retos de {0} están costando. ¿Bajamos a dificultad {1} ({2})?", name, s.to, Fmt.difficulty(s.to).lowercase()),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                            TextButton(onClick = { vm.dismissSuggestion(s) }) { Text("Ahora no") }
-                            TextButton(onClick = { vm.applySuggestion(s) }) { Text(if (s.isUp) "Subir" else "Bajar") }
+                if (!simple && progress.weeklyReviewDue) {
+                    item {
+                        InfoCard(Modifier.padding(top = Space.m)) {
+                            Text("Tu semana en un vistazo", style = MaterialTheme.typography.titleMedium)
+                            Text("Mira cómo fue, ajusta lo que no encaje y repasa tus metas. Son dos minutos.", style = MaterialTheme.typography.bodyMedium)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                TextButton(onClick = vm::markWeeklyReviewed) { Text("Ahora no") }
+                                TextButton(onClick = nav::weeklyReview) { Text("Revisar") }
+                            }
                         }
                     }
                 }
-            }
 
-            if (main != null) {
-                item(key = "main") {
-                    InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.primaryContainer) {
-                        Text(if (main.status == InstanceStatus.STARTED) "Reto principal · en curso" else "Reto principal",
-                            style = MaterialTheme.typography.labelLarge)
-                        Text(main.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = Space.xs))
-                        Text(metaLine(main, custom, gameOn), style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.size(Space.m))
-                        PrimaryButton("Completar", { vm.complete(main.id) })
-                        Spacer(Modifier.size(Space.s))
-                        SecondaryButton("Ver detalles", { nav.instance(main.id) })
-                        TextButton(onClick = { nav.focus(main.id) }) { Text("Modo concentración") }
-                    }
-                }
-            } else if (visible.isNotEmpty() && visible.none { it.isOpen }) {
-                item {
-                    InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.primaryContainer) {
-                        Text("Retos de hoy terminados", style = MaterialTheme.typography.titleMedium)
-                        Text("Lo que hiciste hoy ya cuenta. Si te quedan ganas, puedes añadir otro.", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.size(Space.m))
-                        SecondaryButton("Añadir otro reto", { askPlace = true })
-                    }
-                }
-            }
-
-            if (visible.isNotEmpty()) {
-                item {
-                    val done = visible.count { it.isDone }
-                    SectionTitle("Hoy")
-                    LabeledProgress(done / visible.size.toFloat(), tr("{0} de {1} hechos", done, Fmt.plural(visible.size, "reto", "retos")))
-                    val week = progress.weeks.lastOrNull()
-                    if (week != null) {
-                        Text(
-                            tr("Esta semana: {0} de {1}", week.activeDays, Fmt.plural(week.goal, "día", "días")) + if (week.met) tr(" · objetivo cumplido") else "",
-                            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Space.xs),
-                        )
-                    }
-                }
-                val rest = visible.filter { it.id != main?.id }
-                // Por momentos del día solo si alguno tiene momento: si no, la lista de siempre.
-                val groups = if (rest.any { it.block != null }) {
-                    (DayBlock.entries.map { it as DayBlock? } + null).map { b -> b to rest.filter { it.block == b } }.filter { it.second.isNotEmpty() }
-                } else {
-                    listOf(null to rest)
-                }
-                groups.forEach { (block, list) ->
-                    if (groups.size > 1 || block != null) {
-                        item(key = "b-$block") {
-                            Text(block?.let(Fmt::block) ?: "En cualquier momento", style = MaterialTheme.typography.titleSmall,
-                                modifier = Modifier.padding(top = Space.m).semantics { heading() })
+                if (visible.isEmpty() && progress.dayKind != DayKind.ACTIVE) {
+                    item {
+                        InfoCard(Modifier.padding(top = Space.m)) {
+                            Text(
+                                when (progress.dayKind) {
+                                    DayKind.PAUSED -> "Tus objetivos están en pausa"
+                                    DayKind.REST -> "Hoy es día de descanso"
+                                    else -> "Hoy no tienes retos programados"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text("Descansar también es parte del camino. Tu progreso sigue aquí.", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.size(Space.m))
+                            SecondaryButton("Quiero un reto igualmente", { askPlace = true })
                         }
                     }
-                    items(list, key = { it.id }) { i ->
-                        InstanceRow(i, custom, onComplete = { vm.complete(i.id) }, onOpen = { nav.instance(i.id) })
+                }
+
+                suggestions.forEach { s ->
+                    item(key = "sug-${s.category}") {
+                        InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.secondaryContainer) {
+                            val name = Categories.name(s.category, custom)
+                            Text(
+                                if (s.isUp) tr("Los retos de {0} te están saliendo bien. ¿Subimos a dificultad {1} ({2})?", name, s.to, Fmt.difficulty(s.to).lowercase())
+                                else tr("Los retos de {0} están costando. ¿Bajamos a dificultad {1} ({2})?", name, s.to, Fmt.difficulty(s.to).lowercase()),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                                TextButton(onClick = { vm.dismissSuggestion(s) }) { Text("Ahora no") }
+                                TextButton(onClick = { vm.applySuggestion(s) }) { Text(if (s.isUp) "Subir" else "Bajar") }
+                            }
+                        }
                     }
                 }
-            }
 
-            if (!simple && Lab.SURPRISE in prefs.labFlags) {
-                item {
-                    SectionTitle("Reto sorpresa")
-                    InfoCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
-                        val s = surprise
-                        when {
-                            s != null -> {
-                                Text(s.title, style = MaterialTheme.typography.titleSmall)
-                                Text(s.goal, style = MaterialTheme.typography.bodyMedium)
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                    TextButton(onClick = { nav.catalog(s.id) }) { Text("Ver") }
-                                    TextButton(onClick = { vm.addToToday(s.id); surprise = null }) { Text("Añadir a hoy") }
+                if (main != null) {
+                    item(key = "main") {
+                        InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.primaryContainer) {
+                            Text(if (main.status == InstanceStatus.STARTED) "Reto principal · en curso" else "Reto principal",
+                                style = MaterialTheme.typography.labelLarge)
+                            Text(main.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = Space.xs))
+                            Text(metaLine(main, custom, gameOn), style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.size(Space.m))
+                            PrimaryButton("Completar", { vm.complete(main.id) })
+                            Spacer(Modifier.size(Space.s))
+                            SecondaryButton("Ver detalles", { nav.instance(main.id) })
+                            TextButton(onClick = { nav.focus(main.id) }) { Text("Modo concentración") }
+                        }
+                    }
+                } else if (visible.isNotEmpty() && visible.none { it.isOpen }) {
+                    item {
+                        InfoCard(Modifier.padding(top = Space.m), container = MaterialTheme.colorScheme.primaryContainer) {
+                            Text("Retos de hoy terminados", style = MaterialTheme.typography.titleMedium)
+                            Text("Lo que hiciste hoy ya cuenta. Si te quedan ganas, puedes añadir otro.", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.size(Space.m))
+                            SecondaryButton("Añadir otro reto", { askPlace = true })
+                        }
+                    }
+                }
+
+                if (visible.isNotEmpty()) {
+                    item {
+                        val done = visible.count { it.isDone }
+                        SectionTitle("Hoy")
+                        LabeledProgress(done / visible.size.toFloat(), tr("{0} de {1} hechos", done, Fmt.plural(visible.size, "reto", "retos")))
+                        val week = progress.weeks.lastOrNull()
+                        if (week != null) {
+                            Text(
+                                tr("Esta semana: {0} de {1}", week.activeDays, Fmt.plural(week.goal, "día", "días")) + if (week.met) tr(" · objetivo cumplido") else "",
+                                style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = Space.xs),
+                            )
+                        }
+                    }
+                    val rest = visible.filter { it.id != main?.id }
+                    // Por momentos del día solo si alguno tiene momento: si no, la lista de siempre.
+                    val groups = if (rest.any { it.block != null }) {
+                        (DayBlock.entries.map { it as DayBlock? } + null).map { b -> b to rest.filter { it.block == b } }.filter { it.second.isNotEmpty() }
+                    } else {
+                        listOf(null to rest)
+                    }
+                    groups.forEach { (block, list) ->
+                        if (groups.size > 1 || block != null) {
+                            item(key = "b-$block") {
+                                Text(block?.let(Fmt::block) ?: "En cualquier momento", style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(top = Space.m).semantics { heading() })
+                            }
+                        }
+                        items(list, key = { it.id }) { i ->
+                            InstanceRow(i, custom, onComplete = { vm.complete(i.id) }, onOpen = { nav.instance(i.id) })
+                        }
+                    }
+                }
+
+                if (!simple && Lab.SURPRISE in prefs.labFlags) {
+                    item {
+                        SectionTitle("Reto sorpresa")
+                        InfoCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
+                            val s = surprise
+                            when {
+                                s != null -> {
+                                    Text(s.title, style = MaterialTheme.typography.titleSmall)
+                                    Text(s.goal, style = MaterialTheme.typography.bodyMedium)
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                        TextButton(onClick = { nav.catalog(s.id) }) { Text("Ver") }
+                                        TextButton(onClick = { vm.addToToday(s.id); surprise = null }) { Text("Añadir a hoy") }
+                                    }
+                                }
+                                noSurprise -> Text("Ya probaste todo lo que encaja contigo. ¡Impresionante!", style = MaterialTheme.typography.bodyMedium)
+                                else -> {
+                                    Text("Algo que nunca has hecho. Solo es una idea: no cambia tu plan.", style = MaterialTheme.typography.bodyMedium)
+                                    TextButton(onClick = {
+                                        scope.launch {
+                                            surprise = vm.surprise()
+                                            noSurprise = surprise == null
+                                        }
+                                    }) { Text("Sorpréndeme") }
                                 }
                             }
-                            noSurprise -> Text("Ya probaste todo lo que encaja contigo. ¡Impresionante!", style = MaterialTheme.typography.bodyMedium)
-                            else -> {
-                                Text("Algo que nunca has hecho. Solo es una idea: no cambia tu plan.", style = MaterialTheme.typography.bodyMedium)
-                                TextButton(onClick = {
-                                    scope.launch {
-                                        surprise = vm.surprise()
-                                        noSurprise = surprise == null
-                                    }
-                                }) { Text("Sorpréndeme") }
-                            }
                         }
                     }
                 }
-            }
 
-            val activeGoals = goals.filter { it.status == GoalStatus.ACTIVE }
-            if (!simple && activeGoals.isNotEmpty()) {
-                item {
-                    SectionTitle("Tus metas")
-                    activeGoals.take(3).forEach { Text("• ${it.title}", style = MaterialTheme.typography.bodyLarge) }
-                    TextButton(onClick = nav::goals) { Text("Ver mis metas") }
+                val activeGoals = goals.filter { it.status == GoalStatus.ACTIVE }
+                if (!simple && activeGoals.isNotEmpty()) {
+                    item {
+                        SectionTitle("Tus metas")
+                        activeGoals.take(3).forEach { Text("• ${it.title}", style = MaterialTheme.typography.bodyLarge) }
+                        TextButton(onClick = nav::goals) { Text("Ver mis metas") }
+                    }
                 }
-            }
 
-            val mission = progress.activeMission
-            if (!simple && gameOn && mission != null) {
-                item {
-                    SectionTitle("Misión")
-                    InfoCard {
-                        Text(mission.first.title, style = MaterialTheme.typography.titleSmall)
-                        Text(mission.first.description, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.size(Space.s))
-                        LabeledProgress(
-                            progress.missionProgress / mission.first.goal.target.toFloat(),
-                            tr("{0} de {1} · hasta el {2}", progress.missionProgress, mission.first.goal.target, Fmt.day(mission.second.endsOn)),
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
+                val mission = progress.activeMission
+                if (!simple && gameOn && mission != null) {
+                    item {
+                        SectionTitle("Misión")
+                        InfoCard {
+                            Text(mission.first.title, style = MaterialTheme.typography.titleSmall)
+                            Text(mission.first.description, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.size(Space.s))
+                            LabeledProgress(
+                                progress.missionProgress / mission.first.goal.target.toFloat(),
+                                tr("{0} de {1} · hasta el {2}", progress.missionProgress, mission.first.goal.target, Fmt.day(mission.second.endsOn)),
+                                color = MaterialTheme.colorScheme.tertiary,
+                            )
+                        }
+                    }
+                }
+
+                if (!simple && gameOn && progress.categoryLevels.isNotEmpty()) {
+                    item {
+                        SectionTitle("Tus categorías")
+                        progress.categoryLevels.entries.sortedByDescending { it.value.totalXp }.take(4).forEach { (key, lp) ->
+                            LabeledProgress(lp.fraction, tr("{0} · nivel {1}", Categories.name(key, custom), lp.level),
+                                Modifier.padding(vertical = Space.xs))
+                        }
+                        TextButton(onClick = nav::achievements) { Text("Ver logros y trofeos") }
                     }
                 }
             }
-
-            if (!simple && gameOn && progress.categoryLevels.isNotEmpty()) {
-                item {
-                    SectionTitle("Tus categorías")
-                    progress.categoryLevels.entries.sortedByDescending { it.value.totalXp }.take(4).forEach { (key, lp) ->
-                        LabeledProgress(lp.fraction, tr("{0} · nivel {1}", Categories.name(key, custom), lp.level),
-                            Modifier.padding(vertical = Space.xs))
-                    }
-                    TextButton(onClick = nav::achievements) { Text("Ver logros y trofeos") }
-                }
+            if (showPet) {
+                FloatingPet(species, progress, doneToday = visible.any { it.status == InstanceStatus.COMPLETED }, onOpen = { nav.settings("pet") },
+                    Modifier.align(Alignment.TopEnd).padding(top = padding.calculateTopPadding(), end = Space.s))
             }
         }
     }

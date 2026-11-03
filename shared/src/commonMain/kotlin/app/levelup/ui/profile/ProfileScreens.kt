@@ -1,6 +1,7 @@
 package app.levelup.ui.profile
 
 import androidx.compose.foundation.clickable
+import app.levelup.ui.pet.PetSection
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -88,6 +89,7 @@ private val entries = listOf(
     Entry("reminders", "Recordatorios", "Hora, silencio e intensidad"),
     Entry("style", "Estilo de juego", "Completo, tranquilo o sin juego"),
     Entry("frames", "Avatar y marco", "Tu dibujo y las recompensas de logros"),
+    Entry("pet", "Mascota de racha", "Cómo está, su llama y sus accesorios"),
     Entry("lab", "Laboratorio", "Funciones en prueba que puedes apagar"),
     Entry("data", "Tus datos", "Exportar, importar, cambiar de teléfono o borrar"),
     Entry("privacy", "Privacidad", "Qué se guarda y dónde"),
@@ -192,6 +194,7 @@ fun SettingsScreen(vm: LevelUpViewModel, nav: Nav, platform: Platform, section: 
                 "reminders" -> RemindersSection(prefs, platform.notificationsAllowed(), onChange, vm::setReminders)
                 "style" -> GameStyleSection(prefs, onChange)
                 "frames" -> FramesSection(vm)
+                "pet" -> PetSection(vm)
                 "data" -> DataSection(vm, nav, signedIn)
                 "privacy" -> {
                     ToggleRow("Proteger mis pantallas", prefs.secureScreens, { v -> onChange { it.copy(secureScreens = v) } },

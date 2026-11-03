@@ -43,6 +43,7 @@ import app.levelup.ui.Fmt
 import app.levelup.ui.LevelUpViewModel
 import app.levelup.ui.components.InfoCard
 import app.levelup.ui.components.PrimaryButton
+import app.levelup.ui.pet.StarterChoice
 import app.levelup.ui.settings.AccessibilitySection
 import app.levelup.ui.settings.GoalsSection
 import app.levelup.ui.settings.RemindersSection
@@ -150,6 +151,9 @@ private fun ReadyStep(vm: LevelUpViewModel, prefs: Preferences) {
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
+    Text("Tu primera mascota", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Space.m).semantics { heading() })
+    Text("¿Te gustan más los perros o los gatos? Te acompaña en tu racha y después puedes adoptar más.", style = MaterialTheme.typography.bodyMedium)
+    StarterChoice(prefs.starterPet, vm::chooseStarter)
     Text("Tus primeros retos", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Space.m).semantics { heading() })
     val list = preview
     when {

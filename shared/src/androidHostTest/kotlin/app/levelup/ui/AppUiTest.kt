@@ -134,8 +134,8 @@ class AppUiTest {
         waitForText("Perfil")
         compose.onNodeWithText("Perfil").performClick()
         waitForText("Accesibilidad")
-        // Al final de la lista, para que la entrada no quede debajo de la barra de pestañas.
-        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Acerca de LevelUp", substring = true))
+        // Dos entradas más abajo: la de Accesibilidad queda a la vista, ni bajo la barra de pestañas ni bajo la de arriba.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Estilo de juego"))
         compose.onNodeWithText("Accesibilidad").performClick()
         waitForText("Modo sencillo")
         compose.onNodeWithText("Modo sencillo").performScrollTo().performClick()

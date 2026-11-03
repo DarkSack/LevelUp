@@ -1,5 +1,8 @@
 package app.levelup.cloud
 
+import app.levelup.content.Pets
+import app.levelup.pets.Accessory
+import app.levelup.pets.Species
 import app.levelup.data.LevelUpRepository
 import app.levelup.data.SyncEngine
 import app.levelup.data.SyncState
@@ -80,7 +83,14 @@ class CloudService(
         return try {
             engine.sync().onSuccess {
                 // Lo que ven los amigos (si tiene perfil y lo permite). Si falla, no es motivo para fallar la sincronización.
-                runCatching { repo.prefs().let { p -> cloud.touchProfile(repo.stats().currentStreak, p.equippedFrame, p.avatar) } }
+                runCatching {
+                    repo.prefs().let { p ->
+                        val pet = Species.byKey(p.pet)?.takeIf { it in Pets.owned(p) }
+                        val worn = Accessory.parse(p.petAccessories).intersect(Pets.ownedAccessories(p))
+                        cloud.touchProfile(repo.stats().currentStreak, p.equippedFrame, p.avatar, pet?.key.orEmpty(),
+                            if (pet == null) "" else Accessory.format(worn), pet?.let { Pets.customName(p, it) }.orEmpty())
+                    }
+                }
             }
         } finally {
             _syncing.value = false

@@ -63,6 +63,12 @@ import app.levelup.cloud.GroupChallenge
 import app.levelup.cloud.GroupHistoryItem
 import app.levelup.cloud.MyProfile
 import app.levelup.cloud.ProfileCard
+import app.levelup.content.Pets
+import app.levelup.pets.Accessory
+import app.levelup.pets.PetFrame
+import app.levelup.pets.PetMood
+import app.levelup.pets.STILL
+import app.levelup.pets.Species
 import app.levelup.cloud.Reactions
 import app.levelup.cloud.ReportReasons
 import app.levelup.cloud.SocialNotice
@@ -219,6 +225,7 @@ private fun PersonRow(p: ProfileCard, actions: @Composable () -> Unit) {
             Text(p.displayName, style = MaterialTheme.typography.bodyLarge)
             Text("@${p.username}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Species.byKey(p.pet)?.let { PetFrame(it, PetMood.HAPPY, STILL, Modifier.size(52.dp), Accessory.parse(p.petAccessories)) }
         actions()
     }
 }
@@ -245,6 +252,7 @@ private fun FriendRow(p: ProfileCard, vm: CloudViewModel, today: LocalDate) {
             p.streak?.takeIf { it > 0 }?.let { add(tr("Racha de {0}", Fmt.plural(it, "día", "días"))) }
             p.weeklyXp?.let { add(tr("{0} XP esta semana", it)) }
             p.lastActiveAt?.let { Fmt.lastSeen(it, today) }?.let { add(tr("Activo {0}", it)) }
+            Species.byKey(p.pet)?.let { add(tr("Mascota: {0}", p.petName.ifBlank { tr(Pets.name(it)) })) }
         }
         if (details.isNotEmpty()) Text(details.joinToString(" · ") { tr(it) }, style = MaterialTheme.typography.bodySmall)
         p.title?.let { Text(tr("Título: «{0}»", XpRules.titleFor(it)), style = MaterialTheme.typography.bodySmall) }

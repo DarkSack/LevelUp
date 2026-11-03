@@ -37,11 +37,13 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -102,7 +104,8 @@ class StoreScreenshots {
     /** Una persona inventada: tres semanas haciendo dos retos casi cada día, hoy uno hecho y una meta. */
     private suspend fun seed() {
         repo.updatePreferences {
-            it.copy(onboardingDone = true, displayName = "Ana", categories = listOf("fisico", "mental", "bienestar", "hogar"), minutesPerDay = 30)
+            it.copy(onboardingDone = true, displayName = "Ana", categories = listOf("fisico", "mental", "bienestar", "hogar"), minutesPerDay = 30,
+                starterPet = "gato", pet = "gato", petAccessories = "mono,paliacate")
         }
         // Una misión en marcha desde la segunda semana, para que Logros la muestre.
         repeat(21) { day ->
@@ -160,6 +163,30 @@ class StoreScreenshots {
         // Un poco hacia arriba, para que el gráfico semanal no quede bajo la barra de pestañas (sin inercia).
         compose.onNode(hasScrollToNodeAction()).performTouchInput { swipeUp(startY = centerY, endY = centerY - 450f, durationMillis = 1_000) }
         save("3-progreso")
+    }
+
+    /** La pantalla de la mascota (se abre tocándola en Inicio), arriba y con los accesorios. No va a la ficha. */
+    @Test fun mascota() {
+        launch()
+        compose.waitUntil(15_000) { compose.onAllNodesWithContentDescription("Gatito", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithContentDescription("Gatito", substring = true).performClick()
+        waitFor("Su llama")
+        save("6-mascota")
+        compose.onNodeWithText("Quitar la mascota de Inicio").performScrollTo()
+        save("7-mascotas")
+        compose.onNodeWithText("Al lado").performScrollTo()
+        save("mascota-accesorios")
+    }
+
+    /** El huevo de los betatesters y el alebrije que sale (no van a la ficha: es exclusivo). */
+    @Test fun huevo() {
+        launch()
+        runBlocking { repo.updatePreferences { it.copy(betaTester = true) } }
+        save("mascota-huevo")
+        compose.onNodeWithContentDescription("Un huevo de mascota", substring = true).performClick()
+        compose.onNodeWithContentDescription("Un huevo de mascota", substring = true).performClick()
+        waitFor("Alebrije está")
+        save("mascota-alebrije")
     }
 
     /** Inicio y trofeos en cada estilo, para revisar el aspecto (no van a la ficha). */

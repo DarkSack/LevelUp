@@ -19,7 +19,7 @@ jobs:
       - name: Ajustes de JVM para Linux
         run: sed -i 's/ -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT -Djavax.net.ssl.trustStore=NUL//' gradle.properties
       - name: Pruebas
-        run: ./gradlew :shared:testAndroidHostTest
+        run: ./gradlew :shared:testAndroidHostTest :pets:testAndroidHostTest
       - name: Lint (teléfono y reloj)
         run: ./gradlew :androidApp:lintDebug :wearApp:lintDebug
       - name: APK de depuración (teléfono y reloj)

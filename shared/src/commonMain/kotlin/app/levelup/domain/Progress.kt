@@ -48,8 +48,8 @@ data class Stats(
             return Stats(
                 totalCompleted = done.size,
                 byCategory = done.groupingBy { it.category }.eachCount(),
-                currentStreak = Streaks.current(today, active, prefs.restDays, pauses),
-                bestStreak = Streaks.best(today, active, prefs.restDays, pauses),
+                currentStreak = Streaks.current(today, active, prefs.restDays, pauses, StreakRepair.parse(prefs.streakRepairs)),
+                bestStreak = Streaks.best(today, active, prefs.restDays, pauses, StreakRepair.parse(prefs.streakRepairs)),
                 weeksGoalMet = Streaks.weeks(today, active, prefs.weeklyGoalDays).count { it.met },
                 level = XpRules.levelFor(totalXp),
                 customCreated = customCreated,

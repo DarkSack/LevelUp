@@ -262,6 +262,7 @@ class MigrationTest {
             repo.updatePreferences { it.copy(displayName = "Ana") }
             assertEquals("teal", repo.prefs().accent)
             assertEquals(Days.ALL, repo.prefs().reminderDays, "columna nueva de la v3 con su valor por defecto")
+            assertEquals("", repo.prefs().starterPet, "columna nueva de la v7 con su valor por defecto")
             assertTrue(db.dao().favoritesNow().isEmpty())
             assertEquals(0, db.syncDao().pendingCountNow())
         } finally {

@@ -89,6 +89,10 @@ data class ProfileCard(
     val avatar: String = "",
     val title: Int? = null,
     val trophies: List<String> = emptyList(),
+    /** Mascota que lleva (clave de app.levelup.pets.Species), sus accesorios y el nombre que le puso. */
+    val pet: String = "",
+    val petAccessories: String = "",
+    val petName: String = "",
 )
 
 /** Un reto en grupo terminado o que se dejó, para el historial de participación. */
@@ -298,8 +302,16 @@ class Cloud(config: CloudConfig, sessionManager: SessionManager?) : RemoteSync {
         db.from("profiles").upsert(profile)
     }
 
-    suspend fun touchProfile(streak: Int, frame: String, avatar: String) {
-        db.rpc("touch_profile", buildJsonObject { put("streak", streak); put("avatar_frame", frame); put("avatar_key", avatar) })
+    suspend fun touchProfile(streak: Int, frame: String, avatar: String, pet: String, petExtras: String, petName: String) {
+        try {
+            db.rpc("touch_profile", buildJsonObject {
+                put("streak", streak); put("avatar_frame", frame); put("avatar_key", avatar)
+                put("pet_key", pet); put("pet_extras", petExtras); put("pet_label", petName)
+            })
+        } catch (e: Exception) {
+            // Servidor sin la migración de mascotas: al menos racha, marco y avatar.
+            db.rpc("touch_profile", buildJsonObject { put("streak", streak); put("avatar_frame", frame); put("avatar_key", avatar) })
+        }
     }
 
     suspend fun search(query: String): List<ProfileCard> =

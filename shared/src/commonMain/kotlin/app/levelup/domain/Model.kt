@@ -134,6 +134,24 @@ data class Preferences(
     /** Avatar elegido (clave de content/Avatars.kt). Vacío = la inicial del nombre. */
     @ColumnInfo(defaultValue = "") val avatar: String = "",
     @ColumnInfo(defaultValue = "POP") val style: AppStyle = AppStyle.POP,
+    /** Mascota de racha (clave de app.levelup.pets.Species). Vacío = sin mascota. */
+    @ColumnInfo(defaultValue = "") val pet: String = "",
+    /** La primera mascota, gratis: perro o gato, elegida al empezar. Vacío = aún no elige (se ve un huevo). */
+    @ColumnInfo(defaultValue = "") val starterPet: String = "",
+    /** Nombres puestos a las mascotas: "gato=Michi|perro=Firulais". */
+    @ColumnInfo(defaultValue = "") val petNames: String = "",
+    /** Accesorios comprados con gemas (claves separadas por comas). */
+    @ColumnInfo(defaultValue = "") val ownedAccessories: String = "",
+    /** Accesorios puestos a la mascota, claves de app.levelup.pets.Accessory separadas por comas. */
+    @ColumnInfo(defaultValue = "") val petAccessories: String = "",
+    /** Mascotas compradas con gemas, en el orden en que se compraron (cada una cuesta más: ver Gems). */
+    @ColumnInfo(defaultValue = "") val ownedPets: String = "",
+    /** Usó una compilación beta: tiene para siempre la mascota exclusiva de los betatesters. */
+    @ColumnInfo(defaultValue = "0") val betaTester: Boolean = false,
+    /** El huevo de betatester ya se abrió y salió el alebrije. */
+    @ColumnInfo(defaultValue = "0") val eggHatched: Boolean = false,
+    /** Días perdidos cubiertos con un restablecimiento de racha (fechas ISO separadas por comas). */
+    @ColumnInfo(defaultValue = "") val streakRepairs: String = "",
 ) {
     fun difficultyFor(category: String): Int = categoryDifficulty[category] ?: difficulty
 }

@@ -36,6 +36,7 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${if (withAccount) supabase.getProperty("url", "") else ""}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${if (withAccount) supabase.getProperty("publishableKey", "") else ""}\"")
         buildConfigField("String", "PLAY_LICENSE_KEY", "\"${play.getProperty("licenseKey", "")}\"")
+        buildConfigField("boolean", "BETA", providers.gradleProperty("levelup.beta").getOrElse("false"))
     }
 
     signingConfigs {

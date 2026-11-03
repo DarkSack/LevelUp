@@ -27,6 +27,9 @@ private val noLinks = MutableStateFlow<String?>(null)
 interface Platform {
     val appVersion: String
 
+    /** Compilación para betatesters (en Android, la propiedad levelup.beta de gradle.properties). */
+    val betaBuild: Boolean get() = false
+
     /** El sistema pide quitar animaciones (en Android: "Quitar animaciones" en Accesibilidad). */
     val systemReducedMotion: Boolean
 

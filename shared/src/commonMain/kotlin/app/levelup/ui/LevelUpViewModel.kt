@@ -1,5 +1,10 @@
 package app.levelup.ui
 
+import app.levelup.content.Pets
+import app.levelup.pets.Accessory
+import app.levelup.pets.Species
+import app.levelup.domain.Gems
+import app.levelup.domain.StreakRepair
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.levelup.Platform
@@ -79,6 +84,18 @@ data class ProgressState(
     val missionsCompleted: Set<String> = emptySet(),
     val achievements: List<AchievementView> = emptyList(),
     val frames: List<Cosmetic> = listOf(Cosmetics.byId.getValue(Cosmetics.DEFAULT)),
+    /** Accesorios que tiene (incluidos y comprados). */
+    val petAccessories: Set<Accessory> = emptySet(),
+    /** Accesorios que ya se pueden comprar (sin logro pendiente). */
+    val accessoryGates: Set<Accessory> = emptySet(),
+    /** Gemas para gastar: las ganadas con retos menos lo que costaron las mascotas compradas. */
+    val gems: Int = 0,
+    val ownedPets: Set<Species> = emptySet(),
+    /** Días perdidos que cortaron la racha y se pueden restablecer (vacío si no hay nada que salvar). */
+    val streakMissed: List<LocalDate> = emptyList(),
+    /** La racha que se recupera al restablecer. */
+    val streakToRestore: Int = 0,
+    val repairsLeft: Int = StreakRepair.PER_MONTH,
     val extended: ExtendedStats = ExtendedStats(),
     /** Vuelve tras una temporada sin actividad y hoy aún no completó nada: retos de recuperación. */
     val returning: Boolean = false,
@@ -130,6 +147,9 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
             ?.let { run -> MissionCatalog.byId[run.missionId]?.let { it to run } }
         val lastActive = completed.filter { it.isDone && it.date < today }.maxOfOrNull { it.date }
         val doneToday = completed.any { it.isDone && it.date == today }
+        val activeDays = completed.filter { it.isDone }.mapTo(HashSet()) { it.date }
+        val repaired = StreakRepair.parse(prefs.streakRepairs)
+        val missed = StreakRepair.missed(today, activeDays, prefs.restDays, pauses, repaired)
         val thisWeek = Streaks.weekStart(today)
         val weekStarts = (7 downTo 0).map { thisWeek.minus(it * 7, DateTimeUnit.DAY) }
         val xpByWeek = entries.groupBy { Streaks.weekStart(repo.dateOf(it.createdAt)) }.mapValues { (_, l) -> l.sumOf { it.amount } }
@@ -147,12 +167,74 @@ class LevelUpViewModel(private val repo: LevelUpRepository, private val platform
                 AchievementView(a, AchievementRules.state(a, unlockedIds.keys), a.progress(stats), unlockedIds[a.id])
             },
             frames = Cosmetics.unlocked(unlockedIds.keys, doneMissions, plusOwned),
+            petAccessories = Pets.ownedAccessories(prefs),
+            accessoryGates = Pets.gatesOpen(unlockedIds.keys),
+            gems = Gems.earned(completed) - Gems.spent(Pets.boughtCount(prefs)) - Pets.accessoriesSpent(prefs),
+            ownedPets = Pets.owned(prefs),
+            streakMissed = missed,
+            streakToRestore = if (missed.isEmpty()) 0 else Streaks.current(today, activeDays, prefs.restDays, pauses, repaired + missed),
+            repairsLeft = StreakRepair.left(today, repaired),
             extended = ExtendedStats.compute(today, completed, entries.map { repo.dateOf(it.createdAt) to it.amount }),
             returning = !doneToday && lastActive != null && lastActive.daysUntil(today) >= Stats.COMEBACK_GAP_DAYS,
             pendingReturn = PauseRules.pendingReturn(today, pauses, prefs.lastPauseReviewed),
             weeklyReviewDue = WeeklyReview.isDue(today, prefs.lastWeeklyReview, completed),
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ProgressState())
+
+    init {
+        // Quien usa una compilación beta queda marcado para siempre y estrena el alebrije.
+        if (platform.betaBuild) act {
+            repo.updatePreferences { if (it.betaTester) it else it.copy(betaTester = true) }
+        }
+    }
+
+    /** Cubre los días perdidos si quedan restablecimientos este mes. */
+    fun repairStreak() = act {
+        val p = progress.value
+        if (p.streakMissed.isNotEmpty() && p.streakMissed.size <= p.repairsLeft) {
+            repo.updatePreferences { it.copy(streakRepairs = StreakRepair.format(StreakRepair.parse(it.streakRepairs) + p.streakMissed)) }
+        }
+    }
+
+    /** La primera mascota, gratis. Se puede cambiar mientras no termine la bienvenida. */
+    fun chooseStarter(species: Species) = act {
+        val prefs = repo.prefs()
+        if (species in Pets.STARTERS && (prefs.starterPet.isEmpty() || !prefs.onboardingDone)) {
+            repo.updatePreferences {
+                val keepPet = it.pet.isNotEmpty() && it.pet != it.starterPet
+                it.copy(starterPet = species.key, pet = if (keepPet) it.pet else species.key)
+            }
+        }
+    }
+
+    /** Abre el huevo de betatester: sale el alebrije y se queda en Inicio. */
+    fun hatchEgg() = act {
+        repo.updatePreferences { if (Pets.eggPending(it)) it.copy(eggHatched = true, pet = Species.ALEBRIJE.key) else it }
+    }
+
+    fun renamePet(species: Species, name: String) = act {
+        repo.updatePreferences { it.copy(petNames = Pets.withName(it, species, name)) }
+    }
+
+    /** Compra un accesorio con gemas si ya se puede y alcanza, y se lo pone. */
+    fun buyAccessory(a: Accessory) = act {
+        val p = progress.value
+        if (a !in p.petAccessories && a in p.accessoryGates && p.gems >= Pets.extra(a).price) {
+            repo.updatePreferences {
+                val worn = Accessory.parse(it.petAccessories).filterNot { w -> w.slot == a.slot }.toSet() + a
+                it.copy(ownedAccessories = Pets.withAccessory(it, a), petAccessories = Accessory.format(worn))
+            }
+        }
+    }
+
+    /** Compra [species] con gemas si alcanzan y no la tenía, y se la pone. */
+    fun buyPet(species: Species) = act {
+        val prefs = repo.prefs()
+        val p = progress.value
+        if (!species.exclusive && species !in p.ownedPets && p.gems >= Gems.price(Pets.boughtCount(prefs))) {
+            repo.updatePreferences { it.copy(ownedPets = Pets.withBought(it, species), pet = species.key) }
+        }
+    }
 
     private fun act(block: suspend () -> Unit) {
         viewModelScope.launch { block() }

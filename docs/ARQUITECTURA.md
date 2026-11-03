@@ -30,6 +30,8 @@ shared/      Kotlin Multiplatform (hoy solo el objetivo Android)
     ui/        Compose: tema, componentes, pantallas, navegación; LevelUpViewModel y CloudViewModel (cuenta y social)
     App.kt     punto de entrada de la interfaz; recibe `Platform` con lo que es propio de cada sistema
   androidMain/ base de datos para Android, sesión de la cuenta en preferencias, firma de Play
+pets/        librería propia de mascotas animadas (tlacuache, ajolote, gato), accesorios y la llama de la racha,
+             dibujadas con Canvas de Compose; no sabe nada de la app. Qué se desbloquea y cuándo: content/Tags.kt (Pets)
 androidApp/  Activity, Application, recordatorios y sincronización con WorkManager, compra de Plus, manifiesto,
              widget (TodayWidget), atajos y enlaces levelup://, Health Connect, imagen para compartir y envío al reloj
 wearApp/     app de Wear OS independiente del módulo shared: recibe el resumen del día del teléfono y le pide
