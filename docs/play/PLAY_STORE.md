@@ -16,6 +16,62 @@ marcado con **Tú**. Antes de subir nada, revisar [PENDIENTES.md](../PENDIENTES.
 | Cuenta | Opcional: correo o nombre de usuario y contraseña, sin verificación por correo ni recuperación de contraseña. En Supabase «Confirm email» tiene que estar apagado; `cuenta=no` en `supabase.properties` compilaría sin la nube |
 | Configuración | `supabase.properties` y `play.properties` en la raíz (fuera de git) antes de compilar el release. La clave de `play.properties` solo existe tras crear la app en Play Console: el primer bundle sale sin ella (sirve para la prueba interna, pero no comprueba las compras de Plus); después de copiarla hay que generar y subir otro |
 
+### Notas de la versión 1.1.0
+
+Mismas reglas que las de la 1.0.0 (abajo). Teléfono: 475, 476, 455 caracteres; reloj: 95, 93, 94.
+
+Teléfono:
+
+```
+<es-419>
+Novedades de la 1.1.0:
+• Mascotas de racha animadas: empieza con perro o gato y adopta más con gemas (tlacuachito, ajolote, xolo y más).
+• Ponles nombre y adórnalas con 33 accesorios, algunos de temporada.
+• Crecen con tu racha y te acompañan en el widget y en el reloj.
+• Tu llama cambia de color hasta la legendaria de 1000 días.
+• 4 restablecimientos de racha al mes.
+• Visita las mascotas de tus amigos y hazles cariño.
+• Recupera tu contraseña con un código, sin correo.
+</es-419>
+<en-US>
+What's new in 1.1.0:
+• Animated streak pets: start with a dog or a cat and adopt more with gems (opossum, axolotl, xolo and more).
+• Name them and dress them up with 33 accessories, some seasonal.
+• They grow with your streak and keep you company on the widget and your watch.
+• Your flame changes color up to the legendary 1000-day flame.
+• 4 streak restores per month.
+• Visit your friends' pets and give them some love.
+• Recover your password with a code, no email needed.
+</en-US>
+<pt-BR>
+Novidades da 1.1.0:
+• Mascotes de sequência animados: comece com cachorro ou gato e adote mais com gemas (gambá, axolote, xolo e mais).
+• Dê nomes e enfeite com 33 acessórios, alguns sazonais.
+• Eles crescem com sua sequência e acompanham você no widget e no relógio.
+• Sua chama muda de cor até a lendária de 1000 dias.
+• 4 restaurações de sequência por mês.
+• Visite os mascotes dos amigos e faça carinho.
+• Recupere sua senha com um código, sem e-mail.
+</pt-BR>
+```
+
+Reloj (canal de Wear OS):
+
+```
+<es-419>
+Novedades de la 1.1.0:
+• Tu mascota de racha aparece en el reloj con su ánimo y sus accesorios.
+</es-419>
+<en-US>
+What's new in 1.1.0:
+• Your streak pet now shows on your watch with its mood and accessories.
+</en-US>
+<pt-BR>
+Novidades da 1.1.0:
+• Seu mascote de sequência aparece no relógio com o humor e os acessórios.
+</pt-BR>
+```
+
 ### Notas de la versión 1.0.0
 
 Se pegan tal cual en «Notas de la versión» al crear cada versión. `es-419` es español (Latinoamérica), el idioma

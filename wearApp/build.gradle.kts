@@ -18,8 +18,8 @@ android {
         minSdk = 30
         targetSdk = 36
         // Distinto del teléfono: en Play cada artefacto de la ficha necesita su propio versionCode.
-        versionCode = 100001
-        versionName = "1.0.0"
+        versionCode = 100002
+        versionName = "1.1.0"
     }
 
     signingConfigs {
