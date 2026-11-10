@@ -10,7 +10,7 @@ buildscript {
             classpath("org.bouncycastle:bcutil-jdk18on:1.85")
             classpath("org.bitbucket.b_c:jose4j:0.9.6")
             classpath("org.jdom:jdom2:2.0.6.1")
-            classpath("org.apache.commons:commons-lang3:3.18.0")
+            classpath("org.apache.commons:commons-lang3:3.21.0")
             classpath("org.apache.httpcomponents:httpclient:4.5.14")
         }
     }
@@ -33,7 +33,7 @@ val parches = mapOf(
     "org.bouncycastle:bcutil-jdk18on" to "1.85",
     "org.bitbucket.b_c:jose4j" to "0.9.6",
     "org.jdom:jdom2" to "2.0.6.1",
-    "org.apache.commons:commons-lang3" to "3.18.0",
+    "org.apache.commons:commons-lang3" to "3.21.0",
     "org.apache.httpcomponents:httpclient" to "4.5.14",
 )
 
